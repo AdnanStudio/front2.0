@@ -289,9 +289,6 @@ const PublicHome = () => {
                 {settings.scrollingTexts.map((item, index) => (
                   <span key={index}>• {item.text} •</span>
                 ))}
-                {settings.scrollingTexts.map((item, index) => (
-                  <span key={`duplicate-${index}`}>• {item.text} •</span>
-                ))}
               </>
             ) : (
               <>
