@@ -400,8 +400,8 @@
 }
 
 .author-photo {
-  width: 200px;
-  height: 200px;
+  width: 280px;
+  height: 320px;
   border-radius: 15px;
   object-fit: cover;
   margin-bottom: 20px;
