@@ -4,10 +4,17 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import PublicHeader from "../components/PublicHeader";
 import PublicFooter from "../components/PublicFooter";
+import LazyImage from "../components/LazyImage";
 import { contentData } from "../data/contentData";
 import NoticeViewer from "../components/NoticeViewer";
 import noticeService from "../services/noticeService";
-import { FileText, Download, Calendar, Bell, Image as ImageIcon } from "lucide-react";
+import {
+  FileText,
+  Download,
+  Calendar,
+  Bell,
+  Image as ImageIcon,
+} from "lucide-react";
 import "./PublicHome.css";
 
 const PublicHome = () => {
@@ -96,10 +103,22 @@ const PublicHome = () => {
     return contentData[pathKey] || contentData.home;
   };
 
+  const truncateText = (text, maxLength) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
+  // Loading state - Show content loader (not image loader)
   if (loading) {
     return (
-      <div className="loading-screen">
-        <div className="spinner-large"></div>
+      <div className="public-home">
+        <div className="content-loading-screen">
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <h2>MALKHANAGAR COLLEGE</h2>
+            <p>Please Wait..</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -129,12 +148,11 @@ const PublicHome = () => {
                   index === currentHeroSlide ? "active" : ""
                 } ${isFading ? "fading" : ""}`}
               >
-                <img
+                <LazyImage
                   src={image}
                   alt={`Hero ${index + 1}`}
-                  onError={(e) => {
-                    e.target.src = "https://via.placeholder.com/1920x600";
-                  }}
+                  className="hero-image"
+                  placeholderType="skeleton"
                 />
               </div>
             ))}
@@ -167,22 +185,22 @@ const PublicHome = () => {
         <div className="container">
           {currentPath === "/" ? (
             <>
-              {/* Home Page - About Section */}
+              {/* About Section */}
               <section className="about-section" id="about">
                 <div className="section-title">
                   <h2>
-                    ABOUT {settings.schoolName?.toUpperCase() || "MALKHANAGAR COLLEGE"}
+                    ABOUT{" "}
+                    {settings.schoolName?.toUpperCase() ||
+                      "MALKHANAGAR COLLEGE"}
                   </h2>
                   <div className="title-underline"></div>
                 </div>
                 <div className="about-content">
                   <div className="about-image">
-                    <img
+                    <LazyImage
                       src={settings.aboutImage || "/college.jpg"}
                       alt="College Building"
-                      onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/500x400";
-                      }}
+                      placeholderType="skeleton"
                     />
                   </div>
                   <div className="about-text">
@@ -218,13 +236,11 @@ const PublicHome = () => {
                       </p>
                     </div>
                     <div className="message-author">
-                      <img
+                      <LazyImage
                         src={settings.chairmanImage || "/sir.jpg"}
                         alt="Principal"
-                        className="author-photo"
-                        onError={(e) => {
-                          e.target.src = "https://via.placeholder.com/200x200";
-                        }}
+                        className="author-photo-wrapper"
+                        placeholderType="spinner"
                       />
                       <h3>অধ্যক্ষ (ভারপ্রাপ্ত) মালখানগর কলেজ</h3>
                     </div>
@@ -256,54 +272,70 @@ const PublicHome = () => {
                         <div className="notice-list-public">
                           {(showAllNotices ? notices : notices.slice(0, 4)).map(
                             (notice) => (
-                              <div key={notice._id} className="notice-item-public">
+                              <div
+                                key={notice._id}
+                                className="notice-item-public"
+                              >
                                 <div className="notice-item-header">
                                   <div className="notice-item-left">
-                                    <span className={`notice-badge ${notice.type}`}>
+                                    <span
+                                      className={`notice-badge ${notice.type}`}
+                                    >
                                       {notice.type}
                                     </span>
                                     <div className="notice-date-public">
                                       <Calendar size={16} />
-                                      <span>{formatDate(notice.publishDate)}</span>
+                                      <span>
+                                        {formatDate(notice.publishDate)}
+                                      </span>
                                     </div>
                                   </div>
-                                  {notice.attachments && notice.attachments.length > 0 && (
-                                    <div className="notice-attachment-indicator">
-                                      📎 {notice.attachments.length}
-                                    </div>
-                                  )}
+                                  {notice.attachments &&
+                                    notice.attachments.length > 0 && (
+                                      <div className="notice-attachment-indicator">
+                                        📎 {notice.attachments.length}
+                                      </div>
+                                    )}
                                 </div>
 
-                                <h4>{notice.title}</h4>
+                                <h4>{truncateText(notice.title, 150)}</h4>
                                 <p className="notice-description">
                                   {notice.description.substring(0, 150)}
                                   {notice.description.length > 150 && "..."}
                                 </p>
 
-                                {notice.attachments && notice.attachments.length > 0 && (
-                                  <div className="notice-files-grid">
-                                    {notice.attachments.map((attachment, index) => (
-                                      <button
-                                        key={index}
-                                        className="file-preview-btn"
-                                        onClick={() => handleAttachmentClick(attachment)}
-                                      >
-                                        {attachment.fileType === "pdf" ? (
-                                          <>
-                                            <FileText size={18} />
-                                            <span>PDF Document</span>
-                                          </>
-                                        ) : (
-                                          <>
-                                            <ImageIcon size={18} />
-                                            <span>Image File</span>
-                                          </>
-                                        )}
-                                        <Download size={14} className="download-icon" />
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
+                                {notice.attachments &&
+                                  notice.attachments.length > 0 && (
+                                    <div className="notice-files-grid">
+                                      {notice.attachments.map(
+                                        (attachment, index) => (
+                                          <button
+                                            key={index}
+                                            className="file-preview-btn"
+                                            onClick={() =>
+                                              handleAttachmentClick(attachment)
+                                            }
+                                          >
+                                            {attachment.fileType === "pdf" ? (
+                                              <>
+                                                <FileText size={18} />
+                                                <span>PDF Document</span>
+                                              </>
+                                            ) : (
+                                              <>
+                                                <ImageIcon size={18} />
+                                                <span>Image File</span>
+                                              </>
+                                            )}
+                                            <Download
+                                              size={14}
+                                              className="download-icon"
+                                            />
+                                          </button>
+                                        )
+                                      )}
+                                    </div>
+                                  )}
                               </div>
                             )
                           )}
@@ -318,12 +350,18 @@ const PublicHome = () => {
               <section className="stats-section">
                 <div className="container">
                   <h2 className="stats-title">
-                    We are in <span className="highlight">Members</span> at a glance
+                    We are in <span className="highlight">Members</span> at a
+                    glance
                   </h2>
                   <div className="stats-grid">
                     <div className="stat-box">
                       <div className="stat-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
                           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                           <circle cx="9" cy="7" r="4"></circle>
                           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -336,7 +374,12 @@ const PublicHome = () => {
 
                     <div className="stat-box">
                       <div className="stat-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
                           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                         </svg>
                       </div>
@@ -346,8 +389,20 @@ const PublicHome = () => {
 
                     <div className="stat-box">
                       <div className="stat-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <rect
+                            x="2"
+                            y="7"
+                            width="20"
+                            height="14"
+                            rx="2"
+                            ry="2"
+                          ></rect>
                           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                         </svg>
                       </div>
@@ -380,7 +435,7 @@ const PublicHome = () => {
               </section>
             </>
           ) : (
-            // Other Pages - Show dynamic content
+            /* Other Pages - Show dynamic content */
             <div className="page-content">
               <div className="content-header">
                 <h1>{currentContent.title}</h1>

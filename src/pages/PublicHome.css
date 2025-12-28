@@ -828,3 +828,58 @@ font-size: 18px;
 font-size: 14px;
 }
 }
+
+
+
+
+/* ... (previous styles remain same) ... */
+
+/* Lazy Image specific styles */
+.hero-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.about-image .lazy-image-wrapper {
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  height: 400px;
+}
+
+.author-photo-wrapper {
+  width: 280px;
+  height: 320px;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  margin: 0 auto 20px;
+}
+
+.author-photo-wrapper .lazy-image {
+  object-fit: cover;
+}
+
+/* Mobile responsive for lazy images */
+@media (max-width: 768px) {
+  .about-image .lazy-image-wrapper {
+    height: 300px;
+  }
+
+  .author-photo-wrapper {
+    width: 200px;
+    height: 240px;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-image .lazy-image-wrapper {
+    height: 250px;
+  }
+
+  .author-photo-wrapper {
+    width: 180px;
+    height: 220px;
+  }
+}
