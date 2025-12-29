@@ -3,7 +3,7 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #f0f0f0;
+  background: transparent;
 }
 
 .lazy-image {

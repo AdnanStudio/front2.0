@@ -176,9 +176,7 @@ const PublicHeader = ({ settings, onNavigate, currentPath }) => {
             ))
           ) : (
             <>
-              <span>• Welcome to Malkhanagar College •</span>
-              <span>• Admission is going on •</span>
-              <span>• Check our latest notices •</span>
+              <span></span>
             </>
           )}
         </div>
