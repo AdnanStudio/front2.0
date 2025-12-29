@@ -1,0 +1,478 @@
+.main-header {
+  background: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: transform 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.logo-section:hover {
+  transform: scale(1.02);
+}
+
+.logo-section:active {
+  transform: scale(0.98);
+}
+
+/* Water Wave Animation */
+.logo-section.water-wave-animation::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 102, 204, 0.1) 25%,
+    rgba(0, 102, 204, 0.3) 50%,
+    rgba(0, 102, 204, 0.1) 75%,
+    transparent 100%
+  );
+  animation: waterWave 1.5s ease-in-out;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes waterWave {
+  0% {
+    left: -100%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+/* Additional shimmer effect for text */
+.logo-section.water-wave-animation .school-info h1,
+.logo-section.water-wave-animation .school-subtitle,
+.logo-section.water-wave-animation .school-address {
+  animation: textShimmer 1.5s ease-in-out;
+}
+
+@keyframes textShimmer {
+  0% {
+    color: #0066cc;
+    text-shadow: 0 0 5px rgba(0, 102, 204, 0);
+  }
+  50% {
+    color: #0099ff;
+    text-shadow: 0 0 10px rgba(0, 102, 204, 0.5);
+  }
+  100% {
+    color: #0066cc;
+    text-shadow: 0 0 5px rgba(0, 102, 204, 0);
+  }
+}
+
+.school-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.3s ease;
+}
+
+.logo-section.water-wave-animation .school-logo {
+  animation: logoGlow 1.5s ease-in-out;
+}
+
+@keyframes logoGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 0px rgba(0, 102, 204, 0));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(0, 102, 204, 0.6));
+  }
+}
+
+.school-info {
+  position: relative;
+  z-index: 2;
+}
+
+.school-info h1 {
+  color: #0066cc;
+  font-size: 24px;
+  margin-bottom: 5px;
+  font-weight: 700;
+  transition: color 0.3s ease;
+}
+
+.school-subtitle {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 2px;
+  transition: color 0.3s ease;
+}
+
+.school-address {
+  font-size: 12px;
+  color: #999;
+  transition: color 0.3s ease;
+}
+
+/* Desktop Navigation */
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.nav-item-wrapper {
+  position: relative;
+}
+
+.desktop-nav a {
+  color: #333;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 16px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.3s;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.desktop-nav a:hover,
+.desktop-nav a.active {
+  color: #0066cc;
+  background: #f0f8ff;
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  min-width: 240px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  margin-top: 8px;
+  padding: 8px 0;
+  z-index: 9999;
+  animation: dropdownSlide 0.3s ease;
+  pointer-events: auto;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-menu a {
+  display: block;
+  padding: 12px 20px;
+  color: #555;
+  font-size: 14px;
+  border-radius: 0;
+  background: transparent;
+  transition: all 0.2s;
+}
+
+.dropdown-menu a:hover,
+.dropdown-menu a.active {
+  background: #f8f9fa;
+  color: #0066cc;
+}
+
+.btn-login {
+  background: rgb(35, 167, 255);
+  color: white;
+  padding: 10px 25px;
+  border: none;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+  white-space: nowrap;
+}
+
+.btn-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(35, 167, 255, 0.3);
+}
+
+/* Scrolling Text */
+.scrolling-text-container {
+  background: #2980b9;
+  overflow: hidden;
+  padding: 12px 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.scrolling-text {
+  display: inline-block;
+  white-space: nowrap;
+  animation: scroll-continuous 100s linear infinite;
+  padding-left: 100%;
+}
+
+.scrolling-text.paused {
+  animation-play-state: paused;
+}
+
+.scrolling-text span {
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  padding-right: 80px;
+  display: inline-block;
+}
+
+@keyframes scroll-continuous {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* Mobile */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: #333;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.mobile-nav {
+  display: none;
+  flex-direction: column;
+  background: white;
+  padding: 20px;
+  border-top: 1px solid #e1e8ed;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.mobile-nav-item {
+  border-bottom: 1px solid #f5f7fa;
+}
+
+.mobile-nav-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  color: #333;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mobile-nav-link:active {
+  background: #f8f9fa;
+}
+
+.mobile-dropdown {
+  padding-left: 20px;
+  margin-bottom: 10px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+.mobile-dropdown a {
+  display: block;
+  padding: 10px 0;
+  color: #666;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.mobile-dropdown a:hover,
+.mobile-dropdown a.active {
+  color: #0066cc;
+}
+
+.btn-login-mobile {
+  margin-top: 15px;
+  background: rgb(35, 167, 255);
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.rotated {
+  transform: rotate(180deg);
+  transition: transform 0.3s;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .desktop-nav {
+    display: none;
+  }
+
+  .mobile-menu-btn {
+    display: block;
+  }
+
+  .mobile-nav {
+    display: flex;
+  }
+
+  .school-info h1 {
+    font-size: 20px;
+  }
+
+  .school-logo {
+    width: 70px;
+    height: 70px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .header-content {
+    padding: 10px 0;
+  }
+
+  .logo-section {
+    gap: 12px;
+  }
+
+  .school-logo {
+    width: 60px;
+    height: 60px;
+  }
+
+  .school-info h1 {
+    font-size: 16px;
+  }
+
+  .school-subtitle {
+    font-size: 11px;
+  }
+
+  .school-address {
+    font-size: 10px;
+  }
+
+  .scrolling-text span {
+    font-size: 14px;
+    padding-right: 60px;
+  }
+
+  .mobile-nav {
+    max-height: 60vh;
+  }
+
+  /* Mobile Animation Adjustments */
+  @keyframes waterWave {
+    0% {
+      left: -100%;
+      opacity: 0;
+    }
+    15% {
+      opacity: 1;
+    }
+    85% {
+      opacity: 1;
+    }
+    100% {
+      left: 100%;
+      opacity: 0;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-section {
+    gap: 10px;
+  }
+
+  .school-logo {
+    width: 50px;
+    height: 50px;
+  }
+
+  .school-info h1 {
+    font-size: 14px;
+  }
+
+  .school-subtitle,
+  .school-address {
+    font-size: 10px;
+  }
+
+  .scrolling-text span {
+    font-size: 13px;
+    padding-right: 50px;
+  }
+
+  /* Extra smooth animation for small screens */
+  .logo-section.water-wave-animation::before {
+    animation: waterWave 1.8s ease-in-out;
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .logo-section.water-wave-animation::before,
+  .logo-section.water-wave-animation .school-info h1,
+  .logo-section.water-wave-animation .school-subtitle,
+  .logo-section.water-wave-animation .school-address,
+  .logo-section.water-wave-animation .school-logo {
+    animation: none;
+  }
+  
+  .logo-section:hover {
+    transform: none;
+  }
+}
