@@ -186,6 +186,7 @@
   font-size: 18px !important;
   line-height: 1.9 !important;
   color: #555 !important;
+  text-align: justify;
 }
 
 .message-author {
@@ -528,6 +529,7 @@
   .about-content {
     grid-template-columns: 1fr;
     gap: 30px;
+    padding: 3px;
   }
 
   .about-image {
