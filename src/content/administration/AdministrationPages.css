@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   gap: 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   color: white;
   padding: 40px;
   border-radius: 15px;
@@ -56,7 +56,7 @@
 .member-badge {
   width: 100px;
   height: 100px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -100,7 +100,7 @@
 }
 
 .member-role {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   color: white;
   padding: 8px 15px;
   border-radius: 20px;
@@ -474,7 +474,7 @@
 
 /* Office Hours */
 .office-hours {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   color: white;
   padding: 40px;
   border-radius: 15px;
@@ -502,7 +502,7 @@
   display: flex;
   align-items: center;
   gap: 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   color: white;
   padding: 40px;
   border-radius: 15px;
@@ -617,7 +617,7 @@
 .teacher-avatar {
   width: 100px;
   height: 100px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -791,7 +791,7 @@
   display: flex;
   align-items: center;
   gap: 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   color: white;
   padding: 40px;
   border-radius: 15px;
@@ -887,7 +887,7 @@
 .staff-avatar {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   border-radius: 50%;
   display: flex;
   align-items: center;

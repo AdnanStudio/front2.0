@@ -11,7 +11,7 @@ export const navigationData = [
     path: '/about',
     subItems: [
       { id: 'history', label: 'College History', path: '/about/history' },
-      { id: 'mission', label: 'Mission & Vision', path: '/about/mission' },
+      { id: 'mission', label: 'Mission & Vision', path: '/about/mission-vision' },
       { id: 'facilities', label: 'Facilities', path: '/about/facilities' },
       { id: 'achievements', label: 'Achievements', path: '/about/achievements' }
     ]
@@ -32,7 +32,7 @@ export const navigationData = [
     label: 'Administration',
     path: '/administration',
     subItems: [
-      { id: 'governing', label: 'Governing Body', path: '/administration/governing' },
+      { id: 'governing', label: 'Governing Body', path: '/administration/governing-body' },
       { id: 'principal', label: 'Principal', path: '/administration/principal' },
       { id: 'teachers', label: 'Teachers', path: '/administration/teachers' },
       { id: 'staff', label: 'Staff', path: '/administration/staff' }

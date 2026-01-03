@@ -117,7 +117,7 @@
 }
 
 .highlight-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   color: white;
   padding: 30px;
   border-radius: 15px;
@@ -200,7 +200,7 @@
 .mv-icon-wrapper {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -265,7 +265,7 @@
 .value-icon {
   width: 70px;
   height: 70px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -325,7 +325,7 @@
 .objective-number {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   color: white;
   border-radius: 15px;
   display: flex;
@@ -350,7 +350,7 @@
 
 /* Commitment Section */
 .commitment-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   color: white;
   padding: 50px;
   border-radius: 15px;
@@ -395,7 +395,7 @@
 .facility-icon-main {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   border-radius: 15px;
   display: flex;
   align-items: center;

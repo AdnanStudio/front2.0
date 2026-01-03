@@ -335,7 +335,7 @@
 
 /* Departments Intro */
 .departments-intro {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   color: white;
   padding: 40px;
   border-radius: 15px;
@@ -363,7 +363,7 @@
 }
 
 .department-header.science-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
 }
 
 .department-header.arts-header {
@@ -451,7 +451,7 @@
 }
 
 .subject-tag {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   color: white;
   padding: 10px 20px;
   border-radius: 25px;
@@ -585,7 +585,7 @@
 
 /* Department Coordination */
 .department-coordination {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   color: white;
   padding: 50px;
   border-radius: 15px;
@@ -643,7 +643,7 @@
 }
 
 .syllabus-header.science-bg {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
 }
 
 .syllabus-header.arts-bg {
@@ -713,7 +713,7 @@
 .download-btn {
   width: 100%;
   padding: 12px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   color: white;
   border: none;
   border-radius: 8px;
