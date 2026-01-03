@@ -18,6 +18,96 @@ import {
 } from 'lucide-react';
 import './Home.css';
 
+// Cache utility functions
+const CACHE_DURATION = 365 * 24 * 60 * 60 * 1000; // 1 year in milliseconds
+const CACHE_KEYS = {
+  HOME_DATA: 'home_data_cache',
+  NOTICES: 'notices_cache',
+};
+
+const cacheManager = {
+  // Save data to cache with timestamp
+  set: (key, data) => {
+    try {
+      const cacheData = {
+        data: data,
+        timestamp: Date.now(),
+        expiresAt: Date.now() + CACHE_DURATION,
+      };
+      localStorage.setItem(key, JSON.stringify(cacheData));
+      return true;
+    } catch (error) {
+      console.error('Cache set error:', error);
+      return false;
+    }
+  },
+
+  // Get data from cache if not expired
+  get: (key) => {
+    try {
+      const cached = localStorage.getItem(key);
+      if (!cached) return null;
+
+      const cacheData = JSON.parse(cached);
+      const now = Date.now();
+
+      // Check if cache is expired
+      if (now > cacheData.expiresAt) {
+        localStorage.removeItem(key);
+        return null;
+      }
+
+      return cacheData.data;
+    } catch (error) {
+      console.error('Cache get error:', error);
+      return null;
+    }
+  },
+
+  // Clear specific cache
+  clear: (key) => {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error('Cache clear error:', error);
+    }
+  },
+
+  // Clear all caches
+  clearAll: () => {
+    try {
+      Object.values(CACHE_KEYS).forEach((key) => {
+        localStorage.removeItem(key);
+      });
+    } catch (error) {
+      console.error('Cache clear all error:', error);
+    }
+  },
+
+  // Get cache info (for debugging)
+  getInfo: (key) => {
+    try {
+      const cached = localStorage.getItem(key);
+      if (!cached) return null;
+
+      const cacheData = JSON.parse(cached);
+      const now = Date.now();
+      const remainingTime = cacheData.expiresAt - now;
+      const remainingDays = Math.floor(remainingTime / (24 * 60 * 60 * 1000));
+
+      return {
+        exists: true,
+        createdAt: new Date(cacheData.timestamp).toLocaleString(),
+        expiresAt: new Date(cacheData.expiresAt).toLocaleString(),
+        remainingDays: remainingDays,
+        isExpired: now > cacheData.expiresAt,
+      };
+    } catch (error) {
+      return null;
+    }
+  },
+};
+
 const Home = () => {
   const [homeData, setHomeData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,10 +116,15 @@ const Home = () => {
   const [selectedAttachment, setSelectedAttachment] = useState(null);
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
   const [isFading, setIsFading] = useState(false);
+  const [useCache, setUseCache] = useState(true);
 
   useEffect(() => {
     fetchHomeData();
     fetchPublicNotices();
+
+    // Log cache info in console (for debugging)
+    console.log('Home Data Cache Info:', cacheManager.getInfo(CACHE_KEYS.HOME_DATA));
+    console.log('Notices Cache Info:', cacheManager.getInfo(CACHE_KEYS.NOTICES));
   }, []);
 
   // Hero carousel auto-play
@@ -49,13 +144,33 @@ const Home = () => {
     }
   }, [homeData]);
 
-  const fetchHomeData = async () => {
+  const fetchHomeData = async (forceRefresh = false) => {
     try {
+      // Check cache first if not forcing refresh
+      if (!forceRefresh && useCache) {
+        const cachedData = cacheManager.get(CACHE_KEYS.HOME_DATA);
+        if (cachedData) {
+          console.log('Loading home data from cache');
+          setHomeData(cachedData);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Fetch from API if no cache or force refresh
+      console.log('Fetching home data from API');
       const timestamp = new Date().getTime();
       const response = await axios.get(
         `https://backend-yfp1.onrender.com/api/public/home?t=${timestamp}`
       );
-      setHomeData(response.data.data);
+      
+      const data = response.data.data;
+      setHomeData(data);
+      
+      // Save to cache
+      cacheManager.set(CACHE_KEYS.HOME_DATA, data);
+      console.log('Home data cached successfully');
+      
       setLoading(false);
     } catch (error) {
       console.error('Failed to fetch home data:', error);
@@ -64,13 +179,50 @@ const Home = () => {
     }
   };
 
-  const fetchPublicNotices = async () => {
+  const fetchPublicNotices = async (forceRefresh = false) => {
     try {
+      // Check cache first if not forcing refresh
+      if (!forceRefresh && useCache) {
+        const cachedNotices = cacheManager.get(CACHE_KEYS.NOTICES);
+        if (cachedNotices) {
+          console.log('Loading notices from cache');
+          setNotices(cachedNotices);
+          return;
+        }
+      }
+
+      // Fetch from API if no cache or force refresh
+      console.log('Fetching notices from API');
       const response = await noticeService.getPublicNotices();
-      setNotices(response.data || []);
+      const noticesData = response.data || [];
+      
+      setNotices(noticesData);
+      
+      // Save to cache
+      cacheManager.set(CACHE_KEYS.NOTICES, noticesData);
+      console.log('Notices cached successfully');
     } catch (error) {
       console.error('Failed to fetch notices:', error);
     }
+  };
+
+  const handleRefreshData = () => {
+    setLoading(true);
+    toast.loading('Refreshing data...');
+    
+    // Clear caches and refetch
+    cacheManager.clearAll();
+    
+    Promise.all([
+      fetchHomeData(true),
+      fetchPublicNotices(true)
+    ]).then(() => {
+      toast.dismiss();
+      toast.success('Data refreshed successfully!');
+    }).catch(() => {
+      toast.dismiss();
+      toast.error('Failed to refresh data');
+    });
   };
 
   const handleAttachmentClick = (attachment) => {
@@ -120,9 +272,43 @@ const Home = () => {
 
   const settings = homeData?.websiteSettings || {};
   const heroImages = settings.heroImages || [];
+  const cacheInfo = cacheManager.getInfo(CACHE_KEYS.HOME_DATA);
 
   return (
     <div className="home-content">
+      {/* Cache Info Banner (Optional - can be hidden in production) */}
+      {/* {cacheInfo && (
+        <div style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          padding: '10px 20px',
+          textAlign: 'center',
+          fontSize: '14px',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '15px',
+          flexWrap: 'wrap'
+        }}>
+          <span>📦 Data cached • {cacheInfo.remainingDays} days remaining</span>
+          <button
+            onClick={handleRefreshData}
+            style={{
+              background: 'rgba(255,255,255,0.2)',
+              border: '1px solid rgba(255,255,255,0.3)',
+              color: 'white',
+              padding: '5px 15px',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '500'
+            }}
+          >
+            🔄 Refresh Now
+          </button>
+        </div>
+      )} */}
+
       {/* Hero Carousel */}
       {heroImages.length > 0 && (
         <section className="hero-image-carousel">
@@ -216,7 +402,7 @@ const Home = () => {
             <div className="message-text">
               <p className="message-large-text">
                 <h4>অধ্যক্ষের বাণী :</h4><br />
-                ❝ মালখানগর কলেজ জ্ঞান, মূল্যবোধ ও আধুনিক শিক্ষার সমন্বয়ে একটি অগ্রসরমান প্রতিষ্ঠান। আমরা শিক্ষার্থীদের মেধা, দক্ষতা ও চরিত্র গঠনে প্রতিশ্রুতিবদ্ধ। প্রিয় শিক্ষার্থীরা—স্বপ্ন দেখো, শিখো এবং নৈতিকতা ও অধ্যবসায়ের সাথে এগিয়ে চলো। তোমাদের প্রতিটি অগ্রযাত্রায় মালখানগর কলেজ সর্বদা পাশে রয়েছে ❞
+                ❝ মালখানগর কলেজ জ্ঞান, মূল্যবোধ ও আধুনিক শিক্ষার সমন্বয়ে একটি অগ্রসরমান প্রতিষ্ঠান। আমরা শিক্ষার্থীদের মেধা, দক্ষতা ও চরিত্র গঠনে প্রতিশ্রুতিবদ্ধ। প্রিয় শিক্ষার্থীরা—স্বপ্ন দেখো, শিখো এবং নৈতিকতা ও অধ্যবসায়ের সাথে এগিয়ে চলো। তোমাদের প্রতিটি অগ্রযাত্রায় মালখানগর কলেজ সর্বদা পাশে রয়েছে ❞
               </p>
             </div>
             <div className="message-author">
@@ -386,7 +572,6 @@ const Home = () => {
 };
 
 export default Home;
-
 
 
 // import React, { useState, useEffect } from 'react';
