@@ -1,305 +1,118 @@
 import React, { useState, useEffect } from 'react';
+import { Phone, Mail, BookOpen, Award } from 'lucide-react';
+import PublicHeader from '../../components/PublicHeader';
+import PublicFooter from '../../components/PublicFooter';
 import SkeletonLoader from '../../components/SkeletonLoader';
-import { Users, BookOpen, Award } from 'lucide-react';
-import './AdministrationPages.css';
+import teacherListService from '../../services/teacherListService';
+import axios from 'axios';
+import './Teachers.css';
 
 const Teachers = () => {
+  const [teachers, setTeachers] = useState([]);
+  const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
-  const [selectedDepartment, setSelectedDepartment] = useState('all');
 
   useEffect(() => {
-    setTimeout(() => setLoading(false), 800);
-    window.scrollTo(0, 0);
+    fetchData();
   }, []);
 
-  const departments = [
-    { value: 'all', label: 'সকল বিভাগ' },
-    { value: 'science', label: 'বিজ্ঞান' },
-    { value: 'arts', label: 'মানবিক' },
-    { value: 'commerce', label: 'ব্যবসায় শিক্ষা' },
-  ];
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch settings
+      const settingsResponse = await axios.get(
+        'https://backend-yfp1.onrender.com/api/public/home'
+      );
+      setSettings(settingsResponse.data.data?.websiteSettings || {});
 
-  const teachers = [
-    {
-      name: 'অধ্যাপক ড. নাসরিন সুলতানা',
-      designation: 'বিভাগীয় প্রধান (বাংলা)',
-      department: 'arts',
-      qualification: 'পিএইচডি (বাংলা)',
-      experience: '২০ বছর',
-      subjects: ['বাংলা সাহিত্য', 'ভাষাতত্ত্ব']
-    },
-    {
-      name: 'অধ্যাপক মোঃ আবদুল কাদের',
-      designation: 'বিভাগীয় প্রধান (পদার্থবিজ্ঞান)',
-      department: 'science',
-      qualification: 'এম.এসসি (পদার্থবিজ্ঞান)',
-      experience: '১৮ বছর',
-      subjects: ['পদার্থবিজ্ঞান', 'উচ্চতর গণিত']
-    },
-    {
-      name: 'অধ্যাপক মোঃ জাহিদুল ইসলাম',
-      designation: 'বিভাগীয় প্রধান (হিসাববিজ্ঞান)',
-      department: 'commerce',
-      qualification: 'এম.কম (হিসাববিজ্ঞান)',
-      experience: '১৬ বছর',
-      subjects: ['হিসাববিজ্ঞান', 'ব্যবস্থাপনা']
-    },
-    {
-      name: 'প্রফেসর শাহীন আক্তার',
-      designation: 'বিভাগীয় প্রধান (ইংরেজি)',
-      department: 'arts',
-      qualification: 'এমএ (ইংরেজি)',
-      experience: '১৫ বছর',
-      subjects: ['ইংরেজি সাহিত্য', 'ইংরেজি ভাষা']
-    },
-    {
-      name: 'ড. মাহমুদা খাতুন',
-      designation: 'সহযোগী অধ্যাপক (রসায়ন)',
-      department: 'science',
-      qualification: 'পিএইচডি (রসায়ন)',
-      experience: '১৪ বছর',
-      subjects: ['জৈব রসায়ন', 'অজৈব রসায়ন']
-    },
-    {
-      name: 'অধ্যাপক আবদুল মালেক',
-      designation: 'সহযোগী অধ্যাপক (গণিত)',
-      department: 'science',
-      qualification: 'এম.এসসি (গণিত)',
-      experience: '১৩ বছর',
-      subjects: ['উচ্চতর গণিত', 'পরিসংখ্যান']
-    },
-    {
-      name: 'জনাব সাইফুল ইসলাম',
-      designation: 'সহকারী অধ্যাপক (ব্যবসায় সংগঠন)',
-      department: 'commerce',
-      qualification: 'এমবিএ (ব্যবস্থাপনা)',
-      experience: '১২ বছর',
-      subjects: ['ব্যবসায় সংগঠন', 'বিপণন']
-    },
-    {
-      name: 'ড. ফরিদা ইয়াসমিন',
-      designation: 'সহকারী অধ্যাপক (বাংলা)',
-      department: 'arts',
-      qualification: 'পিএইচডি (বাংলা)',
-      experience: '১১ বছর',
-      subjects: ['আধুনিক বাংলা সাহিত্য', 'প্রাচীন বাংলা']
-    },
-    {
-      name: 'জনাব তানভীর হাসান',
-      designation: 'সহকারী অধ্যাপক (জীববিজ্ঞান)',
-      department: 'science',
-      qualification: 'এম.এসসি (উদ্ভিদবিজ্ঞান)',
-      experience: '১০ বছর',
-      subjects: ['জীববিজ্ঞান', 'উদ্ভিদবিজ্ঞান']
-    },
-    {
-      name: 'জনাব রেজাউল করিম',
-      designation: 'প্রভাষক (রাষ্ট্রবিজ্ঞান)',
-      department: 'arts',
-      qualification: 'এমএসএস (রাষ্ট্রবিজ্ঞান)',
-      experience: '৯ বছর',
-      subjects: ['রাষ্ট্রবিজ্ঞান', 'পৌরনীতি']
-    },
-    {
-      name: 'জনাবা সুমাইয়া আক্তার',
-      designation: 'প্রভাষক (অর্থনীতি)',
-      department: 'arts',
-      qualification: 'এমএ (অর্থনীতি)',
-      experience: '৮ বছর',
-      subjects: ['অর্থনীতি', 'পরিসংখ্যান']
-    },
-    {
-      name: 'জনাব আলমগীর হোসেন',
-      designation: 'প্রভাষক (অর্থায়ন)',
-      department: 'commerce',
-      qualification: 'এমবিএ (অর্থায়ন)',
-      experience: '৭ বছর',
-      subjects: ['অর্থায়ন', 'ব্যাংকিং']
-    },
-    {
-      name: 'জনাবা নাজিয়া সুলতানা',
-      designation: 'প্রভাষক (ইতিহাস)',
-      department: 'arts',
-      qualification: 'এমএ (ইতিহাস)',
-      experience: '৭ বছর',
-      subjects: ['বাংলাদেশের ইতিহাস', 'বিশ্ব ইতিহাস']
-    },
-    {
-      name: 'জনাব মোঃ কামরুল ইসলাম',
-      designation: 'প্রভাষক (তথ্য ও যোগাযোগ প্রযুক্তি)',
-      department: 'science',
-      qualification: 'বিএসসি (কম্পিউটার সায়েন্স)',
-      experience: '৬ বছর',
-      subjects: ['আইসিটি', 'কম্পিউটার প্রোগ্রামিং']
-    },
-    {
-      name: 'জনাবা তাসনিম জাহান',
-      designation: 'প্রভাষক (ইসলামের ইতিহাস)',
-      department: 'arts',
-      qualification: 'এমএ (ইসলামের ইতিহাস)',
-      experience: '৬ বছর',
-      subjects: ['ইসলামের ইতিহাস', 'ইসলামিক স্টাডিজ']
+      // Fetch teachers
+      const teachersResponse = await teacherListService.getAllTeachers();
+      setTeachers(teachersResponse.data || []);
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
-
-  const filteredTeachers = selectedDepartment === 'all' 
-    ? teachers 
-    : teachers.filter(t => t.department === selectedDepartment);
-
-  if (loading) {
-    return (
-      <div className="content-page-wrapper">
-        <div className="container">
-          <SkeletonLoader type="title" />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-            <SkeletonLoader type="card" />
-            <SkeletonLoader type="card" />
-            <SkeletonLoader type="card" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  };
 
   return (
-    <div className="content-page-wrapper">
-      <div className="container">
-        <div className="page-header">
+    <div className="teachers-public-page">
+      <PublicHeader settings={settings} currentPath="/administration/teachers" />
+
+      <div className="page-container">
+        <div className="page-header-section">
           <h1>Our Teachers</h1>
-          <div className="title-underline"></div>
-          <p className="page-subtitle">
-            মালখানগর কলেজের শিক্ষকমণ্ডলী
-          </p>
+          <p>Meet our dedicated and qualified teaching staff</p>
         </div>
 
-        <div className="content-body">
-          <div className="teachers-intro">
-            <Users size={48} />
-            <p>
-              মালখানগর কলেজে ৮০+ অভিজ্ঞ ও যোগ্য শিক্ষক রয়েছেন যারা শিক্ষার্থীদের মানসম্মত শিক্ষা প্রদানে নিরলসভাবে কাজ করে যাচ্ছেন। আমাদের শিক্ষকবৃন্দ শুধু পাঠদানেই সীমাবদ্ধ নন, বরং শিক্ষার্থীদের সার্বিক উন্নয়ন ও ক্যারিয়ার গঠনে পরামর্শদাতা হিসেবেও কাজ করেন।
-            </p>
+        {loading ? (
+          <div className="teachers-grid-public">
+            <SkeletonLoader type="card" count={6} />
           </div>
-
-          <div className="teacher-stats">
-            <div className="stat-card">
-              <BookOpen size={40} />
-              <h3>৮০+</h3>
-              <p>শিক্ষক</p>
-            </div>
-            <div className="stat-card">
-              <Award size={40} />
-              <h3>১৫+</h3>
-              <p>পিএইচডি ডিগ্রিধারী</p>
-            </div>
-            <div className="stat-card">
-              <Users size={40} />
-              <h3>১২+</h3>
-              <p>গড় অভিজ্ঞতা (বছর)</p>
-            </div>
+        ) : teachers.length === 0 ? (
+          <div className="no-data">
+            <p>No teachers available at the moment.</p>
           </div>
-
-          <div className="department-filter">
-            <label>বিভাগ নির্বাচন করুন:</label>
-            <select 
-              value={selectedDepartment} 
-              onChange={(e) => setSelectedDepartment(e.target.value)}
-              className="filter-select"
-            >
-              {departments.map(dept => (
-                <option key={dept.value} value={dept.value}>
-                  {dept.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="teachers-grid">
-            {filteredTeachers.map((teacher, index) => (
-              <div key={index} className="teacher-card">
-                <div className="teacher-avatar">
-                  <Users size={48} />
+        ) : (
+          <div className="teachers-grid-public">
+            {teachers.map((teacher) => (
+              <div key={teacher._id} className="teacher-card-public">
+                <div className="teacher-image-wrapper">
+                  <img
+                    src={teacher.image?.url || '/placeholder.png'}
+                    alt={teacher.name}
+                    onError={(e) => (e.target.src = '/placeholder.png')}
+                  />
                 </div>
-                <h3>{teacher.name}</h3>
-                <p className="teacher-designation">{teacher.designation}</p>
-                <div className="teacher-info">
-                  <div className="info-item">
-                    <strong>যোগ্যতা:</strong>
-                    <span>{teacher.qualification}</span>
-                  </div>
-                  <div className="info-item">
-                    <strong>অভিজ্ঞতা:</strong>
-                    <span>{teacher.experience}</span>
-                  </div>
-                  <div className="info-item">
-                    <strong>বিষয়:</strong>
-                    <div className="subject-tags-small">
-                      {teacher.subjects.map((subject, i) => (
-                        <span key={i} className="subject-tag-small">{subject}</span>
-                      ))}
+                <div className="teacher-info-public">
+                  <h3>{teacher.name}</h3>
+                  <p className="teacher-designation">{teacher.designation}</p>
+
+                  {teacher.qualification && (
+                    <div className="teacher-detail">
+                      <Award size={16} />
+                      <span>{teacher.qualification}</span>
                     </div>
+                  )}
+
+                  {teacher.subjects && teacher.subjects.length > 0 && (
+                    <div className="teacher-detail">
+                      <BookOpen size={16} />
+                      <span>{teacher.subjects.join(', ')}</span>
+                    </div>
+                  )}
+
+                  {teacher.experience && (
+                    <div className="teacher-detail">
+                      <span className="experience-badge">
+                        {teacher.experience} Experience
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="teacher-contact-info">
+                    {teacher.phone && (
+                      <div className="contact-detail">
+                        <Phone size={14} />
+                        <span>{teacher.phone}</span>
+                      </div>
+                    )}
+                    {teacher.email && (
+                      <div className="contact-detail">
+                        <Mail size={14} />
+                        <span>{teacher.email}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             ))}
           </div>
-
-          <div className="teacher-qualities">
-            <h2>আমাদের শিক্ষকদের বৈশিষ্ট্য</h2>
-            <div className="qualities-grid">
-              <div className="quality-card">
-                <div className="quality-icon">📚</div>
-                <h4>উচ্চ শিক্ষিত</h4>
-                <p>প্রতিটি শিক্ষক স্ব-স্ব বিষয়ে স্নাতকোত্তর ডিগ্রিধারী এবং অনেকে পিএইচডি সম্পন্ন করেছেন</p>
-              </div>
-
-              <div className="quality-card">
-                <div className="quality-icon">🎓</div>
-                <h4>প্রশিক্ষিত</h4>
-                <p>সকল শিক্ষক বিএড বা সমমান শিক্ষক প্রশিক্ষণ গ্রহণ করেছেন</p>
-              </div>
-
-              <div className="quality-card">
-                <div className="quality-icon">💡</div>
-                <h4>অভিজ্ঞ</h4>
-                <p>দীর্ঘ শিক্ষকতা অভিজ্ঞতা এবং আধুনিক শিক্ষা পদ্ধতিতে দক্ষ</p>
-              </div>
-
-              <div className="quality-card">
-                <div className="quality-icon">❤️</div>
-                <h4>নিবেদিত</h4>
-                <p>শিক্ষার্থীদের সার্বিক উন্নয়নে নিবেদিতপ্রাণ এবং সহানুভূতিশীল</p>
-              </div>
-
-              <div className="quality-card">
-                <div className="quality-icon">🔬</div>
-                <h4>গবেষক</h4>
-                <p>অনেক শিক্ষক গবেষণা কার্যক্রমে সক্রিয় এবং জার্নালে প্রবন্ধ প্রকাশ করেন</p>
-              </div>
-
-              <div className="quality-card">
-                <div className="quality-icon">🌐</div>
-                <h4>প্রযুক্তি-দক্ষ</h4>
-                <p>আধুনিক প্রযুক্তি ব্যবহারে পারদর্শী এবং ডিজিটাল শিক্ষায় অভিজ্ঞ</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="teacher-development">
-            <h2>শিক্ষক উন্নয়ন কর্মসূচি</h2>
-            <p>
-              মালখানগর কলেজ নিয়মিত শিক্ষকদের জন্য প্রশিক্ষণ ও পেশাগত উন্নয়ন কর্মসূচির আয়োজন করে। এর মধ্যে রয়েছে:
-            </p>
-            <ul className="development-list">
-              <li>মাসিক শিক্ষক সেমিনার ও কর্মশালা</li>
-              <li>আধুনিক শিক্ষা পদ্ধতি প্রশিক্ষণ</li>
-              <li>ডিজিটাল শিক্ষা ও প্রযুক্তি ব্যবহার প্রশিক্ষণ</li>
-              <li>গবেষণা পদ্ধতি ও প্রবন্ধ লেখার প্রশিক্ষণ</li>
-              <li>মানসিক স্বাস্থ্য ও কাউন্সেলিং প্রশিক্ষণ</li>
-              <li>জাতীয় ও আন্তর্জাতিক সম্মেলনে অংশগ্রহণের সুযোগ</li>
-            </ul>
-          </div>
-        </div>
+        )}
       </div>
+
+      <PublicFooter settings={settings} />
     </div>
   );
 };

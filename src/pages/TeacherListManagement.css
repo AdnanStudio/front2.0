@@ -1,0 +1,10 @@
+/* Import from TeacherTrainingManagement.css or copy the same styles */
+@import './TeacherTrainingManagement.css';
+
+.teacher-list-management-page {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* All other styles are the same as TeacherTrainingManagement.css */

@@ -15,7 +15,10 @@ import {
   Settings,
   CalendarDays,
   CalendarX,
-  BookOpenCheck
+  BookOpenCheck,
+  UserCheck,
+  UsersRound,
+  ListChecks
 } from 'lucide-react';
 import './DashboardHome.css';
 
@@ -130,6 +133,30 @@ const DashboardHome = () => {
       color: '#f38181',
       roles: ['admin', 'teacher', 'student', 'staff', 'librarian', 'accountant']
     },
+    // ✅ NEW: Teacher Training
+    {
+      path: '/dashboard/teacher-training',
+      icon: <UserCheck />,
+      label: 'Teacher Training',
+      color: '#8b5cf6',
+      roles: ['admin']
+    },
+    // ✅ NEW: Club Management
+    {
+      path: '/dashboard/club-management',
+      icon: <UsersRound />,
+      label: 'Club Management',
+      color: '#ec4899',
+      roles: ['admin']
+    },
+    // ✅ NEW: Teacher List
+    {
+      path: '/dashboard/teacher-list',
+      icon: <ListChecks />,
+      label: 'Teacher List',
+      color: '#14b8a6',
+      roles: ['admin']
+    },
     {
       path: '/dashboard/users',
       icon: <UserCog />,
@@ -167,11 +194,6 @@ const DashboardHome = () => {
 
   return (
     <div className="dashboard-home-container">
-      {/* <div className="welcome-header">
-        <h1>Welcome, {user?.name}! 👋</h1>
-        <p>Select an option to get started</p>
-      </div> */}
-
       <div className="dashboard-cards-grid">
         {menuItems.map((item, index) => (
           <div

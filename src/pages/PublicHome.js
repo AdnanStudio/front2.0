@@ -1,7 +1,3 @@
-// ============================================
-// FILE PATH: frontend/src/pages/PublicHome.js
-// ============================================
-
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -33,6 +29,9 @@ import GoverningBody from '../content/administration/GoverningBody';
 import Principal from '../content/administration/Principal';
 import Teachers from '../content/administration/Teachers';
 import Staff from '../content/administration/Staff';
+// ✅ NEW IMPORTS
+import TeacherTraining from '../content/administration/TeacherTraining';
+import ClubManagementPublic from '../content/administration/ClubManagement';
 
 // Admission sub-pages
 import AdmissionProcedure from '../content/admission/AdmissionProcedure';
@@ -82,7 +81,6 @@ const PublicHome = () => {
 
   return (
     <div className="public-home">
-      {/* Show header immediately with loading state */}
       <PublicHeader 
         settings={settings} 
         currentPath={location.pathname}
@@ -119,6 +117,9 @@ const PublicHome = () => {
         <Route path="/administration/principal" element={<Principal />} />
         <Route path="/administration/teachers" element={<Teachers />} />
         <Route path="/administration/staff" element={<Staff />} />
+        {/* ✅ NEW ROUTES */}
+        <Route path="/administration/teacher-training" element={<TeacherTraining />} />
+        <Route path="/administration/club-management" element={<ClubManagementPublic />} />
 
         {/* Admission Sub-routes */}
         <Route path="/admission/procedure" element={<AdmissionProcedure />} />

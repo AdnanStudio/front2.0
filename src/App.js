@@ -12,6 +12,11 @@ import PrivateRoute from './components/PrivateRoute';
 import AdmissionForm from './pages/AdmissionForm';
 import AdmissionList from './pages/AdmissionList';
 
+// ✅ NEW: Import public pages
+import TeacherTraining from './content/administration/TeacherTraining';
+import ClubManagementPublic from './content/administration/ClubManagement';
+import Teachers from './content/administration/Teachers';
+
 import './App.css';
 
 function App() {
@@ -46,6 +51,11 @@ function App() {
         <Routes>
           {/* Public Routes - All nested routes handled in PublicHome */}
           <Route path="/*" element={<PublicHome />} />
+          
+          {/* ✅ NEW: Public administration routes */}
+          <Route path="/administration/teacher-training" element={<TeacherTraining />} />
+          <Route path="/administration/club-management" element={<ClubManagementPublic />} />
+          <Route path="/administration/teachers" element={<Teachers />} />
           
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

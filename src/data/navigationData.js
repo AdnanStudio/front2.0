@@ -1,10 +1,4 @@
 export const navigationData = [
-  // {
-  //   id: 'home',
-  //   label: 'Home',
-  //   path: '/',
-  //   subItems: []
-  // },
   {
     id: 'about',
     label: 'About',
@@ -35,7 +29,11 @@ export const navigationData = [
       { id: 'governing', label: 'Governing Body', path: '/administration/governing-body' },
       { id: 'principal', label: 'Principal', path: '/administration/principal' },
       { id: 'teachers', label: 'Teachers', path: '/administration/teachers' },
-      { id: 'staff', label: 'Staff', path: '/administration/staff' }
+      { id: 'staff', label: 'Staff', path: '/administration/staff' },
+      // ✅ NEW: Teacher Training
+      { id: 'teacher-training', label: 'Teacher Training', path: '/administration/teacher-training' },
+      // ✅ NEW: Club Management
+      { id: 'club-management', label: 'Club Management', path: '/administration/club-management' }
     ]
   },
   {

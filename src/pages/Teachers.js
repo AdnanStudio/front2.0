@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import teacherService from '../services/teacherService';
+import subjectService from '../services/subjectService';
 import toast from 'react-hot-toast';
 import { 
   GraduationCap, 
@@ -12,33 +13,59 @@ import {
   Eye,
   BookOpen,
   Phone,
-  Mail
+  Mail,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import './Teachers.css';
 
 const Teachers = () => {
   const [teachers, setTeachers] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSubject, setFilterSubject] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   const navigate = useNavigate();
 
   useEffect(() => {
+    fetchSubjects();
+  }, []);
+
+  useEffect(() => {
     fetchTeachers();
-  }, [filterSubject]);
+  }, [filterSubject, currentPage]);
+
+  const fetchSubjects = async () => {
+    try {
+      const data = await subjectService.getAllSubjects({ isActive: true });
+      setSubjects(data.data || []);
+    } catch (error) {
+      console.error('Error fetching subjects:', error);
+    }
+  };
 
   const fetchTeachers = async () => {
     try {
       setLoading(true);
-      const params = {};
+      const params = {
+        page: currentPage,
+        limit: 9
+      };
       if (filterSubject) params.subject = filterSubject;
       if (searchTerm) params.search = searchTerm;
 
       const data = await teacherService.getAllTeachers(params);
       setTeachers(data.data);
+      setTotalPages(data.totalPages || 1);
+      setTotalCount(data.count || 0);
     } catch (error) {
       toast.error(error.message || 'Failed to fetch teachers');
     } finally {
@@ -48,6 +75,7 @@ const Teachers = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
+    setCurrentPage(1);
     fetchTeachers();
   };
 
@@ -66,6 +94,10 @@ const Teachers = () => {
   const viewTeacherDetails = (teacher) => {
     setSelectedTeacher(teacher);
     setShowModal(true);
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -100,17 +132,16 @@ const Teachers = () => {
 
         <div className="filter-group">
           <BookOpen size={20} />
-          <select value={filterSubject} onChange={(e) => setFilterSubject(e.target.value)}>
+          <select value={filterSubject} onChange={(e) => {
+            setFilterSubject(e.target.value);
+            setCurrentPage(1);
+          }}>
             <option value="">All Subjects</option>
-            <option value="Mathematics">Mathematics</option>
-            <option value="English">English</option>
-            <option value="Science">Science</option>
-            <option value="Physics">Physics</option>
-            <option value="Chemistry">Chemistry</option>
-            <option value="Biology">Biology</option>
-            <option value="Computer Science">Computer Science</option>
-            <option value="History">History</option>
-            <option value="Geography">Geography</option>
+            {subjects.map((subject) => (
+              <option key={subject._id} value={subject._id}>
+                {subject.name}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -124,7 +155,7 @@ const Teachers = () => {
         <>
           <div className="teachers-stats">
             <div className="stat-item">
-              <h3>{teachers.length}</h3>
+              <h3>{totalCount}</h3>
               <p>Total Teachers</p>
             </div>
             <div className="stat-item">
@@ -132,8 +163,8 @@ const Teachers = () => {
               <p>Active</p>
             </div>
             <div className="stat-item">
-              <h3>{new Set(teachers.flatMap(t => t.subject)).size}</h3>
-              <p>Subjects Taught</p>
+              <h3>{subjects.length}</h3>
+              <p>Subjects Available</p>
             </div>
           </div>
 
@@ -166,11 +197,11 @@ const Teachers = () => {
                     <p className="teacher-qualification">{teacher.qualification}</p>
                     
                     <div className="teacher-subjects">
-                      {teacher.subject.slice(0, 2).map((sub, index) => (
-                        <span key={index} className="subject-tag">{sub}</span>
+                      {teacher.subjects?.slice(0, 2).map((sub) => (
+                        <span key={sub._id} className="subject-tag">{sub.name}</span>
                       ))}
-                      {teacher.subject.length > 2 && (
-                        <span className="subject-tag more">+{teacher.subject.length - 2}</span>
+                      {teacher.subjects?.length > 2 && (
+                        <span className="subject-tag more">+{teacher.subjects.length - 2}</span>
                       )}
                     </div>
 
@@ -222,6 +253,41 @@ const Teachers = () => {
               ))
             )}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button
+                className="pagination-btn"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft size={20} />
+                Previous
+              </button>
+              
+              <div className="pagination-numbers">
+                {[...Array(totalPages)].map((_, index) => (
+                  <button
+                    key={index + 1}
+                    className={`pagination-number ${currentPage === index + 1 ? 'active' : ''}`}
+                    onClick={() => handlePageChange(index + 1)}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                className="pagination-btn"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
         </>
       )}
 
@@ -267,7 +333,11 @@ const Teachers = () => {
                   </div>
                   <div className="info-row">
                     <label>Subjects:</label>
-                    <span>{selectedTeacher.subject.join(', ')}</span>
+                    <span>{selectedTeacher.subjects?.map(s => s.name).join(', ') || 'N/A'}</span>
+                  </div>
+                  <div className="info-row">
+                    <label>Classes:</label>
+                    <span>{selectedTeacher.classes?.map(c => `${c.name}-${c.section}`).join(', ') || 'N/A'}</span>
                   </div>
                   <div className="info-row">
                     <label>Qualification:</label>
@@ -285,12 +355,6 @@ const Teachers = () => {
                     <label>Joining Date:</label>
                     <span>{new Date(selectedTeacher.joiningDate).toLocaleDateString()}</span>
                   </div>
-                  {selectedTeacher.classTeacher?.class && (
-                    <div className="info-row">
-                      <label>Class Teacher:</label>
-                      <span>{selectedTeacher.classTeacher.class} - Section {selectedTeacher.classTeacher.section}</span>
-                    </div>
-                  )}
                   <div className="info-row">
                     <label>Address:</label>
                     <span>{selectedTeacher.userId?.address || 'N/A'}</span>
