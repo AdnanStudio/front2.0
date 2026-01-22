@@ -46,16 +46,16 @@ export const navigationData = [
       { id: 'apply', label: 'Apply Online', path: '/admission' }
     ]
   },
-  {
-    id: 'gallery',
-    label: 'Gallery',
-    path: '/gallery',
-    subItems: [
-      { id: 'photos', label: 'Photo Gallery', path: '/gallery/photos' },
-      { id: 'videos', label: 'Video Gallery', path: '/gallery/videos' },
-      { id: 'events', label: 'Events', path: '/gallery/events' }
-    ]
-  },
+  // {
+  //   id: 'gallery',
+  //   label: 'Gallery',
+  //   path: '/gallery',
+  //   subItems: [
+  //     { id: 'photos', label: 'Photo Gallery', path: '/gallery/photos' },
+  //     { id: 'videos', label: 'Video Gallery', path: '/gallery/videos' },
+  //     { id: 'events', label: 'Events', path: '/gallery/events' }
+  //   ]
+  // },
   {
     id: 'notice',
     label: 'Notice',

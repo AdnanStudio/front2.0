@@ -63,7 +63,7 @@ const PublicFooter = ({ settings = {} }) => {
                 <h4>Download Our App</h4>
                 <div className="app-buttons">
                   <a
-                    href={settings.playStoreLink || 'https://play.google.com'}
+                    href={settings.playStoreLink || '/install-guide'}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

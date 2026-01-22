@@ -12,6 +12,9 @@ import PrivateRoute from './components/PrivateRoute';
 import AdmissionForm from './pages/AdmissionForm';
 import AdmissionList from './pages/AdmissionList';
 
+import InstallPWAGuide from './components/InstallPWAGuide';
+
+
 // ✅ NEW: Import public pages
 import TeacherTraining from './content/administration/TeacherTraining';
 import ClubManagementPublic from './content/administration/ClubManagement';
@@ -51,6 +54,9 @@ function App() {
         <Routes>
           {/* Public Routes - All nested routes handled in PublicHome */}
           <Route path="/*" element={<PublicHome />} />
+
+          {/* ✅ NEW: Install Guide Route */}
+          <Route path="/install-guide" element={<InstallPWAGuide />} />
           
           {/* ✅ NEW: Public administration routes */}
           <Route path="/administration/teacher-training" element={<TeacherTraining />} />

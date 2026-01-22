@@ -308,7 +308,7 @@ const AdmissionForm = () => {
           Back to Home
         </button>
         <h1>Admission Form</h1>
-        <p>MALKHANAGAR COLLEGE - Academic Year 2025</p>
+        <p>MALKHANAGAR COLLEGE</p>
       </div>
 
       {/* Progress Steps */}
