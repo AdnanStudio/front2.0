@@ -584,7 +584,7 @@ const Subjects = () => {
                   </select>
                 </div>
 
-                <div className="form-group">
+                {/* <div className="form-group">
                   <label>Teacher</label>
                   <select
                     name="teacher"
@@ -598,18 +598,15 @@ const Subjects = () => {
                       </option>
                     ))}
                   </select>
-                </div>
+                </div> */}
 
                 <div className="form-group">
-                  <label>Credits *</label>
+                  <label>Credits </label>
                   <input
                     type="number"
                     name="credits"
                     value={formData.credits}
                     onChange={handleInputChange}
-                    min="1"
-                    max="10"
-                    required
                   />
                 </div>
 
@@ -763,7 +760,7 @@ const Subjects = () => {
                   </select>
                 </div>
 
-                <div className="form-group">
+                {/* <div className="form-group">
                   <label>Teacher</label>
                   <select
                     name="teacher"
@@ -777,18 +774,16 @@ const Subjects = () => {
                       </option>
                     ))}
                   </select>
-                </div>
+                </div> */}
 
                 <div className="form-group">
-                  <label>Credits *</label>
+                  <label>Credits </label>
                   <input
                     type="number"
                     name="credits"
                     value={formData.credits}
                     onChange={handleInputChange}
-                    min="1"
-                    max="10"
-                    required
+                    
                   />
                 </div>
 

@@ -360,12 +360,12 @@ const ManageSettings = () => {
         >
           Chairman Image
         </button>
-        <button 
+        {/* <button 
           className={`tab-btn ${activeTab === 'notice' ? 'active' : ''}`}
           onClick={() => setActiveTab('notice')}
         >
           Notice Image
-        </button>
+        </button> */}
       </div>
 
       {/* Tab Content */}

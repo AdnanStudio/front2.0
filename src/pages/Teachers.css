@@ -32,7 +32,7 @@
   position: relative;
   padding: 25px 25px 0;
   text-align: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgb(35, 167, 255);
   padding-bottom: 60px;
 }
 
@@ -323,7 +323,7 @@
 .teacher-card-header {
   position: relative;
   padding: 2rem 1.5rem 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgb(35, 167, 255);
   text-align: center;
 }
 
@@ -843,7 +843,7 @@
 .teacher-card-header {
   position: relative;
   padding: 2rem 1.5rem 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgb(35, 167, 255);
   text-align: center;
 }
 

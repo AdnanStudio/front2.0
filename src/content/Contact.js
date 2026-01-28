@@ -35,7 +35,7 @@ const Contact = () => {
               <MapPin size={32} />
             </div>
             <h3>Address</h3>
-            <p>Malkhanagar, Dhaka, Bangladesh</p>
+            <p>Malkhanagar, Sirajdikhan, Dhaka</p>
           </div>
 
           <div className="contact-info-card">
@@ -43,7 +43,7 @@ const Contact = () => {
               <Phone size={32} />
             </div>
             <h3>Phone</h3>
-            <p>+880 1XXX-XXXXXX</p>
+            <p>+880 1309-134590</p>
           </div>
 
           <div className="contact-info-card">
@@ -51,7 +51,7 @@ const Contact = () => {
               <Mail size={32} />
             </div>
             <h3>Email</h3>
-            <p>info@malkhangarcollege.edu.bd</p>
+            <p>malkhanagarcollege@gmail.com</p>
           </div>
 
           <div className="contact-info-card">

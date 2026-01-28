@@ -10,18 +10,28 @@ import {
   CheckCircle, 
   XCircle,
   Clock,
-  Eye
+  Eye,
+  Trash2,
+  AlertTriangle,
+  Filter
 } from 'lucide-react';
 import './Payments.css';
 
 const Payments = () => {
   const { user } = useSelector((state) => state.auth);
   const [payments, setPayments] = useState([]);
+  const [filteredPayments, setFilteredPayments] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPayModal, setShowPayModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [deletePaymentId, setDeletePaymentId] = useState(null);
+  
+  // ✅ Filter State
+  const [activeFilter, setActiveFilter] = useState('all');
 
   const [createForm, setCreateForm] = useState({
     student: '',
@@ -44,6 +54,11 @@ const Payments = () => {
     }
   }, [user.role]);
 
+  // ✅ Filter payments when activeFilter or payments change
+  useEffect(() => {
+    filterPayments();
+  }, [activeFilter, payments]);
+
   const fetchPayments = async () => {
     try {
       setLoading(true);
@@ -63,6 +78,22 @@ const Payments = () => {
     } catch (error) {
       console.error('Failed to fetch students');
     }
+  };
+
+  // ✅ Filter Function
+  const filterPayments = () => {
+    if (activeFilter === 'all') {
+      setFilteredPayments(payments);
+    } else {
+      const filtered = payments.filter(payment => payment.status === activeFilter);
+      setFilteredPayments(filtered);
+    }
+  };
+
+  // ✅ Get count by status
+  const getStatusCount = (status) => {
+    if (status === 'all') return payments.length;
+    return payments.filter(p => p.status === status).length;
   };
 
   const handleCreatePayment = async (e) => {
@@ -119,6 +150,31 @@ const Payments = () => {
     }
   };
 
+  // Delete single payment
+  const handleDeletePayment = async () => {
+    try {
+      await paymentService.deletePayment(deletePaymentId);
+      toast.success('Payment deleted successfully');
+      setShowDeleteConfirm(false);
+      setDeletePaymentId(null);
+      fetchPayments();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete payment');
+    }
+  };
+
+  // Delete all payments
+  const handleDeleteAllPayments = async () => {
+    try {
+      const result = await paymentService.deleteAllPayments();
+      toast.success(result.message || 'All payments deleted successfully');
+      setShowDeleteAllConfirm(false);
+      fetchPayments();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete all payments');
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'paid': return 'success';
@@ -163,12 +219,23 @@ const Payments = () => {
             <p>Manage student payments and fees</p>
           </div>
         </div>
-        {user.role !== 'student' && (
-          <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
-            <Plus size={20} />
-            Create Payment Request
-          </button>
-        )}
+        <div className="header-actions">
+          {user.role === 'admin' && payments.length > 0 && (
+            <button 
+              className="btn-delete-all" 
+              onClick={() => setShowDeleteAllConfirm(true)}
+            >
+              <Trash2 size={20} />
+              Delete All
+            </button>
+          )}
+          {user.role !== 'student' && (
+            <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
+              <Plus size={20} />
+              Create Payment Request
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Payment Stats */}
@@ -202,6 +269,55 @@ const Payments = () => {
         </div>
       </div>
 
+      {/* ✅ Filter Buttons */}
+      <div className="filter-container">
+        <div className="filter-header">
+          <Filter size={20} />
+          <h3>Filter by Status</h3>
+        </div>
+        <div className="filter-buttons">
+          <button 
+            className={`filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
+            onClick={() => setActiveFilter('all')}
+          >
+            All
+            <span className="filter-count">{getStatusCount('all')}</span>
+          </button>
+          <button 
+            className={`filter-btn pending ${activeFilter === 'pending' ? 'active' : ''}`}
+            onClick={() => setActiveFilter('pending')}
+          >
+            <Clock size={16} />
+            Pending
+            <span className="filter-count">{getStatusCount('pending')}</span>
+          </button>
+          <button 
+            className={`filter-btn paid ${activeFilter === 'paid' ? 'active' : ''}`}
+            onClick={() => setActiveFilter('paid')}
+          >
+            <CheckCircle size={16} />
+            Paid
+            <span className="filter-count">{getStatusCount('paid')}</span>
+          </button>
+          <button 
+            className={`filter-btn rejected ${activeFilter === 'rejected' ? 'active' : ''}`}
+            onClick={() => setActiveFilter('rejected')}
+          >
+            <XCircle size={16} />
+            Rejected
+            <span className="filter-count">{getStatusCount('rejected')}</span>
+          </button>
+          <button 
+            className={`filter-btn overdue ${activeFilter === 'overdue' ? 'active' : ''}`}
+            onClick={() => setActiveFilter('overdue')}
+          >
+            <AlertTriangle size={16} />
+            Overdue
+            <span className="filter-count">{getStatusCount('overdue')}</span>
+          </button>
+        </div>
+      </div>
+
       {loading ? (
         <div className="loading-container">
           <div className="spinner"></div>
@@ -209,10 +325,14 @@ const Payments = () => {
         </div>
       ) : (
         <div className="payments-grid">
-          {payments.length === 0 ? (
-            <div className="no-data">No payment requests found</div>
+          {filteredPayments.length === 0 ? (
+            <div className="no-data">
+              {activeFilter === 'all' 
+                ? 'No payment requests found' 
+                : `No ${activeFilter} payments found`}
+            </div>
           ) : (
-            payments.map((payment) => (
+            filteredPayments.map((payment) => (
               <div key={payment._id} className="payment-card">
                 <div className="payment-header">
                   <div className="payment-info">
@@ -291,6 +411,20 @@ const Payments = () => {
                         Reject
                       </button>
                     </>
+                  )}
+
+                  {/* Delete button - Admin only */}
+                  {user.role === 'admin' && (
+                    <button
+                      className="btn-delete"
+                      onClick={() => {
+                        setDeletePaymentId(payment._id);
+                        setShowDeleteConfirm(true);
+                      }}
+                    >
+                      <Trash2 size={18} />
+                      Delete
+                    </button>
                   )}
                 </div>
               </div>
@@ -450,6 +584,65 @@ const Payments = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="modal-content confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <AlertTriangle size={24} color="#f93e3e" />
+              <h2>Confirm Delete</h2>
+            </div>
+            <div className="modal-body">
+              <p>Are you sure you want to delete this payment request?</p>
+              <p className="warning-text">This action cannot be undone.</p>
+            </div>
+            <div className="modal-actions">
+              <button 
+                className="btn-secondary" 
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setDeletePaymentId(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button className="btn-danger" onClick={handleDeletePayment}>
+                <Trash2 size={18} />
+                Delete Payment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete All Confirmation Modal */}
+      {showDeleteAllConfirm && (
+        <div className="modal-overlay" onClick={() => setShowDeleteAllConfirm(false)}>
+          <div className="modal-content confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <AlertTriangle size={24} color="#f93e3e" />
+              <h2>Confirm Delete All</h2>
+            </div>
+            <div className="modal-body">
+              <p><strong>Warning!</strong> You are about to delete <strong>ALL {payments.length}</strong> payment requests.</p>
+              <p className="warning-text">This action cannot be undone and will permanently remove all payment data.</p>
+            </div>
+            <div className="modal-actions">
+              <button 
+                className="btn-secondary" 
+                onClick={() => setShowDeleteAllConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button className="btn-danger" onClick={handleDeleteAllPayments}>
+                <Trash2 size={18} />
+                Delete All Payments
+              </button>
             </div>
           </div>
         </div>

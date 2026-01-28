@@ -415,7 +415,7 @@
 
 /* Document Instructions */
 .document-instructions {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgb(35, 167, 255);
   color: white;
   padding: 25px;
   border-radius: 15px;

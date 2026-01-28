@@ -35,9 +35,15 @@ const paymentService = {
     return response.data;
   },
 
-  // Delete payment request
+  // ✅ Delete single payment request (Admin only)
   deletePayment: async (id) => {
     const response = await api.delete(`/payments/${id}`);
+    return response.data;
+  },
+
+  // ✅ Delete all payment requests (Admin only)
+  deleteAllPayments: async () => {
+    const response = await api.delete('/payments/all/delete-all');
     return response.data;
   }
 };

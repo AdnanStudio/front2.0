@@ -30,10 +30,10 @@ const PublicFooter = ({ settings = {} }) => {
                   Address: {settings.schoolAddress || 'Sirajdikhan, Dhaka'}
                 </p>
                 <p>
-                  Phone: {settings.schoolPhone || '+880 1234-xxxxxxx'}
+                  Phone: {settings.schoolPhone || '+880 1309-134590'}
                 </p>
                 <p>
-                  Email: {settings.schoolEmail || 'info@college.edu.bd'}
+                  Email: {settings.schoolEmail || 'malkhanagarcollege@gmail.com'}
                 </p>
               </div>
             </div>
@@ -106,7 +106,7 @@ const PublicFooter = ({ settings = {} }) => {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Amader Website
+                আমাদের ওয়েবসাইট
               </a>
             </p>
           </div>

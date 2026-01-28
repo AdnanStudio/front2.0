@@ -18,7 +18,8 @@ import {
   BookOpenCheck,
   UserCheck,
   UsersRound,
-  ListChecks
+  ListChecks,
+  Library // ✅ NEW ICON
 } from 'lucide-react';
 import './DashboardHome.css';
 
@@ -26,7 +27,7 @@ const DashboardHome = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
 
-  // Complete menu items from sidebar
+  // Complete menu items
   const allMenuItems = [
     {
       path: '/dashboard/students',
@@ -133,7 +134,14 @@ const DashboardHome = () => {
       color: '#f38181',
       roles: ['admin', 'teacher', 'student', 'staff', 'librarian', 'accountant']
     },
-    // ✅ NEW: Teacher Training
+    // ✅ NEW: Library Management
+    {
+      path: '/dashboard/library',
+      icon: <Library />,
+      label: 'Library Management',
+      color: '#2196F3',
+      roles: ['admin', 'librarian']
+    },
     {
       path: '/dashboard/teacher-training',
       icon: <UserCheck />,
@@ -141,7 +149,6 @@ const DashboardHome = () => {
       color: '#8b5cf6',
       roles: ['admin']
     },
-    // ✅ NEW: Club Management
     {
       path: '/dashboard/club-management',
       icon: <UsersRound />,
@@ -149,7 +156,6 @@ const DashboardHome = () => {
       color: '#ec4899',
       roles: ['admin']
     },
-    // ✅ NEW: Teacher List
     {
       path: '/dashboard/teacher-list',
       icon: <ListChecks />,
@@ -164,13 +170,13 @@ const DashboardHome = () => {
       color: '#aa96da',
       roles: ['admin']
     },
-    {
-      path: '/dashboard/website-settings',
-      icon: <Settings />,
-      label: 'Website Settings',
-      color: '#fcbad3',
-      roles: ['admin']
-    },
+    // {
+    //   path: '/dashboard/website-settings',
+    //   icon: <Settings />,
+    //   label: 'Website Settings',
+    //   color: '#fcbad3',
+    //   roles: ['admin']
+    // },
     {
       path: '/dashboard/notices',
       icon: <Bell />,
@@ -215,7 +221,6 @@ const DashboardHome = () => {
 };
 
 export default DashboardHome;
-
 
 // import React from 'react';
 // import { useNavigate } from 'react-router-dom';
