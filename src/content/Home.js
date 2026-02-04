@@ -512,7 +512,7 @@ const Home = () => {
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
               </div>
-              <h3>{settings.totalStudents || 3200}</h3>
+              <h3>{settings.totalStudents || 3000}</h3>
               <p>Student</p>
             </div>
 
@@ -533,7 +533,7 @@ const Home = () => {
                   <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                 </svg>
               </div>
-              <h3>{settings.totalStaff || 40}</h3>
+              <h3>{settings.totalStaff || 30}</h3>
               <p>Staffs</p>
             </div>
           </div>
