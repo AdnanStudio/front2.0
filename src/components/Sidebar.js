@@ -17,10 +17,11 @@ import {
   UserCog,
   CalendarDays,
   CalendarX,
-  Library, // ✅ NEW ICON
+  Library,
   UserCheck,
   UsersRound,
-  ListChecks
+  ListChecks,
+  Building2  // ✅ NEW ICON for Governing Body
 } from 'lucide-react';
 
 import './Sidebar.css';
@@ -144,7 +145,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       roles: ['admin', 'teacher']
     },
 
-    // ✅ NEW: Library Management
+    // Library Management
     {
       path: '/dashboard/library',
       icon: <Library />,
@@ -158,6 +159,16 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       icon: <Bell />,
       label: 'Notifications',
       roles: ['admin', 'teacher', 'student', 'staff', 'librarian', 'accountant']
+    },
+
+    // ========== ADMINISTRATION SECTION ==========
+    
+    // ✅ NEW: Governing Body
+    {
+      path: '/dashboard/governing-body',
+      icon: <Building2 />,
+      label: 'Governing Body',
+      roles: ['admin']
     },
 
     // Teacher Training
@@ -183,6 +194,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       label: 'Teacher List',
       roles: ['admin']
     },
+
+    // ========== SYSTEM MANAGEMENT ==========
 
     // User Management
     {

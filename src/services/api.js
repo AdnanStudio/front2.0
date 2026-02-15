@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Render backend URL
-const API_URL = 'https://backend-yfp1.onrender.com/api';
+const API_URL = 'https://malkhanagarcollege.onrender.com/api';
 
 // Create axios instance
 const api = axios.create({

@@ -161,7 +161,7 @@ const Home = () => {
       console.log('Fetching home data from API');
       const timestamp = new Date().getTime();
       const response = await axios.get(
-        `https://backend-yfp1.onrender.com/api/public/home?t=${timestamp}`
+        `https://malkhanagarcollege.onrender.com/api/public/home?t=${timestamp}`
       );
       
       const data = response.data.data;

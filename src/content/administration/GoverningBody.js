@@ -1,29 +1,64 @@
 import React, { useState, useEffect } from 'react';
+import { Phone, Mail, Users, Shield, Award, Clock } from 'lucide-react';
+import PublicHeader from '../../components/PublicHeader';
+import PublicFooter from '../../components/PublicFooter';
 import SkeletonLoader from '../../components/SkeletonLoader';
-import { Users, Shield, Award, Clock } from 'lucide-react';
+import governingBodyService from '../../services/governingBodyService';
+import axios from 'axios';
 import './AdministrationPages.css';
 
 const GoverningBody = () => {
+  const [members, setMembers] = useState([]);
+  const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setTimeout(() => setLoading(false), 800);
+    fetchData();
     window.scrollTo(0, 0);
   }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch settings
+      const settingsResponse = await axios.get(
+        'https://malkhanagarcollege.onrender.com/api/public/home'
+      );
+      setSettings(settingsResponse.data.data?.websiteSettings || {});
+
+      // Fetch governing body members
+      const membersResponse = await governingBodyService.getAllMembers();
+      setMembers(membersResponse.data || []);
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Separate president/secretary from regular members
+  const president = members.find(m => m.role === 'সভাপতি');
+  const secretary = members.find(m => m.role === 'সদস্য সচিব');
+  const regularMembers = members.filter(m => m.role === 'সদস্য');
 
   if (loading) {
     return (
       <div className="content-page-wrapper">
+        <PublicHeader settings={settings} currentPath="/administration/governing-body" />
         <div className="container">
           <SkeletonLoader type="title" />
           <SkeletonLoader type="text" count={8} />
         </div>
+        <PublicFooter settings={settings} />
       </div>
     );
   }
 
   return (
     <div className="content-page-wrapper">
+      <PublicHeader settings={settings} currentPath="/administration/governing-body" />
+      
       <div className="container">
         <div className="page-header">
           <h1>Governing Body</h1>
@@ -44,102 +79,121 @@ const GoverningBody = () => {
           <div className="governing-structure">
             <h2>পরিচালনা পর্ষদের সদস্যবৃন্দ</h2>
 
-            <div className="member-card president-card">
-              <div className="member-badge">
-                <Shield size={32} />
+            {/* President Card */}
+            {president && (
+              <div className="member-card president-card">
+                <div className="member-badge">
+                  <Shield size={32} />
+                </div>
+                <div className="member-image-container">
+                  <img
+                    src={president.image?.url || '/placeholder.png'}
+                    alt={president.name}
+                    onError={(e) => (e.target.src = '/placeholder.png')}
+                  />
+                </div>
+                <div className="member-info">
+                  <h3>{president.role}</h3>
+                  <h4>{president.name}</h4>
+                  <p className="designation">{president.designation}</p>
+                  <p className="details">{president.description}</p>
+                  {(president.email || president.phone) && (
+                    <div className="member-contact">
+                      {president.phone && (
+                        <div className="contact-item">
+                          <Phone size={16} />
+                          <span>{president.phone}</span>
+                        </div>
+                      )}
+                      {president.email && (
+                        <div className="contact-item">
+                          <Mail size={16} />
+                          <span>{president.email}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="member-info">
-                <h3>সভাপতি</h3>
-                <h4>জনাব মোহাম্মদ আলী</h4>
-                <p className="designation">উপজেলা নির্বাহী অফিসার</p>
-                <p className="details">
-                  পরিচালনা পর্ষদের সভাপতি হিসেবে কলেজের সার্বিক তত্ত্বাবধান এবং নীতি নির্ধারণে নেতৃত্ব প্রদান করেন। তিনি স্থানীয় প্রশাসনের প্রতিনিধি হিসেবে কলেজ ও সরকারের মধ্যে সেতুবন্ধন হিসেবে কাজ করেন এবং কলেজের উন্নয়নে গুরুত্বপূর্ণ পদক্ষেপ গ্রহণে সহায়তা করেন। তার দক্ষ নেতৃত্বে কলেজ ক্রমাগত উন্নতির পথে এগিয়ে চলেছে।
-                </p>
-              </div>
-            </div>
+            )}
 
-            <div className="members-grid">
-              <div className="member-card">
-                <div className="member-role">সদস্য সচিব</div>
-                <h4>অধ্যক্ষ (ভারপ্রাপ্ত)</h4>
-                <p className="member-name">মালখানগর কলেজ</p>
-                <p className="member-description">
-                  পরিচালনা পর্ষদের সকল সভার কার্যবিবরণী সংরক্ষণ এবং সিদ্ধান্ত বাস্তবায়নের দায়িত্ব পালন করেন। তিনি কলেজের দৈনন্দিন কার্যক্রম পরিচালনা এবং পর্ষদের সিদ্ধান্ত বাস্তবায়নে কেন্দ্রীয় ভূমিকা পালন করেন।
-                </p>
+            {/* Secretary Card */}
+            {secretary && (
+              <div className="member-card secretary-card">
+                <div className="member-image-container">
+                  <img
+                    src={secretary.image?.url || '/placeholder.png'}
+                    alt={secretary.name}
+                    onError={(e) => (e.target.src = '/placeholder.png')}
+                  />
+                </div>
+                <div className="member-info">
+                  <div className="member-role">{secretary.role}</div>
+                  <h4>{secretary.name}</h4>
+                  <p className="member-name">{secretary.designation}</p>
+                  <p className="member-description">{secretary.description}</p>
+                  {(secretary.email || secretary.phone) && (
+                    <div className="member-contact">
+                      {secretary.phone && (
+                        <div className="contact-item">
+                          <Phone size={16} />
+                          <span>{secretary.phone}</span>
+                        </div>
+                      )}
+                      {secretary.email && (
+                        <div className="contact-item">
+                          <Mail size={16} />
+                          <span>{secretary.email}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
+            )}
 
-              <div className="member-card">
-                <div className="member-role">সদস্য</div>
-                <h4>জনাব আবদুল হামিদ</h4>
-                <p className="member-name">উপজেলা শিক্ষা অফিসার</p>
-                <p className="member-description">
-                  শিক্ষা মন্ত্রণালয়ের প্রতিনিধি হিসেবে শিক্ষার মান নিয়ন্ত্রণ ও উন্নয়নে পরামর্শ প্রদান করেন। তিনি সরকারি শিক্ষা নীতি বাস্তবায়ন এবং একাডেমিক মান উন্নয়নে গুরুত্বপূর্ণ ভূমিকা রাখেন।
-                </p>
+            {/* Regular Members Grid */}
+            {regularMembers.length > 0 && (
+              <div className="members-grid">
+                {regularMembers.map((member) => (
+                  <div key={member._id} className="member-card">
+                    <div className="member-image-container">
+                      <img
+                        src={member.image?.url || '/placeholder.png'}
+                        alt={member.name}
+                        onError={(e) => (e.target.src = '/placeholder.png')}
+                      />
+                    </div>
+                    <div className="member-role">{member.role}</div>
+                    <h4>{member.name}</h4>
+                    <p className="member-name">{member.designation}</p>
+                    <p className="member-description">{member.description}</p>
+                    {(member.email || member.phone) && (
+                      <div className="member-contact">
+                        {member.phone && (
+                          <div className="contact-item">
+                            <Phone size={14} />
+                            <span>{member.phone}</span>
+                          </div>
+                        )}
+                        {member.email && (
+                          <div className="contact-item">
+                            <Mail size={14} />
+                            <span>{member.email}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
+            )}
 
-              <div className="member-card">
-                <div className="member-role">সদস্য</div>
-                <h4>জনাব কামরুল ইসলাম</h4>
-                <p className="member-name">স্থানীয় সংসদ সদস্য প্রতিনিধি</p>
-                <p className="member-description">
-                  সংসদ সদস্যের পক্ষ থেকে কলেজের উন্নয়ন কার্যক্রমে সহায়তা এবং তত্ত্বাবধান করেন। কলেজের অবকাঠামো উন্নয়ন এবং সরকারি সহায়তা প্রাপ্তিতে তার ভূমিকা অপরিসীম।
-                </p>
+            {members.length === 0 && (
+              <div className="no-data">
+                <p>No governing body members available at the moment.</p>
               </div>
-
-              <div className="member-card">
-                <div className="member-role">সদস্য</div>
-                <h4>জনাব মোঃ রফিকুল ইসলাম</h4>
-                <p className="member-name">অভিভাবক প্রতিনিধি</p>
-                <p className="member-description">
-                  শিক্ষার্থীদের অভিভাবকদের পক্ষ থেকে কলেজের নীতি নির্ধারণে মতামত প্রদান করেন। তিনি অভিভাবক-কলেজ সংযোগ স্থাপনে এবং শিক্ষার্থীদের সমস্যা সমাধানে কাজ করেন।
-                </p>
-              </div>
-
-              <div className="member-card">
-                <div className="member-role">সদস্য</div>
-                <h4>জনাবা সালেহা বেগম</h4>
-                <p className="member-name">মহিলা প্রতিনিধি</p>
-                <p className="member-description">
-                  মহিলা শিক্ষার্থীদের স্বার্থ রক্ষা এবং তাদের সমস্যা সমাধানে বিশেষ ভূমিকা পালন করেন। তিনি নারী শিক্ষা উন্নয়ন এবং নিরাপদ শিক্ষার পরিবেশ নিশ্চিতে কাজ করেন।
-                </p>
-              </div>
-
-              <div className="member-card">
-                <div className="member-role">সদস্য</div>
-                <h4>অধ্যাপক ড. মাহমুদুল হাসান</h4>
-                <p className="member-name">শিক্ষক প্রতিনিধি</p>
-                <p className="member-description">
-                  শিক্ষকমণ্ডলীর পক্ষ থেকে শিক্ষা কার্যক্রম ও একাডেমিক বিষয়ে পরামর্শ প্রদান করেন। তিনি শিক্ষা পদ্ধতি উন্নয়ন এবং শিক্ষকদের কল্যাণে কাজ করেন।
-                </p>
-              </div>
-
-              <div className="member-card">
-                <div className="member-role">সদস্য</div>
-                <h4>জনাব হাজী আবদুল করিম</h4>
-                <p className="member-name">স্থানীয় শিক্ষানুরাগী</p>
-                <p className="member-description">
-                  কলেজের প্রতিষ্ঠাতা সদস্য এবং দীর্ঘদিন ধরে শিক্ষা উন্নয়নে অবদান রেখে চলেছেন। তিনি স্থানীয় সমাজের সাথে কলেজের সম্পর্ক উন্নয়নে গুরুত্বপূর্ণ ভূমিকা পালন করেন।
-                </p>
-              </div>
-
-              <div className="member-card">
-                <div className="member-role">সদস্য</div>
-                <h4>জনাব নাজমুল হুদা</h4>
-                <p className="member-name">ব্যবসায়ী প্রতিনিধি</p>
-                <p className="member-description">
-                  স্থানীয় ব্যবসায়ী সমাজের পক্ষ থেকে কলেজের আর্থিক ও অবকাঠামো উন্নয়নে সহায়তা করেন। তিনি কলেজের আর্থিক স্বচ্ছতা এবং সম্পদ ব্যবস্থাপনায় পরামর্শ দেন।
-                </p>
-              </div>
-
-              <div className="member-card">
-                <div className="member-role">সদস্য</div>
-                <h4>জনাব মুক্তাদির হোসেন</h4>
-                <p className="member-name">প্রাক্তন শিক্ষার্থী প্রতিনিধি</p>
-                <p className="member-description">
-                  প্রাক্তন শিক্ষার্থীদের পক্ষ থেকে কলেজের উন্নয়ন ও ঐতিহ্য রক্ষায় কাজ করেন। তিনি অ্যালামনাই নেটওয়ার্ক গঠন এবং প্রাক্তন শিক্ষার্থীদের সাথে সংযোগ রক্ষায় কাজ করেন।
-                </p>
-              </div>
-            </div>
+            )}
           </div>
 
           <div className="governing-responsibilities">
@@ -149,7 +203,7 @@ const GoverningBody = () => {
                 <Award size={40} />
                 <h4>নীতি নির্ধারণ</h4>
                 <p>
-                  কলেজের শিক্ষা নীতি, ভর্তি নীতি এবং পরীক্ষা পদ্ধতি নির্ধারণ করা। শিক্ষার্থীদের সার্বিক কল্যাণ এবং শিক্ষার মান উন্নয়নে সঠিক নীতিমালা প্রণয়ন করা। সকল নীতি গণতান্ত্রিক প্রক্রিয়ায় আলোচনা ও সিদ্ধান্ত গ্রহণের মাধ্যমে নির্ধারণ করা হয়।
+                  কলেজের শিক্ষা নীতি, ভর্তি নীতি এবং পরীক্ষা পদ্ধতি নির্ধারণ করা। শিক্ষার্থীদের সার্বিক কল্যাণ এবং শিক্ষার মান উন্নয়নে সঠিক নীতিমালা প্রণয়ন করা।
                 </p>
               </div>
 
@@ -157,7 +211,7 @@ const GoverningBody = () => {
                 <Award size={40} />
                 <h4>বাজেট অনুমোদন</h4>
                 <p>
-                  বার্ষিক বাজেট প্রণয়ন ও অনুমোদন এবং আর্থিক স্বচ্ছতা নিশ্চিত করা। কলেজের সকল আয়-ব্যয়ের হিসাব যাচাই করা এবং সম্পদের সর্বোত্তম ব্যবহার নিশ্চিত করা। আর্থিক নীতিমালা প্রণয়ন এবং আর্থিক শৃঙ্খলা বজায় রাখা।
+                  বার্ষিক বাজেট প্রণয়ন ও অনুমোদন এবং আর্থিক স্বচ্ছতা নিশ্চিত করা। কলেজের সকল আয়-ব্যয়ের হিসাব যাচাই করা।
                 </p>
               </div>
 
@@ -165,7 +219,7 @@ const GoverningBody = () => {
                 <Award size={40} />
                 <h4>শিক্ষক নিয়োগ</h4>
                 <p>
-                  যোগ্য শিক্ষক নিয়োগ এবং তাদের পদোন্নতি সংক্রান্ত সিদ্ধান্ত গ্রহণ। শিক্ষকদের দক্ষতা উন্নয়ন এবং প্রশিক্ষণের ব্যবস্থা করা। শিক্ষকদের কল্যাণ এবং কর্মপরিবেশ উন্নয়নে পদক্ষেপ গ্রহণ করা।
+                  যোগ্য শিক্ষক নিয়োগ এবং তাদের পদোন্নতি সংক্রান্ত সিদ্ধান্ত গ্রহণ। শিক্ষকদের দক্ষতা উন্নয়ন এবং প্রশিক্ষণের ব্যবস্থা করা।
                 </p>
               </div>
 
@@ -173,7 +227,7 @@ const GoverningBody = () => {
                 <Award size={40} />
                 <h4>অবকাঠামো উন্নয়ন</h4>
                 <p>
-                  কলেজের ভবন, শ্রেণিকক্ষ এবং অন্যান্য সুবিধা উন্নয়নের পরিকল্পনা। নতুন ভবন নির্মাণ, পুরাতন ভবন সংস্কার এবং আধুনিক সুবিধা সংযোজনের সিদ্ধান্ত গ্রহণ। শিক্ষার্থীদের জন্য উন্নত শিক্ষার পরিবেশ তৈরি করা।
+                  কলেজের ভবন, শ্রেণিকক্ষ এবং অন্যান্য সুবিধা উন্নয়নের পরিকল্পনা। নতুন ভবন নির্মাণ এবং পুরাতন ভবন সংস্কার।
                 </p>
               </div>
 
@@ -181,7 +235,7 @@ const GoverningBody = () => {
                 <Award size={40} />
                 <h4>একাডেমিক তত্ত্বাবধান</h4>
                 <p>
-                  শিক্ষার মান নিয়ন্ত্রণ এবং একাডেমিক কার্যক্রম মনিটরিং করা। পরীক্ষার ফলাফল পর্যালোচনা এবং শিক্ষার মান উন্নয়নে পদক্ষেপ গ্রহণ। একাডেমিক ক্যালেন্ডার অনুমোদন এবং শিক্ষা কার্যক্রম তদারকি করা।
+                  শিক্ষার মান নিয়ন্ত্রণ এবং একাডেমিক কার্যক্রম মনিটরিং করা। পরীক্ষার ফলাফল পর্যালোচনা এবং শিক্ষার মান উন্নয়ন।
                 </p>
               </div>
 
@@ -189,7 +243,7 @@ const GoverningBody = () => {
                 <Award size={40} />
                 <h4>সমস্যা সমাধান</h4>
                 <p>
-                  শিক্ষার্থী, শিক্ষক ও অভিভাবকদের সমস্যা সমাধানে কার্যকর পদক্ষেপ নেওয়া। অভিযোগ শুনানি এবং ন্যায়সঙ্গত সমাধান প্রদান করা। কলেজের সার্বিক পরিবেশ উন্নয়নে নিয়মিত পদক্ষেপ গ্রহণ করা।
+                  শিক্ষার্থী, শিক্ষক ও অভিভাবকদের সমস্যা সমাধানে কার্যকর পদক্ষেপ নেওয়া। কলেজের সার্বিক পরিবেশ উন্নয়ন।
                 </p>
               </div>
             </div>
@@ -206,7 +260,7 @@ const GoverningBody = () => {
                 <p>প্রতি মাসের প্রথম শনিবার</p>
                 <span className="time">সকাল ১০:০০ টা</span>
                 <p className="meeting-desc">
-                  মাসিক নিয়মিত সভায় কলেজের চলমান কার্যক্রম পর্যালোচনা, সমস্যা চিহ্নিতকরণ এবং সমাধানের পদক্ষেপ নির্ধারণ করা হয়।
+                  মাসিক নিয়মিত সভায় কলেজের চলমান কার্যক্রম পর্যালোচনা এবং সমস্যা সমাধানের পদক্ষেপ নির্ধারণ করা হয়।
                 </p>
               </div>
 
@@ -230,55 +284,10 @@ const GoverningBody = () => {
             </div>
           </div>
 
-          <div className="governing-achievements">
-            <h2>সাম্প্রতিক সিদ্ধান্ত ও অর্জন</h2>
-            <div className="achievements-list">
-              <div className="achievement-item">
-                <div className="achievement-icon">✓</div>
-                <div className="achievement-content">
-                  <h4>নতুন একাডেমিক ভবন অনুমোদন (২০২৪)</h4>
-                  <p>
-                    পরিচালনা পর্ষদ একটি চার তলা বিশিষ্ট নতুন একাডেমিক ভবন নির্মাণের অনুমোদন দিয়েছে যা ২৫টি নতুন শ্রেণিকক্ষ সংযোজন করবে। এই ভবন শিক্ষার্থীদের জন্য আরও উন্নত শিক্ষার পরিবেশ তৈরি করবে।
-                  </p>
-                </div>
-              </div>
-
-              <div className="achievement-item">
-                <div className="achievement-icon">✓</div>
-                <div className="achievement-content">
-                  <h4>ডিজিটাল ক্লাসরুম প্রকল্প (২০২৩)</h4>
-                  <p>
-                    সকল শ্রেণিকক্ষে মাল্টিমিডিয়া প্রজেক্টর এবং স্মার্ট বোর্ড স্থাপনের সিদ্ধান্ত গৃহীত হয়েছে। ইতিমধ্যে ১৫টি শ্রেণিকক্ষে এই সুবিধা চালু হয়েছে।
-                  </p>
-                </div>
-              </div>
-
-              <div className="achievement-item">
-                <div className="achievement-icon">✓</div>
-                <div className="achievement-content">
-                  <h4>মেধাবী শিক্ষার্থীদের জন্য বৃত্তি কর্মসূচি (২০২৩)</h4>
-                  <p>
-                    দরিদ্র ও মেধাবী শিক্ষার্থীদের জন্য বৃত্তি কর্মসূচি চালু করা হয়েছে। এই বছর ৫০ জন শিক্ষার্থী বৃত্তি পাচ্ছে এবং আগামী বছর এই সংখ্যা ১০০ এ উন্নীত করার পরিকল্পনা রয়েছে।
-                  </p>
-                </div>
-              </div>
-
-              <div className="achievement-item">
-                <div className="achievement-icon">✓</div>
-                <div className="achievement-content">
-                  <h4>শিক্ষক প্রশিক্ষণ কর্মসূচি (২০২৪)</h4>
-                  <p>
-                    শিক্ষকদের দক্ষতা উন্নয়নের জন্য নিয়মিত প্রশিক্ষণ কর্মসূচির আয়োজন করা হচ্ছে। আধুনিক শিক্ষা পদ্ধতি এবং প্রযুক্তি ব্যবহারে শিক্ষকদের দক্ষ করে তোলা হচ্ছে।
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <div className="transparency-section">
             <h2>স্বচ্ছতা ও জবাবদিহিতা</h2>
             <p>
-              মালখানগর কলেজ পরিচালনা পর্ষদ সম্পূর্ণ স্বচ্ছতা ও জবাবদিহিতার সাথে কাজ করে। সকল সভার কার্যবিবরণী সংরক্ষণ করা হয় এবং গুরুত্বপূর্ণ সিদ্ধান্তসমূহ কলেজ ওয়েবসাইটে প্রকাশ করা হয়। আর্থিক বিবরণী নিয়মিত অডিট করা হয় এবং সংশ্লিষ্ট কর্তৃপক্ষের কাছে জমা দেওয়া হয়। অভিভাবক এবং শিক্ষার্থীরা যেকোনো সময় পরিচালনা পর্ষদের কাছে তাদের মতামত ও পরামর্শ প্রদান করতে পারেন। জনগণের কাছে জবাবদিহিতা এবং স্বচ্ছ প্রশাসন নিশ্চিত করাই পরিচালনা পর্ষদের অন্যতম লক্ষ্য।
+              মালখানগর কলেজ পরিচালনা পর্ষদ সম্পূর্ণ স্বচ্ছতা ও জবাবদিহিতার সাথে কাজ করে। সকল সভার কার্যবিবরণী সংরক্ষণ করা হয় এবং গুরুত্বপূর্ণ সিদ্ধান্তসমূহ কলেজ ওয়েবসাইটে প্রকাশ করা হয়।
             </p>
             <div className="transparency-features">
               <div className="trans-feature">
@@ -318,244 +327,10 @@ const GoverningBody = () => {
           </div>
         </div>
       </div>
+
+      <PublicFooter settings={settings} />
     </div>
   );
 };
 
 export default GoverningBody;
-
-
-
-// import React, { useState, useEffect } from 'react';
-// import SkeletonLoader from '../../components/SkeletonLoader';
-// import { Users, Shield, Award } from 'lucide-react';
-// import './AdministrationPages.css';
-
-// const GoverningBody = () => {
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     setTimeout(() => setLoading(false), 800);
-//     window.scrollTo(0, 0);
-//   }, []);
-
-//   if (loading) {
-//     return (
-//       <div className="content-page-wrapper">
-//         <div className="container">
-//           <SkeletonLoader type="title" />
-//           <SkeletonLoader type="text" count={8} />
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="content-page-wrapper">
-//       <div className="container">
-//         <div className="page-header">
-//           <h1>Governing Body</h1>
-//           <div className="title-underline"></div>
-//           <p className="page-subtitle">
-//             মালখানগর কলেজের পরিচালনা পর্ষদ
-//           </p>
-//         </div>
-
-//         <div className="content-body">
-//           <div className="governing-intro">
-//             <Users size={48} />
-//             <p>
-//               মালখানগর কলেজ পরিচালনা পর্ষদ কলেজের সার্বিক উন্নয়ন, নীতি নির্ধারণ এবং শিক্ষার মান উন্নয়নে গুরুত্বপূর্ণ ভূমিকা পালন করে। পর্ষদ নিয়মিত সভা আয়োজন করে এবং কলেজের সকল গুরুত্বপূর্ণ সিদ্ধান্ত গ্রহণ করে থাকে।
-//             </p>
-//           </div>
-
-//           <div className="governing-structure">
-//             <h2>পরিচালনা পর্ষদের সদস্যবৃন্দ</h2>
-
-//             <div className="member-card president-card">
-//               <div className="member-badge">
-//                 <Shield size={32} />
-//               </div>
-//               <div className="member-info">
-//                 <h3>সভাপতি</h3>
-//                 <h4>জনাব মোহাম্মদ আলী</h4>
-//                 <p className="designation">উপজেলা নির্বাহী অফিসার</p>
-//                 <p className="details">
-//                   পরিচালনা পর্ষদের সভাপতি হিসেবে কলেজের সার্বিক তত্ত্বাবধান এবং নীতি নির্ধারণে নেতৃত্ব প্রদান করেন। তিনি স্থানীয় প্রশাসনের প্রতিনিধি হিসেবে কলেজ ও সরকারের মধ্যে সেতুবন্ধন হিসেবে কাজ করেন।
-//                 </p>
-//               </div>
-//             </div>
-
-//             <div className="members-grid">
-//               <div className="member-card">
-//                 <div className="member-role">সদস্য সচিব</div>
-//                 <h4>অধ্যক্ষ (ভারপ্রাপ্ত)</h4>
-//                 <p className="member-name">মালখানগর কলেজ</p>
-//                 <p className="member-description">
-//                   পরিচালনা পর্ষদের সকল সভার কার্যবিবরণী সংরক্ষণ এবং সিদ্ধান্ত বাস্তবায়নের দায়িত্ব পালন করেন।
-//                 </p>
-//               </div>
-
-//               <div className="member-card">
-//                 <div className="member-role">সদস্য</div>
-//                 <h4>জনাব আবদুল হামিদ</h4>
-//                 <p className="member-name">উপজেলা শিক্ষা অফিসার</p>
-//                 <p className="member-description">
-//                   শিক্ষা মন্ত্রণালয়ের প্রতিনিধি হিসেবে শিক্ষার মান নিয়ন্ত্রণ ও উন্নয়নে পরামর্শ প্রদান করেন।
-//                 </p>
-//               </div>
-
-//               <div className="member-card">
-//                 <div className="member-role">সদস্য</div>
-//                 <h4>জনাব কামরুল ইসলাম</h4>
-//                 <p className="member-name">স্থানীয় সংসদ সদস্য প্রতিনিধি</p>
-//                 <p className="member-description">
-//                   সংসদ সদস্যের পক্ষ থেকে কলেজের উন্নয়ন কার্যক্রমে সহায়তা এবং তত্ত্বাবধান করেন।
-//                 </p>
-//               </div>
-
-//               <div className="member-card">
-//                 <div className="member-role">সদস্য</div>
-//                 <h4>জনাব মোঃ রফিকুল ইসলাম</h4>
-//                 <p className="member-name">অভিভাবক প্রতিনিধি</p>
-//                 <p className="member-description">
-//                   শিক্ষার্থীদের অভিভাবকদের পক্ষ থেকে কলেজের নীতি নির্ধারণে মতামত প্রদান করেন।
-//                 </p>
-//               </div>
-
-//               <div className="member-card">
-//                 <div className="member-role">সদস্য</div>
-//                 <h4>জনাব সালেহা বেগম</h4>
-//                 <p className="member-name">মহিলা প্রতিনিধি</p>
-//                 <p className="member-description">
-//                   মহিলা শিক্ষার্থীদের স্বার্থ রক্ষা এবং তাদের সমস্যা সমাধানে বিশেষ ভূমিকা পালন করেন।
-//                 </p>
-//               </div>
-
-//               <div className="member-card">
-//                 <div className="member-role">সদস্য</div>
-//                 <h4>অধ্যাপক ড. মাহমুদুল হাসান</h4>
-//                 <p className="member-name">শিক্ষক প্রতিনিধি</p>
-//                 <p className="member-description">
-//                   শিক্ষকমণ্ডলীর পক্ষ থেকে শিক্ষা কার্যক্রম ও একাডেমিক বিষয়ে পরামর্শ প্রদান করেন।
-//                 </p>
-//               </div>
-
-//               <div className="member-card">
-//                 <div className="member-role">সদস্য</div>
-//                 <h4>জনাব হাজী আবদুল করিম</h4>
-//                 <p className="member-name">স্থানীয় শিক্ষানুরাগী</p>
-//                 <p className="member-description">
-//                   কলেজের প্রতিষ্ঠাতা সদস্য এবং দীর্ঘদিন ধরে শিক্ষা উন্নয়নে অবদান রেখে চলেছেন।
-//                 </p>
-//               </div>
-
-//               <div className="member-card">
-//                 <div className="member-role">সদস্য</div>
-//                 <h4>জনাব নাজমুল হুদা</h4>
-//                 <p className="member-name">ব্যবসায়ী প্রতিনিধি</p>
-//                 <p className="member-description">
-//                   স্থানীয় ব্যবসায়ী সমাজের পক্ষ থেকে কলেজের আর্থিক ও অবকাঠামো উন্নয়নে সহায়তা করেন।
-//                 </p>
-//               </div>
-
-//               <div className="member-card">
-//                 <div className="member-role">সদস্য</div>
-//                 <h4>জনাব মুক্তাদির হোসেন</h4>
-//                 <p className="member-name">প্রাক্তন শিক্ষার্থী প্রতিনিধি</p>
-//                 <p className="member-description">
-//                   প্রাক্তন শিক্ষার্থীদের পক্ষ থেকে কলেজের উন্নয়ন ও ঐতিহ্য রক্ষায় কাজ করেন।
-//                 </p>
-//               </div>
-//             </div>
-//           </div>
-
-//           <div className="governing-responsibilities">
-//             <h2>পরিচালনা পর্ষদের দায়িত্ব ও কার্যাবলী</h2>
-//             <div className="responsibilities-grid">
-//               <div className="responsibility-card">
-//                 <Award size={40} />
-//                 <h4>নীতি নির্ধারণ</h4>
-//                 <p>
-//                   কলেজের শিক্ষা নীতি, ভর্তি নীতি এবং পরীক্ষা পদ্ধতি নির্ধারণ করা।
-//                 </p>
-//               </div>
-
-//               <div className="responsibility-card">
-//                 <Award size={40} />
-//                 <h4>বাজেট অনুমোদন</h4>
-//                 <p>
-//                   বার্ষিক বাজেট প্রণয়ন ও অনুমোদন এবং আর্থিক স্বচ্ছতা নিশ্চিত করা।
-//                 </p>
-//               </div>
-
-//               <div className="responsibility-card">
-//                 <Award size={40} />
-//                 <h4>শিক্ষক নিয়োগ</h4>
-//                 <p>
-//                   যোগ্য শিক্ষক নিয়োগ এবং তাদের পদোন্নতি সংক্রান্ত সিদ্ধান্ত গ্রহণ।
-//                 </p>
-//               </div>
-
-//               <div className="responsibility-card">
-//                 <Award size={40} />
-//                 <h4>অবকাঠামো উন্নয়ন</h4>
-//                 <p>
-//                   কলেজের ভবন, শ্রেণিকক্ষ এবং অন্যান্য সুবিধা উন্নয়নের পরিকল্পনা।
-//                 </p>
-//               </div>
-
-//               <div className="responsibility-card">
-//                 <Award size={40} />
-//                 <h4>একাডেমিক তত্ত্বাবধান</h4>
-//                 <p>
-//                   শিক্ষার মান নিয়ন্ত্রণ এবং একাডেমিক কার্যক্রম মনিটরিং করা।
-//                 </p>
-//               </div>
-
-//               <div className="responsibility-card">
-//                 <Award size={40} />
-//                 <h4>সমস্যা সমাধান</h4>
-//                 <p>
-//                   শিক্ষার্থী, শিক্ষক ও অভিভাবকদের সমস্যা সমাধানে কার্যকর পদক্ষেপ নেওয়া।
-//                 </p>
-//               </div>
-//             </div>
-//           </div>
-
-//           <div className="meeting-schedule">
-//             <h2>সভার সময়সূচি</h2>
-//             <div className="meeting-info">
-//               <div className="meeting-card">
-//                 <h4>নিয়মিত সভা</h4>
-//                 <p>প্রতি মাসের প্রথম শনিবার</p>
-//                 <span className="time">সকাল ১০:০০ টা</span>
-//               </div>
-
-//               <div className="meeting-card">
-//                 <h4>জরুরি সভা</h4>
-//                 <p>প্রয়োজন অনুযায়ী</p>
-//                 <span className="time">সভাপতি কর্তৃক আহূত</span>
-//               </div>
-
-//               <div className="meeting-card">
-//                 <h4>বার্ষিক সাধারণ সভা</h4>
-//                 <p>বছরে একবার</p>
-//                 <span className="time">জানুয়ারি মাসে</span>
-//               </div>
-//             </div>
-//           </div>
-
-//           <div className="transparency-section">
-//             <h2>স্বচ্ছতা ও জবাবদিহিতা</h2>
-//             <p>
-//               মালখানগর কলেজ পরিচালনা পর্ষদ সম্পূর্ণ স্বচ্ছতা ও জবাবদিহিতার সাথে কাজ করে। সকল সভার কার্যবিবরণী সংরক্ষণ করা হয় এবং গুরুত্বপূর্ণ সিদ্ধান্তসমূহ কলেজ ওয়েবসাইটে প্রকাশ করা হয়। অভিভাবক এবং শিক্ষার্থীরা যেকোনো সময় পরিচালনা পর্ষদের কাছে তাদের মতামত ও পরামর্শ প্রদান করতে পারেন।
-//             </p>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default GoverningBody;

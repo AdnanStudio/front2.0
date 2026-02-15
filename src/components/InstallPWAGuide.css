@@ -30,6 +30,21 @@
   animation: bounce 2s infinite;
 }
 
+.download a {
+  display: inline-block;
+  background: rgb(1, 135, 95);
+  padding: 10px;
+  border-radius: 0%;
+}
+.download a{
+  color: #f5f7fa;
+  font-size: 16px;
+  text-decoration: none;
+}
+.download a:hover{
+  color: greenyellow;
+}
+
 @keyframes bounce {
   0%, 100% {
     transform: translateY(0);

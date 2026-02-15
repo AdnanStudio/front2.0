@@ -107,7 +107,8 @@ const InstallPWAGuide = () => {
             <Smartphone size={48} />
           </div>
           <h1>ওয়েবসাইট ইনস্টল করুন 📱</h1>
-          <p>মোবাইল অ্যাপের মতো আমাদের ওয়েবসাইট ব্যবহার করুন - কোনো Play Store লাগবে না!</p>
+          <br></br>
+          <button className='download'><a href='https://drive.google.com/file/d/1nDxWsojWT5kgC0UXtnT2v8XQ5tB3u-On/view?usp=sharing'>Download APP [click here]</a></button>
         </div>
 
         <div className="platform-tabs">
@@ -143,13 +144,13 @@ const InstallPWAGuide = () => {
                 <p className="step-description">{step.description}</p>
                 
                 <div className="step-image-wrapper">
-                  <img 
+                  {/* <img 
                     src={step.image} 
                     alt={step.title}
                     onError={(e) => {
                       e.target.src = 'https://via.placeholder.com/600x400?text=Screenshot+Not+Available';
                     }}
-                  />
+                  /> */}
                 </div>
               </div>
             </div>

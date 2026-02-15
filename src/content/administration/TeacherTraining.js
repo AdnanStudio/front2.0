@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, Mail } from 'lucide-react';
+import { Phone, Mail, Calendar, MapPin, User, Clock } from 'lucide-react';
 import PublicHeader from '../../components/PublicHeader';
 import PublicFooter from '../../components/PublicFooter';
 import SkeletonLoader from '../../components/SkeletonLoader';
@@ -22,7 +22,7 @@ const TeacherTraining = () => {
       
       // Fetch settings
       const settingsResponse = await axios.get(
-        'https://backend-yfp1.onrender.com/api/public/home'
+        'https://malkhanagarcollege.onrender.com/api/public/home'
       );
       setSettings(settingsResponse.data.data?.websiteSettings || {});
 
@@ -36,6 +36,19 @@ const TeacherTraining = () => {
     }
   };
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'upcoming':
+        return '#3b82f6';
+      case 'ongoing':
+        return '#f59e0b';
+      case 'completed':
+        return '#10b981';
+      default:
+        return '#6b7280';
+    }
+  };
+
   return (
     <div className="teacher-training-page">
       <PublicHeader settings={settings} currentPath="/administration/teacher-training" />
@@ -43,7 +56,7 @@ const TeacherTraining = () => {
       <div className="page-container">
         <div className="page-header-section">
           <h1>Teacher Training Programs</h1>
-          <p>Our dedicated training programs for professional development</p>
+          <p>Professional development programs for our dedicated teachers</p>
         </div>
 
         {loading ? (
@@ -64,16 +77,64 @@ const TeacherTraining = () => {
                     alt={training.name}
                     onError={(e) => (e.target.src = '/placeholder.png')}
                   />
+                  <span 
+                    className="training-status-badge"
+                    style={{ background: getStatusColor(training.status) }}
+                  >
+                    {training.status}
+                  </span>
                 </div>
                 <div className="training-content-public">
                   <h3>{training.name}</h3>
-                  <div className="training-contact">
-                    <div className="contact-item">
-                      <Phone size={16} />
-                      <span>{training.phone}</span>
-                    </div>
-                  </div>
+                  <p className="training-type">{training.trainingType}</p>
                   <p className="training-description">{training.description}</p>
+
+                  <div className="training-details-grid">
+                    <div className="training-detail-item">
+                      <User size={16} />
+                      <div>
+                        <strong>Trainer:</strong>
+                        <span>{training.trainer}</span>
+                      </div>
+                    </div>
+
+                    <div className="training-detail-item">
+                      <Calendar size={16} />
+                      <div>
+                        <strong>Date:</strong>
+                        <span>
+                          {new Date(training.startDate).toLocaleDateString()} - {' '}
+                          {new Date(training.endDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="training-detail-item">
+                      <Clock size={16} />
+                      <div>
+                        <strong>Duration:</strong>
+                        <span>{training.duration}</span>
+                      </div>
+                    </div>
+
+                    <div className="training-detail-item">
+                      <MapPin size={16} />
+                      <div>
+                        <strong>Venue:</strong>
+                        <span>{training.venue}</span>
+                      </div>
+                    </div>
+
+                    {training.phone && (
+                      <div className="training-detail-item">
+                        <Phone size={16} />
+                        <div>
+                          <strong>Contact:</strong>
+                          <span>{training.phone}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

@@ -38,7 +38,7 @@ const Home = () => {
   const fetchHomeData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('https://backend-yfp1.onrender.com/api/public/home');
+      const response = await axios.get('https://malkhanagarcollege.onrender.com/api/public/home');
       const { carousels, notices, blogs, principalInfo } = response.data.data;
       
       setCarousels(carousels);

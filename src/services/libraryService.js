@@ -1,150 +1,234 @@
-import api from './api';
+import axios from 'axios';
 
-// ==================== BOOK SERVICES ====================
+const API_URL = process.env.REACT_APP_API_URL || 'https://malkhanagarcollege.onrender.com/api';
 
-// Get all books
-export const getAllBooks = async (params = {}) => {
-  try {
-    const queryString = new URLSearchParams(params).toString();
-    const response = await api.get(`/library/books${queryString ? `?${queryString}` : ''}`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error;
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add auth token to requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-};
+);
 
-// Get single book
-export const getBook = async (id) => {
-  try {
-    const response = await api.get(`/library/books/${id}`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error;
+// Handle response errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error.response?.data || error);
   }
-};
+);
 
-// Create new book
-export const createBook = async (bookData) => {
-  try {
-    const formData = new FormData();
-    
-    Object.keys(bookData).forEach(key => {
-      if (key === 'bookImage' && bookData[key] instanceof File) {
-        formData.append('bookImage', bookData[key]);
-      } else {
-        formData.append(key, bookData[key]);
-      }
-    });
-
-    const response = await api.post('/library/books', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error;
-  }
-};
-
-// Update book
-export const updateBook = async (id, bookData) => {
-  try {
-    const formData = new FormData();
-    
-    Object.keys(bookData).forEach(key => {
-      if (key === 'bookImage' && bookData[key] instanceof File) {
-        formData.append('bookImage', bookData[key]);
-      } else {
-        formData.append(key, bookData[key]);
-      }
-    });
-
-    const response = await api.put(`/library/books/${id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error;
-  }
-};
-
-// Delete book
-export const deleteBook = async (id) => {
-  try {
-    const response = await api.delete(`/library/books/${id}`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error;
-  }
-};
-
-// ==================== ISSUE/RETURN SERVICES ====================
-
-// Issue book
-export const issueBook = async (issueData) => {
-  try {
-    const response = await api.post('/library/issue', issueData);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error;
-  }
-};
-
-// Return book
-export const returnBook = async (issueId, returnData) => {
-  try {
-    const response = await api.put(`/library/return/${issueId}`, returnData);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error;
-  }
-};
-
-// Get all issues
-export const getAllIssues = async (params = {}) => {
-  try {
-    const queryString = new URLSearchParams(params).toString();
-    const response = await api.get(`/library/issues${queryString ? `?${queryString}` : ''}`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error;
-  }
-};
-
-// ==================== FINE SERVICES ====================
-
-// Get all fines
-export const getAllFines = async (params = {}) => {
-  try {
-    const queryString = new URLSearchParams(params).toString();
-    const response = await api.get(`/library/fines${queryString ? `?${queryString}` : ''}`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error;
-  }
-};
-
-// Update fine status
-export const updateFineStatus = async (fineId, statusData) => {
-  try {
-    const response = await api.put(`/library/fines/${fineId}`, statusData);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error;
-  }
-};
-
-// ==================== STATISTICS SERVICE ====================
-
-// Get library statistics
+// ==================== LIBRARY STATS ====================
 export const getLibraryStats = async () => {
   try {
     const response = await api.get('/library/stats');
-    return response.data;
+    return response;
   } catch (error) {
-    throw error.response?.data || error;
+    console.error('Error fetching library stats:', error);
+    // Return mock data for development
+    return {
+      data: {
+        totalBooks: 0,
+        availableBooks: 0,
+        issuedBooks: 0,
+        overdueBooks: 0,
+        todayReturns: 0,
+        pendingFines: 0
+      }
+    };
   }
+};
+
+// ==================== BOOKS ====================
+export const getBooks = async () => {
+  try {
+    const response = await api.get('/library/books');
+    return response;
+  } catch (error) {
+    console.error('Error fetching books:', error);
+    // Return empty array for development
+    return { data: [] };
+  }
+};
+
+export const getBookById = async (id) => {
+  try {
+    const response = await api.get(`/library/books/${id}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addBook = async (bookData) => {
+  try {
+    const response = await api.post('/library/books', bookData);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateBook = async (id, bookData) => {
+  try {
+    const response = await api.put(`/library/books/${id}`, bookData);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteBook = async (id) => {
+  try {
+    const response = await api.delete(`/library/books/${id}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// ==================== BOOK ISSUES ====================
+export const getIssuedBooks = async () => {
+  try {
+    const response = await api.get('/library/issues');
+    return response;
+  } catch (error) {
+    console.error('Error fetching issued books:', error);
+    return { data: [] };
+  }
+};
+
+export const issueBook = async (issueData) => {
+  try {
+    const response = await api.post('/library/issues', issueData);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const returnBook = async (issueId) => {
+  try {
+    const response = await api.put(`/library/issues/${issueId}/return`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getIssueById = async (id) => {
+  try {
+    const response = await api.get(`/library/issues/${id}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// ==================== FINES ====================
+export const getFines = async () => {
+  try {
+    const response = await api.get('/library/fines');
+    return response;
+  } catch (error) {
+    console.error('Error fetching fines:', error);
+    return { data: [] };
+  }
+};
+
+export const payFine = async (fineId, paymentData) => {
+  try {
+    const response = await api.put(`/library/fines/${fineId}/pay`, paymentData);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const waiveFine = async (fineId, waiveData) => {
+  try {
+    const response = await api.put(`/library/fines/${fineId}/waive`, waiveData);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// ==================== STUDENTS ====================
+export const searchStudents = async (query) => {
+  try {
+    const response = await api.get(`/students/search?q=${query}`);
+    return response;
+  } catch (error) {
+    console.error('Error searching students:', error);
+    return { data: [] };
+  }
+};
+
+export const getStudentById = async (id) => {
+  try {
+    const response = await api.get(`/students/${id}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// ==================== REPORTS ====================
+export const getLibraryReports = async (params) => {
+  try {
+    const response = await api.get('/library/reports', { params });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const exportLibraryData = async (type) => {
+  try {
+    const response = await api.get(`/library/export/${type}`, {
+      responseType: 'blob',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export default {
+  getLibraryStats,
+  getBooks,
+  getBookById,
+  addBook,
+  updateBook,
+  deleteBook,
+  getIssuedBooks,
+  issueBook,
+  returnBook,
+  getIssueById,
+  getFines,
+  payFine,
+  waiveFine,
+  searchStudents,
+  getStudentById,
+  getLibraryReports,
+  exportLibraryData,
 };

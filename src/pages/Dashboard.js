@@ -39,8 +39,10 @@ import TeacherTrainingManagement from './TeacherTrainingManagement';
 import ClubManagement from './ClubManagement';
 import TeacherListManagement from './TeacherListManagement';
 import LibraryManagement from './LibraryManagement'; // ✅ NEW
+import GoverningBodyManagement from './../components/GoverningBodyManagement';
 
 import './Dashboard.css';
+
 
 const Dashboard = () => {
   const { user } = useSelector((state) => state.auth);
@@ -180,6 +182,15 @@ const Dashboard = () => {
           {user?.role === 'student' && (
             <Route path="/class-routine" element={<StudentRoutineView />} />
           )}
+
+          {/* ====================================== */}
+{/* ADMINISTRATION ROUTES - Admin Only */}
+{user?.role === 'admin' && (
+  <>
+    <Route path="/governing-body" element={<GoverningBodyManagement />} />
+  </>
+)}
+{/* ====================================== */}
 
           {/* ✅ LIBRARY MANAGEMENT - Admin & Librarian */}
           {(user?.role === 'admin' || user?.role === 'librarian') && (

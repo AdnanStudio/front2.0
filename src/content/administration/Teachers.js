@@ -22,7 +22,7 @@ const Teachers = () => {
       
       // Fetch settings
       const settingsResponse = await axios.get(
-        'https://backend-yfp1.onrender.com/api/public/home'
+        'https://malkhanagarcollege.onrender.com/api/public/home'
       );
       setSettings(settingsResponse.data.data?.websiteSettings || {});
 

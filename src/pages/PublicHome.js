@@ -63,7 +63,7 @@ const PublicHome = () => {
     try {
       const timestamp = new Date().getTime();
       const response = await axios.get(
-        `https://backend-yfp1.onrender.com/api/public/home?t=${timestamp}`
+        `https://malkhanagarcollege.onrender.com/api/public/home?t=${timestamp}`
       );
       const websiteSettings = response.data.data?.websiteSettings || {};
       setSettings({

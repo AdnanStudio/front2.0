@@ -19,7 +19,8 @@ import {
   UserCheck,
   UsersRound,
   ListChecks,
-  Library // ✅ NEW ICON
+  Library,
+  Building2  // ✅ NEW ICON for Governing Body
 } from 'lucide-react';
 import './DashboardHome.css';
 
@@ -134,13 +135,21 @@ const DashboardHome = () => {
       color: '#f38181',
       roles: ['admin', 'teacher', 'student', 'staff', 'librarian', 'accountant']
     },
-    // ✅ NEW: Library Management
+    // Library Management
     {
       path: '/dashboard/library',
       icon: <Library />,
       label: 'Library Management',
       color: '#2196F3',
       roles: ['admin', 'librarian']
+    },
+    // ✅ NEW: Governing Body
+    {
+      path: '/dashboard/governing-body',
+      icon: <Building2 />,
+      label: 'Governing Body',
+      color: '#3b82f6',
+      roles: ['admin']
     },
     {
       path: '/dashboard/teacher-training',
@@ -170,13 +179,6 @@ const DashboardHome = () => {
       color: '#aa96da',
       roles: ['admin']
     },
-    // {
-    //   path: '/dashboard/website-settings',
-    //   icon: <Settings />,
-    //   label: 'Website Settings',
-    //   color: '#fcbad3',
-    //   roles: ['admin']
-    // },
     {
       path: '/dashboard/notices',
       icon: <Bell />,

@@ -43,7 +43,7 @@ const PublicFooter = ({ settings = {} }) => {
               <h4>Social Media</h4>
               <div className="social-icons">
                 <a
-                  href={settings.facebookLink || 'https://facebook.com'}
+                  href={settings.facebookLink || 'https://www.facebook.com/malkhanagar.UC'}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -51,7 +51,7 @@ const PublicFooter = ({ settings = {} }) => {
                 </a>
 
                 <a
-                  href={settings.youtubeLink || 'https://youtube.com'}
+                  href={settings.youtubeLink || 'https://www.youtube.com/@MalkhanagarCollege'}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

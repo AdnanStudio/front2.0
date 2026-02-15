@@ -1,477 +1,535 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import teacherTrainingService from '../services/teacherTrainingService';
 import toast from 'react-hot-toast';
-import {
-  Users,
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Eye,
-  UserCheck,
-  UserX,
-  X,
-  Upload,
-  Save,
-  ArrowLeft
-} from 'lucide-react';
-import './TeacherTrainingManagement.css';
+import './Dashboard.css';
 
 const TeacherTrainingManagement = () => {
   const [trainings, setTrainings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingTraining, setEditingTraining] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [selectedTraining, setSelectedTraining] = useState(null);
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('');
 
   const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
+    title: '',
     description: '',
-    order: 0
+    trainer: '',
+    trainingType: '',
+    startDate: '',
+    endDate: '',
+    duration: '',
+    venue: '',
+    totalSeats: '',
+    participants: [],
+    status: 'upcoming',
+    budget: '',
+    materials: ''
   });
 
-  const [profileImage, setProfileImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
+  const trainingTypes = [
+    'Pedagogical Skills',
+    'Subject Knowledge',
+    'Technology Integration',
+    'Classroom Management',
+    'Assessment & Evaluation',
+    'Student Psychology',
+    'Leadership Development',
+    'Special Education',
+    'Soft Skills',
+    'Other'
+  ];
 
-  const navigate = useNavigate();
+  const statuses = ['upcoming', 'ongoing', 'completed', 'cancelled'];
 
   useEffect(() => {
     fetchTrainings();
   }, []);
 
-  const fetchTrainings = async () => {
-    try {
-      setLoading(true);
-      const response = await teacherTrainingService.getAllTrainings();
-      setTrainings(response.data || []);
-    } catch (error) {
-      toast.error('Failed to fetch trainings');
-      console.error('Fetch trainings error:', error);
-    } finally {
-      setLoading(false);
-    }
+  const fetchTrainings = () => {
+    // Mock data - Replace with API call
+    const mockTrainings = [
+      {
+        _id: '1',
+        title: 'Digital Teaching Methods',
+        description: 'Learn modern digital teaching techniques',
+        trainer: 'Dr. Rahman Ahmed',
+        trainingType: 'Technology Integration',
+        startDate: '2026-02-10',
+        endDate: '2026-02-12',
+        duration: '3 days',
+        venue: 'Training Hall, Main Building',
+        totalSeats: 30,
+        participants: ['T001', 'T002', 'T003'],
+        status: 'upcoming',
+        budget: '50000',
+        materials: 'Laptop, Projector, Handouts'
+      },
+      {
+        _id: '2',
+        title: 'Effective Classroom Management',
+        description: 'Strategies for better classroom control',
+        trainer: 'Prof. Sultana Begum',
+        trainingType: 'Classroom Management',
+        startDate: '2026-01-20',
+        endDate: '2026-01-22',
+        duration: '3 days',
+        venue: 'Conference Room',
+        totalSeats: 25,
+        participants: ['T004', 'T005'],
+        status: 'completed',
+        budget: '40000',
+        materials: 'Training Manual, Case Studies'
+      }
+    ];
+    
+    setTrainings(mockTrainings);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size should be less than 5MB');
-        return;
-      }
-
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select a valid image file');
-        return;
-      }
-
-      setProfileImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const validateForm = () => {
-    if (!formData.name || !formData.phone || !formData.description) {
-      toast.error('Please fill in all required fields');
-      return false;
-    }
-    return true;
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (!validateForm()) return;
-
+    
     try {
-      setSubmitting(true);
-
-      const submitData = new FormData();
-      Object.keys(formData).forEach(key => {
-        submitData.append(key, formData[key]);
-      });
-
-      if (profileImage) {
-        submitData.append('image', profileImage);
-      }
-
-      if (isEditMode) {
-        await teacherTrainingService.updateTraining(selectedTraining._id, submitData);
+      if (editingTraining) {
+        // Update existing training
+        setTrainings(trainings.map(t => 
+          t._id === editingTraining._id 
+            ? { ...formData, _id: t._id } 
+            : t
+        ));
         toast.success('Training updated successfully!');
       } else {
-        await teacherTrainingService.createTraining(submitData);
-        toast.success('Training created successfully!');
+        // Add new training
+        const newTraining = {
+          ...formData,
+          _id: Date.now().toString(),
+          participants: []
+        };
+        setTrainings([...trainings, newTraining]);
+        toast.success('Training added successfully!');
       }
-
+      
       resetForm();
-      fetchTrainings();
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Operation failed';
-      toast.error(errorMessage);
-      console.error('Submit error:', error);
-    } finally {
-      setSubmitting(false);
+      console.error('Error saving training:', error);
+      toast.error('Failed to save training');
     }
   };
 
   const handleEdit = (training) => {
-    setIsEditMode(true);
-    setSelectedTraining(training);
+    setEditingTraining(training);
     setFormData({
-      name: training.name,
-      phone: training.phone,
+      title: training.title,
       description: training.description,
-      order: training.order
+      trainer: training.trainer,
+      trainingType: training.trainingType,
+      startDate: training.startDate,
+      endDate: training.endDate,
+      duration: training.duration,
+      venue: training.venue,
+      totalSeats: training.totalSeats,
+      participants: training.participants || [],
+      status: training.status,
+      budget: training.budget,
+      materials: training.materials
     });
-    setImagePreview(training.image?.url);
-    setShowModal(true);
+    setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this training?')) return;
-
-    try {
-      await teacherTrainingService.deleteTraining(id);
-      toast.success('Training deleted successfully');
-      fetchTrainings();
-    } catch (error) {
-      toast.error('Failed to delete training');
-      console.error('Delete error:', error);
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this training?')) {
+      setTrainings(trainings.filter(t => t._id !== id));
+      toast.success('Training deleted successfully!');
     }
-  };
-
-  const handleToggleStatus = async (id) => {
-    try {
-      await teacherTrainingService.toggleTrainingStatus(id);
-      toast.success('Status updated successfully');
-      fetchTrainings();
-    } catch (error) {
-      toast.error('Failed to update status');
-      console.error('Toggle status error:', error);
-    }
-  };
-
-  const viewDetails = (training) => {
-    setSelectedTraining(training);
-    setShowDetailsModal(true);
   };
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      phone: '',
+      title: '',
       description: '',
-      order: 0
+      trainer: '',
+      trainingType: '',
+      startDate: '',
+      endDate: '',
+      duration: '',
+      venue: '',
+      totalSeats: '',
+      participants: [],
+      status: 'upcoming',
+      budget: '',
+      materials: ''
     });
-    setProfileImage(null);
-    setImagePreview(null);
-    setIsEditMode(false);
-    setSelectedTraining(null);
-    setShowModal(false);
+    setEditingTraining(null);
+    setShowForm(false);
   };
 
-  const filteredTrainings = trainings.filter(training =>
-    training.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    training.phone.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTrainings = trainings.filter(training => {
+    const matchesSearch = 
+      training.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      training.trainer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      training.trainingType.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = filterStatus === '' || training.status === filterStatus;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'upcoming':
+        return '#3b82f6';
+      case 'ongoing':
+        return '#f59e0b';
+      case 'completed':
+        return '#10b981';
+      case 'cancelled':
+        return '#ef4444';
+      default:
+        return '#6b7280';
+    }
+  };
 
   return (
-    <div className="training-management-page">
+    <div className="dashboard-page">
+      {/* Header */}
       <div className="page-header">
-        <div className="header-left">
-          <Users size={32} />
-          <div>
-            <h1>Teacher Training Management</h1>
-            <p>Manage teacher training programs</p>
-          </div>
+        <div>
+          <h2>🎓 Teacher Training Management</h2>
+          <p>Manage professional development programs for teachers</p>
         </div>
-        <button className="btn-primary" onClick={() => setShowModal(true)}>
-          <Plus size={20} />
-          Add Training
+        <button 
+          className="btn-primary"
+          onClick={() => setShowForm(!showForm)}
+        >
+          {showForm ? '✕ Cancel' : '+ Add Training'}
         </button>
       </div>
 
-      <div className="filters-section">
-        <div className="search-form">
-          <div className="search-input-group">
-            <Search size={20} />
-            <input
-              type="text"
-              placeholder="Search by name or phone..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+      {/* Statistics */}
+      <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', marginBottom: '25px' }}>
+        <div className="stat-card" style={{ background: '#dbeafe', borderLeft: '4px solid #3b82f6' }}>
+          <h3 style={{ color: '#1e40af' }}>Total Trainings</h3>
+          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e3a8a' }}>{trainings.length}</p>
+        </div>
+        <div className="stat-card" style={{ background: '#fef3c7', borderLeft: '4px solid #f59e0b' }}>
+          <h3 style={{ color: '#92400e' }}>Upcoming</h3>
+          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#78350f' }}>
+            {trainings.filter(t => t.status === 'upcoming').length}
+          </p>
+        </div>
+        <div className="stat-card" style={{ background: '#d1fae5', borderLeft: '4px solid #10b981' }}>
+          <h3 style={{ color: '#065f46' }}>Completed</h3>
+          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#064e3b' }}>
+            {trainings.filter(t => t.status === 'completed').length}
+          </p>
         </div>
       </div>
 
-      {loading ? (
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Loading trainings...</p>
-        </div>
-      ) : (
-        <>
-          <div className="stats-section">
-            <div className="stat-item">
-              <h3>{filteredTrainings.length}</h3>
-              <p>Total Trainings</p>
+      {/* Add/Edit Form */}
+      {showForm && (
+        <div className="form-container" style={{ marginBottom: '30px' }}>
+          <h3>{editingTraining ? 'Edit Training' : 'Add New Training'}</h3>
+          
+          <form onSubmit={handleSubmit} className="form-grid">
+            <div className="form-group">
+              <label>Training Title *</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="e.g., Digital Teaching Methods"
+                required
+              />
             </div>
-            <div className="stat-item">
-              <h3>{filteredTrainings.filter(t => t.isActive).length}</h3>
-              <p>Active</p>
-            </div>
-            <div className="stat-item">
-              <h3>{filteredTrainings.filter(t => !t.isActive).length}</h3>
-              <p>Inactive</p>
-            </div>
-          </div>
 
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Photo</th>
-                  <th>Name</th>
-                  <th>Phone</th>
-                  <th>Description</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTrainings.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="no-data">
-                      No trainings found
-                    </td>
-                  </tr>
-                ) : (
-                  filteredTrainings.map((training) => (
-                    <tr key={training._id}>
-                      <td>
-                        <img
-                          src={training.image?.url || 'https://via.placeholder.com/40'}
-                          alt={training.name}
-                          className="training-photo"
-                        />
-                      </td>
-                      <td className="training-name">{training.name}</td>
-                      <td>{training.phone}</td>
-                      <td className="description-cell">
-                        {training.description.substring(0, 50)}...
-                      </td>
-                      <td>
-                        <span className={`status-badge ${training.isActive ? 'active' : 'inactive'}`}>
-                          {training.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button
-                            className="btn-icon btn-view"
-                            onClick={() => viewDetails(training)}
-                            title="View Details"
-                          >
-                            <Eye size={18} />
-                          </button>
-                          <button
-                            className="btn-icon btn-edit"
-                            onClick={() => handleEdit(training)}
-                            title="Edit"
-                          >
-                            <Edit size={18} />
-                          </button>
-                          <button
-                            className="btn-icon btn-toggle"
-                            onClick={() => handleToggleStatus(training._id)}
-                            title={training.isActive ? 'Deactivate' : 'Activate'}
-                          >
-                            {training.isActive ? <UserX size={18} /> : <UserCheck size={18} />}
-                          </button>
-                          <button
-                            className="btn-icon btn-delete"
-                            onClick={() => handleDelete(training._id)}
-                            title="Delete"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
+            <div className="form-group">
+              <label>Trainer Name *</label>
+              <input
+                type="text"
+                name="trainer"
+                value={formData.trainer}
+                onChange={handleInputChange}
+                placeholder="e.g., Dr. Rahman Ahmed"
+                required
+              />
+            </div>
 
-      {/* Form Modal */}
-      {showModal && (
-        <div className="modal-overlay" onClick={resetForm}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{isEditMode ? 'Edit Training' : 'Add Training'}</h2>
-              <button onClick={resetForm} className="close-btn">
-                <X size={24} />
+            <div className="form-group">
+              <label>Training Type *</label>
+              <select
+                name="trainingType"
+                value={formData.trainingType}
+                onChange={handleInputChange}
+                required
+              >
+                <option value="">Select Type</option>
+                {trainingTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Status *</label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                required
+              >
+                {statuses.map(status => (
+                  <option key={status} value={status}>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Start Date *</label>
+              <input
+                type="date"
+                name="startDate"
+                value={formData.startDate}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>End Date *</label>
+              <input
+                type="date"
+                name="endDate"
+                value={formData.endDate}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Duration</label>
+              <input
+                type="text"
+                name="duration"
+                value={formData.duration}
+                onChange={handleInputChange}
+                placeholder="e.g., 3 days, 2 weeks"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Total Seats *</label>
+              <input
+                type="number"
+                name="totalSeats"
+                value={formData.totalSeats}
+                onChange={handleInputChange}
+                min="1"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Venue *</label>
+              <input
+                type="text"
+                name="venue"
+                value={formData.venue}
+                onChange={handleInputChange}
+                placeholder="e.g., Training Hall, Main Building"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Budget (৳)</label>
+              <input
+                type="number"
+                name="budget"
+                value={formData.budget}
+                onChange={handleInputChange}
+                placeholder="e.g., 50000"
+              />
+            </div>
+
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label>Description *</label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                rows="3"
+                placeholder="Describe the training objectives and content..."
+                required
+              ></textarea>
+            </div>
+
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label>Materials Needed</label>
+              <textarea
+                name="materials"
+                value={formData.materials}
+                onChange={handleInputChange}
+                rows="2"
+                placeholder="e.g., Laptop, Projector, Handouts, Training Manual"
+              ></textarea>
+            </div>
+
+            <div className="form-actions" style={{ gridColumn: '1 / -1' }}>
+              <button type="button" className="btn-secondary" onClick={resetForm}>
+                Cancel
+              </button>
+              <button type="submit" className="btn-primary">
+                {editingTraining ? 'Update Training' : 'Add Training'}
               </button>
             </div>
-
-            <form onSubmit={handleSubmit} className="training-form">
-              <div className="form-section">
-                <h3>Profile Picture</h3>
-                <div className="image-upload-container">
-                  <div className="image-preview">
-                    {imagePreview ? (
-                      <img src={imagePreview} alt="Preview" />
-                    ) : (
-                      <div className="placeholder">
-                        <Upload size={40} />
-                        <p>Upload Photo</p>
-                      </div>
-                    )}
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    id="profileImage"
-                    style={{ display: 'none' }}
-                  />
-                  <label htmlFor="profileImage" className="upload-btn">
-                    {imagePreview ? 'Change Image' : 'Choose Image'}
-                  </label>
-                </div>
-              </div>
-
-              <div className="form-section">
-                <h3>Information</h3>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Name <span className="required">*</span></label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      placeholder="Enter name"
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Phone <span className="required">*</span></label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      placeholder="Enter phone number"
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Order</label>
-                    <input
-                      type="number"
-                      name="order"
-                      value={formData.order}
-                      onChange={handleInputChange}
-                      min="0"
-                    />
-                  </div>
-
-                  <div className="form-group full-width">
-                    <label>Description <span className="required">*</span></label>
-                    <textarea
-                      name="description"
-                      value={formData.description}
-                      onChange={handleInputChange}
-                      placeholder="Enter description"
-                      rows="4"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={resetForm}
-                  disabled={submitting}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary" disabled={submitting}>
-                  <Save size={20} />
-                  {submitting ? 'Saving...' : isEditMode ? 'Update' : 'Create'}
-                </button>
-              </div>
-            </form>
-          </div>
+          </form>
         </div>
       )}
 
-      {/* Details Modal */}
-      {showDetailsModal && selectedTraining && (
-        <div className="modal-overlay" onClick={() => setShowDetailsModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Training Details</h2>
-              <button onClick={() => setShowDetailsModal(false)} className="close-btn">
-                <X size={24} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="detail-card">
-                <img
-                  src={selectedTraining.image?.url || 'https://via.placeholder.com/150'}
-                  alt={selectedTraining.name}
-                  className="detail-photo"
-                />
-                <div className="detail-info">
-                  <div className="info-row">
-                    <label>Name:</label>
-                    <span>{selectedTraining.name}</span>
-                  </div>
-                  <div className="info-row">
-                    <label>Phone:</label>
-                    <span>{selectedTraining.phone}</span>
-                  </div>
-                  <div className="info-row">
-                    <label>Description:</label>
-                    <span>{selectedTraining.description}</span>
-                  </div>
-                  <div className="info-row">
-                    <label>Status:</label>
-                    <span className={`status-badge ${selectedTraining.isActive ? 'active' : 'inactive'}`}>
-                      {selectedTraining.isActive ? 'Active' : 'Inactive'}
+      {/* Search and Filter */}
+      <div className="search-filter-section">
+        <div className="search-box">
+          <i className="fas fa-search"></i>
+          <input
+            type="text"
+            placeholder="Search by title, trainer, or type..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        <select
+          className="filter-select"
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+        >
+          <option value="">All Status</option>
+          {statuses.map(status => (
+            <option key={status} value={status}>
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Trainings List */}
+      <div className="table-container">
+        {filteredTrainings.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#9ca3af' }}>
+            <i className="fas fa-graduation-cap" style={{ fontSize: '48px', marginBottom: '15px' }}></i>
+            <p>No trainings found</p>
+          </div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Training Title</th>
+                <th>Trainer</th>
+                <th>Type</th>
+                <th>Date</th>
+                <th>Duration</th>
+                <th>Venue</th>
+                <th>Seats</th>
+                <th>Status</th>
+                <th>Budget</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredTrainings.map(training => (
+                <tr key={training._id}>
+                  <td>
+                    <strong>{training.title}</strong>
+                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                      {training.description.substring(0, 50)}...
+                    </div>
+                  </td>
+                  <td>{training.trainer}</td>
+                  <td>
+                    <span style={{
+                      padding: '4px 12px',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      background: '#e0e7ff',
+                      color: '#4338ca'
+                    }}>
+                      {training.trainingType}
                     </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+                  </td>
+                  <td>
+                    <div>{new Date(training.startDate).toLocaleDateString()}</div>
+                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                      to {new Date(training.endDate).toLocaleDateString()}
+                    </div>
+                  </td>
+                  <td>{training.duration}</td>
+                  <td>{training.venue}</td>
+                  <td>
+                    <span style={{ fontWeight: '600' }}>
+                      {training.participants.length} / {training.totalSeats}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{
+                      padding: '4px 12px',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      background: getStatusColor(training.status) + '20',
+                      color: getStatusColor(training.status)
+                    }}>
+                      {training.status.charAt(0).toUpperCase() + training.status.slice(1)}
+                    </span>
+                  </td>
+                  <td>৳{parseInt(training.budget).toLocaleString()}</td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => handleEdit(training)}
+                        style={{
+                          padding: '6px 12px',
+                          background: '#dbeafe',
+                          color: '#1e40af',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '13px'
+                        }}
+                      >
+                        <i className="fas fa-edit"></i>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(training._id)}
+                        style={{
+                          padding: '6px 12px',
+                          background: '#fee2e2',
+                          color: '#991b1b',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '13px'
+                        }}
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 };

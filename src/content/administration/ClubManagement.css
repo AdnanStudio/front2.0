@@ -1,92 +1,323 @@
+/* ==================== CLUB MANAGEMENT PAGE ==================== */
 .club-management-public-page {
   min-height: 100vh;
-  background: #f9fafb;
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
 }
 
 .page-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 60px 20px;
 }
 
 .page-header-section {
   text-align: center;
-  margin-bottom: 50px;
+  margin-bottom: 60px;
+  animation: fadeInDown 0.6s ease-out;
 }
 
 .page-header-section h1 {
-  font-size: 36px;
-  color: #1a1a1a;
-  margin-bottom: 10px;
+  font-size: 42px;
+  font-weight: 800;
+  color: #1a202c;
+  margin-bottom: 15px;
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .page-header-section p {
   font-size: 18px;
-  color: #666;
+  color: #5a4a3a;
+  font-weight: 500;
 }
 
-.members-grid-public {
+/* ==================== CLUBS GRID ==================== */
+.clubs-grid-public {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 30px;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 35px;
+  animation: fadeInUp 0.8s ease-out;
 }
 
-.member-card-public {
+/* ==================== CLUB CARD ==================== */
+.club-card-public {
   background: white;
-  border-radius: 12px;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.member-card-public:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+.club-card-public::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(250, 112, 154, 0.1) 0%, rgba(254, 225, 64, 0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
 }
 
-.member-image-public {
+.club-card-public:hover {
+  transform: translateY(-15px) rotate(-1deg);
+  box-shadow: 0 25px 60px rgba(250, 112, 154, 0.3);
+}
+
+.club-card-public:hover::after {
+  opacity: 1;
+}
+
+/* ==================== CLUB IMAGE ==================== */
+.club-image-public {
   width: 100%;
-  height: 300px;
+  height: 280px;
   overflow: hidden;
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  position: relative;
 }
 
-.member-image-public img {
+.club-image-public img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  filter: brightness(0.95);
 }
 
-.member-content-public {
-  padding: 24px;
+.club-card-public:hover .club-image-public img {
+  transform: scale(1.12);
+  filter: brightness(1.05);
 }
 
-.member-content-public h3 {
-  font-size: 22px;
-  color: #1a1a1a;
-  margin-bottom: 12px;
+/* Category Badge */
+.club-category-badge {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  padding: 8px 18px;
+  border-radius: 25px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: white;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  animation: slideInLeft 0.6s ease-out;
 }
 
-.member-content-public p {
-  color: #666;
-  line-height: 1.7;
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ==================== CLUB CONTENT ==================== */
+.club-content-public {
+  padding: 30px;
+  position: relative;
+  z-index: 1;
+}
+
+.club-content-public h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 15px;
+  line-height: 1.3;
+  transition: color 0.3s ease;
+}
+
+.club-card-public:hover .club-content-public h3 {
+  color: #fa709a;
+}
+
+.club-description {
+  color: #4a5568;
+  line-height: 1.8;
   font-size: 15px;
+  margin-bottom: 25px;
 }
 
-.no-data {
-  text-align: center;
-  padding: 60px 20px;
-  color: #666;
+/* ==================== CLUB DETAILS ==================== */
+.club-details {
+  display: grid;
+  gap: 14px;
+  padding-top: 20px;
+  border-top: 2px solid #f7fafc;
+}
+
+.club-detail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f7fafc;
+  transition: all 0.3s ease;
+}
+
+.club-detail-item:hover {
+  background: #edf2f7;
+  transform: translateX(5px);
+}
+
+.club-detail-item svg {
+  color: #fa709a;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.club-detail-item > div {
+  flex: 1;
+}
+
+.club-detail-item strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.club-detail-item span {
+  color: #2d3748;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* ==================== CLUB ACHIEVEMENTS ==================== */
+.club-achievements {
+  margin-top: 20px;
+  padding: 15px;
+  background: linear-gradient(135deg, #fff5e6 0%, #ffe6f0 100%);
+  border-radius: 12px;
+  border-left: 4px solid #fa709a;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.club-achievements strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fa709a;
+  margin-bottom: 8px;
+}
+
+.club-achievements strong::before {
+  content: '🏆';
   font-size: 18px;
 }
 
-/* Responsive */
+.club-achievements p {
+  color: #5a4a3a;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ==================== NO DATA ==================== */
+.no-data {
+  text-align: center;
+  padding: 80px 20px;
+  color: #718096;
+  font-size: 18px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.no-data::before {
+  content: '🎯';
+  display: block;
+  font-size: 72px;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+/* ==================== ANIMATIONS ==================== */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
-  .members-grid-public {
+  .page-header-section h1 {
+    font-size: 32px;
+  }
+
+  .clubs-grid-public {
     grid-template-columns: 1fr;
+    gap: 25px;
+  }
+
+  .club-image-public {
+    height: 240px;
+  }
+
+  .club-content-public {
+    padding: 24px;
+  }
+
+  .club-content-public h3 {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    padding: 40px 15px;
   }
 
   .page-header-section h1 {
     font-size: 28px;
+  }
+
+  .club-card-public:hover {
+    transform: translateY(-10px) rotate(0deg);
   }
 }

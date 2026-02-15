@@ -277,7 +277,7 @@ const AdmissionForm = () => {
         }
       });
 
-      const response = await axios.post('https://backend-yfp1.onrender.com/api/admissions', submitData, {
+      const response = await axios.post('https://malkhanagarcollege.onrender.com/api/admissions', submitData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
