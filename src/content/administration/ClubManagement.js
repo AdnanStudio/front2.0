@@ -42,8 +42,7 @@ const ClubManagementPublic = () => {
 
       <div className="page-container">
         <div className="page-header-section">
-          <h1>Club Management</h1>
-          <p>Explore our vibrant student clubs and extracurricular activities</p>
+          <h1>Club Members</h1>
         </div>
 
         {loading ? (

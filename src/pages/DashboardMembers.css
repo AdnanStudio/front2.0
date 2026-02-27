@@ -1,0 +1,607 @@
+/* ============================================================
+   DASHBOARD MEMBER LIST CSS
+   Used by:
+     - GoverningBodyManagement (dashboard)
+     - TeacherTrainingManagement (dashboard)
+     - TeacherListManagement (dashboard)
+   Add  import './DashboardMembers.css';  to each file
+   ============================================================ */
+
+/* ── Page wrapper ── */
+.dm-page {
+  padding: 0 0 40px;
+}
+
+/* ── Page header ── */
+.dm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.dm-header-left h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dm-header-left p {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ── Stats row ── */
+.dm-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.dm-stat {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-left: 4px solid var(--stat-color, #2c6c9d);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.dm-stat:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+}
+
+.dm-stat-value {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--stat-color, #2c6c9d);
+  line-height: 1;
+}
+
+.dm-stat-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ── Search + Filter bar ── */
+.dm-toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.dm-search {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+}
+
+.dm-search input {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.dm-search input:focus {
+  border-color: #2c6c9d;
+  box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+}
+
+.dm-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.dm-filter select {
+  padding: 10px 14px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.dm-filter select:focus {
+  border-color: #2c6c9d;
+}
+
+/* ── Add button ── */
+.dm-btn-add {
+  padding: 10px 20px;
+  background: #2c6c9d;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  box-shadow: 0 3px 10px rgba(102,126,234,0.35);
+}
+
+.dm-btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(102,126,234,0.45);
+}
+
+/* ── Form card ── */
+.dm-form-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border: 1px solid #f3f4f6;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dm-form-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1.5px solid #f3f4f6;
+}
+
+.dm-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.dm-form-grid .full-span {
+  grid-column: 1 / -1;
+}
+
+.dm-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dm-form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.dm-form-group input,
+.dm-form-group select,
+.dm-form-group textarea {
+  padding: 10px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 9px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #fafafa;
+  color: #111827;
+  font-family: inherit;
+}
+
+.dm-form-group input:focus,
+.dm-form-group select:focus,
+.dm-form-group textarea:focus {
+  border-color: #2c6c9d;
+  box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+  background: #fff;
+}
+
+.dm-form-group textarea { resize: vertical; min-height: 90px; }
+
+.dm-image-preview {
+  margin-top: 8px;
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+}
+
+.dm-image-preview.circle { border-radius: 50%; }
+
+.dm-form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1.5px solid #f3f4f6;
+}
+
+.dm-btn-cancel {
+  padding: 10px 20px;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dm-btn-cancel:hover { background: #e5e7eb; }
+
+.dm-btn-submit {
+  padding: 10px 24px;
+  background: #2c6c9d;
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 3px 10px rgba(102,126,234,0.3);
+}
+
+.dm-btn-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(102,126,234,0.4);
+}
+
+.dm-btn-submit:disabled { opacity: 0.65; cursor: not-allowed; }
+
+/* ================================================================
+   MEMBER CARDS GRID — used by GoverningBody & TeacherList
+   ================================================================ */
+
+.dm-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.dm-member-card {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+  border: 1px solid #f3f4f6;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+}
+
+.dm-member-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 36px rgba(102,126,234,0.18);
+}
+
+.dm-member-card-top {
+  height: 70px;
+  background: #2c6c9d;
+}
+
+/* color variants per role/status */
+.dm-member-card-top.blue   { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.dm-member-card-top.green  { background: linear-gradient(135deg, #10b981, #047857); }
+.dm-member-card-top.orange { background: linear-gradient(135deg, #f59e0b, #b45309); }
+.dm-member-card-top.red    { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+.dm-member-card-top.teal   { background: linear-gradient(135deg, #14b8a6, #0f766e); }
+.dm-member-card-top.pink   { background: linear-gradient(135deg, #ec4899, #be185d); }
+
+.dm-member-avatar-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: -36px;
+  position: relative;
+  z-index: 1;
+}
+
+.dm-member-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  object-fit: cover;
+  background: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.dm-member-avatar-placeholder {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.dm-member-card-body {
+  padding: 12px 18px 18px;
+  text-align: center;
+}
+
+.dm-member-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px;
+}
+
+.dm-member-designation {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 10px;
+}
+
+.dm-member-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.dm-member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: left;
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.dm-member-info-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: #4b5563;
+}
+
+.dm-member-info-row i {
+  color: #9ca3af;
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.dm-member-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.dm-action-btn {
+  padding: 7px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s;
+}
+
+.dm-action-btn.edit   { background: #dbeafe; color: #1e40af; }
+.dm-action-btn.toggle { background: #fef9c3; color: #854d0e; }
+.dm-action-btn.delete { background: #fee2e2; color: #991b1b; }
+
+.dm-action-btn:hover { filter: brightness(0.93); transform: translateY(-1px); }
+
+/* Status dot on card */
+.dm-status-dot {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+.dm-status-dot.active   { background: #10b981; }
+.dm-status-dot.inactive { background: #ef4444; }
+.dm-status-dot.leave    { background: #f59e0b; }
+
+/* ================================================================
+   TABLE STYLE — for TeacherTraining dashboard list
+   ================================================================ */
+
+.dm-table-wrap {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+  border: 1px solid #f3f4f6;
+}
+
+.dm-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dm-table thead tr {
+  background: #2c6c9d;
+}
+
+.dm-table thead th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.dm-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.15s;
+}
+
+.dm-table tbody tr:last-child { border-bottom: none; }
+.dm-table tbody tr:hover { background: #f9fafb; }
+
+.dm-table tbody td {
+  padding: 14px 16px;
+  font-size: 13.5px;
+  color: #1f2937;
+  vertical-align: middle;
+}
+
+.dm-table-training-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dm-table-training-thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #2c6c9d;
+}
+
+.dm-table-training-placeholder {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.dm-table-training-name {
+  font-weight: 700;
+  color: #111827;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.dm-table-training-desc {
+  font-size: 12px;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+.dm-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dm-tag.type    { background: #e0e7ff; color: #4338ca; }
+.dm-tag.status-upcoming  { background: #dbeafe; color: #1e40af; }
+.dm-tag.status-ongoing   { background: #fef3c7; color: #92400e; }
+.dm-tag.status-completed { background: #d1fae5; color: #065f46; }
+.dm-tag.status-cancelled { background: #fee2e2; color: #991b1b; }
+.dm-tag.status-active    { background: #d1fae5; color: #065f46; }
+.dm-tag.status-on-leave  { background: #fef3c7; color: #92400e; }
+.dm-tag.status-resigned  { background: #fee2e2; color: #991b1b; }
+.dm-tag.status-retired   { background: #f3f4f6; color: #4b5563; }
+
+/* ── Empty state ── */
+.dm-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+}
+
+.dm-empty-icon {
+  font-size: 52px;
+  margin-bottom: 14px;
+  display: block;
+  opacity: 0.5;
+}
+
+.dm-empty p {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* ── Loading spinner ── */
+.dm-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .dm-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+  .dm-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .dm-form-grid .full-span {
+    grid-column: 1;
+  }
+  .dm-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .dm-table-wrap {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .dm-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  .dm-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -1,208 +1,548 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import markService from '../services/markService';
-import studentService from '../services/studentService';
+import api from '../services/api';
 import toast from 'react-hot-toast';
-import { Award, Plus, TrendingUp, BookOpen } from 'lucide-react';
 import './Marks.css';
 
-const Marks = () => {
-  const { user } = useSelector((state) => state.auth);
-  const [marks, setMarks] = useState([]);
-  const [students, setStudents] = useState([]);
-  const [statistics, setStatistics] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+const EXAM_TYPES = [
+  { value: '1st_term',    label: '1st Term Exam' },
+  { value: '2nd_term',    label: '2nd Term Exam' },
+  { value: '3rd_term',    label: '3rd Term Exam' },
+  { value: 'half_yearly', label: 'Half Yearly' },
+  { value: 'annual',      label: 'Annual Exam' },
+  { value: 'test',        label: 'Test Exam' },
+  { value: 'mock',        label: 'Mock Test' },
+];
 
-  const [createForm, setCreateForm] = useState({
-    student: '',
-    subject: '',
-    examType: 'midterm',
-    examName: '',
-    totalMarks: '',
-    obtainedMarks: '',
-    examDate: '',
-    remarks: '',
-    isPublished: false,
+const CY = new Date().getFullYear();
+const YEARS = Array.from({ length: 5 }, (_, i) => CY - i + 1);
+
+const gradeColor = g => ({
+  'A+': '#15803d', A: '#16a34a', 'A-': '#65a30d',
+  B: '#ca8a04', C: '#ea580c', D: '#dc2626', F: '#991b1b',
+}[g] || '#64748b');
+
+const calcLive = (grid, studentId, subjects) => {
+  let obtained = 0, full = 0;
+  subjects.forEach(sub => {
+    const key = String(sub._id);
+    const m   = grid[studentId]?.[key] || {};
+    const f   = parseFloat(m.theoryFullMarks) || sub.totalMarks || 100;
+    full += f;
+    if (!m.isAbsent) obtained += parseFloat(m.theoryObtained) || 0;
   });
+  const pct = full > 0 ? (obtained / full) * 100 : 0;
+  const g = pct>=80?'A+':pct>=70?'A':pct>=60?'A-':pct>=50?'B':pct>=40?'C':pct>=33?'D':'F';
+  return { obtained, full, pct: pct.toFixed(1), grade: g };
+};
 
+export default function Marks() {
+  const { user } = useSelector(s => s.auth);
+  const isAdmin   = user?.role === 'admin';
+
+  const [classes,  setClasses]  = useState([]);
+  const [selClass, setSelClass] = useState('');
+  const [selExam,  setSelExam]  = useState('annual');
+  const [selYear,  setSelYear]  = useState(CY);
+  const [tab,      setTab]      = useState('entry');
+
+  const [classInfo, setClassInfo] = useState(null);
+  const [grid,      setGrid]      = useState({});
+  const [viewMarks, setViewMarks] = useState([]);
+  const [stats,     setStats]     = useState(null);
+
+  // Track load state per-tab independently
+  const [entryLoading, setEntryLoading] = useState(false);
+  const [viewLoading,  setViewLoading]  = useState(false);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [saving,       setSaving]       = useState(false);
+
+  // Track if data was already loaded for current filter combination
+  const loadedRef = useRef({ entry: null, view: null, stats: null });
+
+  const filterKey = `${selClass}|${selExam}|${selYear}`;
+
+  // Load classes once on mount
   useEffect(() => {
-    fetchMarks();
-    if (user.role !== 'student') {
-      fetchStudents();
-    }
-  }, [user.role]);
+    api.get('/classes')
+      .then(r => setClasses(r.data?.data || []))
+      .catch(() => {}); // silent - classes are secondary
+  }, []);
 
-  const fetchMarks = async () => {
+  // Reset loaded cache when filters change
+  useEffect(() => {
+    loadedRef.current = { entry: null, view: null, stats: null };
+    setClassInfo(null);
+    setViewMarks([]);
+    setStats(null);
+    setGrid({});
+  }, [selClass, selExam, selYear]);
+
+  // ── Load entry data ──────────────────────────────────────────────────
+  const loadEntry = useCallback(async (force = false) => {
+    if (!selClass) return;
+    if (!force && loadedRef.current.entry === filterKey) return; // already loaded
+    setEntryLoading(true);
     try {
-      setLoading(true);
-      const data = await markService.getAllMarks();
-      setMarks(data.data);
-
-      if (user.role === 'student' && data.data.length > 0) {
-        const studentId = data.data[0].student._id;
-        const statsData = await markService.getMarksByStudent(studentId);
-        setStatistics(statsData.data.statistics);
-      }
-    } catch (error) {
-      toast.error('Failed to fetch marks');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchStudents = async () => {
-    try {
-      const data = await studentService.getAllStudents();
-      setStudents(data.data);
-    } catch (error) {
-      console.error('Failed to fetch students');
-    }
-  };
-
-  const handleCreateMark = async (e) => {
-    e.preventDefault();
-
-    if (parseFloat(createForm.obtainedMarks) > parseFloat(createForm.totalMarks)) {
-      toast.error('Obtained marks cannot be greater than total marks');
-      return;
-    }
-
-    try {
-      await markService.createMark(createForm);
-      toast.success('Mark created successfully');
-      setShowCreateModal(false);
-      setCreateForm({
-        student: '',
-        subject: '',
-        examType: 'midterm',
-        examName: '',
-        totalMarks: '',
-        obtainedMarks: '',
-        examDate: '',
-        remarks: '',
-        isPublished: false,
+      const r = await api.get(`/marks/class/${selClass}/students`, {
+        params: { examType: selExam, examYear: selYear },
       });
-      fetchMarks();
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create mark');
+      const data = r.data?.data;
+      if (!data) throw new Error('No data');
+      setClassInfo(data);
+
+      const newGrid = {};
+      data.students.forEach(({ student, existingMark }) => {
+        newGrid[student._id] = {};
+        data.subjects.forEach(sub => {
+          const key = String(sub._id);
+          const ex  = existingMark?.subjects?.find(s =>
+            s.subjectName?.toLowerCase() === sub.name?.toLowerCase()
+          );
+          newGrid[student._id][key] = {
+            theoryFullMarks:    ex?.theoryFullMarks    ?? sub.totalMarks ?? 100,
+            theoryObtained:     ex?.theoryObtained     ?? '',
+            practicalFullMarks: ex?.practicalFullMarks ?? 0,
+            practicalObtained:  ex?.practicalObtained  ?? '',
+            mcqFullMarks:       ex?.mcqFullMarks       ?? 0,
+            mcqObtained:        ex?.mcqObtained        ?? '',
+            isAbsent:           ex?.isAbsent           ?? false,
+          };
+        });
+      });
+      setGrid(newGrid);
+      loadedRef.current.entry = filterKey;
+    } catch (e) {
+      // Only show error toast if user explicitly clicked retry
+      if (force) {
+        toast.error(e.response?.data?.message || 'Failed to load class data');
+      }
+    }
+    setEntryLoading(false);
+  }, [selClass, selExam, selYear, filterKey]);
+
+  const loadView = useCallback(async (force = false) => {
+    if (!selClass) return;
+    if (!force && loadedRef.current.view === filterKey) return;
+    setViewLoading(true);
+    try {
+      const r = await api.get(`/marks/class/${selClass}`, {
+        params: { examType: selExam, examYear: selYear },
+      });
+      setViewMarks(r.data?.data || []);
+      loadedRef.current.view = filterKey;
+    } catch {
+      if (force) toast.error('Failed to load results');
+    }
+    setViewLoading(false);
+  }, [selClass, selExam, selYear, filterKey]);
+
+  const loadStats = useCallback(async (force = false) => {
+    if (!selClass) return;
+    if (!force && loadedRef.current.stats === filterKey) return;
+    setStatsLoading(true);
+    try {
+      const r = await api.get(`/marks/stats/${selClass}`, {
+        params: { examType: selExam, examYear: selYear },
+      });
+      setStats(r.data?.data || null);
+      loadedRef.current.stats = filterKey;
+    } catch {
+      if (force) toast.error('Failed to load statistics');
+    }
+    setStatsLoading(false);
+  }, [selClass, selExam, selYear, filterKey]);
+
+  // Only load data for the ACTIVE tab (not all 3 at once)
+  useEffect(() => {
+    if (!selClass) return;
+    if (tab === 'entry') loadEntry();
+    if (tab === 'view')  loadView();
+    if (tab === 'stats') loadStats();
+  }, [tab, selClass, selExam, selYear]);
+
+  // ── Mark input ───────────────────────────────────────────────────────
+  const setMark = (studentId, subjectId, field, val) => {
+    setGrid(prev => ({
+      ...prev,
+      [studentId]: {
+        ...prev[studentId],
+        [subjectId]: {
+          ...prev[studentId]?.[subjectId],
+          [field]: field === 'isAbsent' ? val : (val === '' ? '' : parseFloat(val) || 0),
+        },
+      },
+    }));
+  };
+
+  // ── Save all ─────────────────────────────────────────────────────────
+  const handleSaveAll = async () => {
+    if (!classInfo?.students?.length) return toast.error('No students to save');
+    setSaving(true);
+    try {
+      const marksData = classInfo.students.map(({ student }) => ({
+        studentId: student._id,
+        subjects: classInfo.subjects.map(sub => {
+          const key = String(sub._id);
+          const m   = grid[student._id]?.[key] || {};
+          return {
+            subjectName:        sub.name,
+            subjectCode:        sub.code || '',
+            theoryFullMarks:    parseFloat(m.theoryFullMarks)    || 100,
+            theoryObtained:     parseFloat(m.theoryObtained)     || 0,
+            practicalFullMarks: parseFloat(m.practicalFullMarks) || 0,
+            practicalObtained:  parseFloat(m.practicalObtained)  || 0,
+            mcqFullMarks:       parseFloat(m.mcqFullMarks)       || 0,
+            mcqObtained:        parseFloat(m.mcqObtained)        || 0,
+            isAbsent:           m.isAbsent ?? false,
+          };
+        }),
+      }));
+      const r = await api.post('/marks/bulk', {
+        classId:  selClass,
+        examType: selExam,
+        examYear: selYear,
+        marksData,
+      });
+      toast.success(r.data?.message || '✅ Marks saved!');
+      // Invalidate view/stats cache so they reload fresh
+      loadedRef.current.view  = null;
+      loadedRef.current.stats = null;
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to save marks');
+    }
+    setSaving(false);
+  };
+
+  // ── Publish ──────────────────────────────────────────────────────────
+  const handlePublish = async () => {
+    if (!window.confirm('Publish results? Students will be notified.')) return;
+    try {
+      const r = await api.put('/marks/publish', {
+        classId: selClass, examType: selExam, examYear: selYear,
+      });
+      toast.success(r.data?.message || 'Results published!');
+      loadedRef.current.view  = null;
+      loadedRef.current.stats = null;
+      if (tab === 'view') loadView(true);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to publish');
     }
   };
 
-  const getGradeColor = (grade) => {
-    if (grade === 'A+' || grade === 'A') return 'grade-a';
-    if (grade === 'A-' || grade === 'B') return 'grade-b';
-    if (grade === 'C' || grade === 'D') return 'grade-c';
-    return 'grade-f';
+  const handleUnpublish = async () => {
+    if (!window.confirm('Unpublish results?')) return;
+    try {
+      await api.put('/marks/unpublish', {
+        classId: selClass, examType: selExam, examYear: selYear,
+      });
+      toast.success('Results unpublished');
+      loadedRef.current.view  = null;
+      loadView(true);
+    } catch {
+      toast.error('Failed to unpublish');
+    }
   };
 
-  const formatDate = (date) =>
-    new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  const selClassObj  = classes.find(c => c._id === selClass);
+  const selExamLabel = EXAM_TYPES.find(e => e.value === selExam)?.label;
+  const loading = tab === 'entry' ? entryLoading
+                : tab === 'view'  ? viewLoading
+                : statsLoading;
 
   return (
-    <div className="marks-page">
-      <div className="page-header">
-        <div className="header-left">
-          <Award size={32} />
-          <div>
-            <h1>Marks & Grades</h1>
-            <p>View and manage student marks</p>
-          </div>
+    <div className="mk-page">
+      {/* Header */}
+      <div className="mk-header">
+        <h1>📊 Mark Management System</h1>
+        <p>Enter marks → Save → Publish → Print admit cards & marksheets</p>
+      </div>
+
+      {/* Filters */}
+      <div className="mk-filters">
+        <div className="mk-fg">
+          <label>Class</label>
+          <select value={selClass} onChange={e => { setSelClass(e.target.value); setTab('entry'); }}>
+            <option value="">— Select Class —</option>
+            {classes.map(c => (
+              <option key={c._id} value={c._id}>
+                {c.name}{c.section ? ` (${c.section})` : ''}
+              </option>
+            ))}
+          </select>
         </div>
-        {user.role !== 'student' && (
-          <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
-            <Plus size={20} /> Add Marks
-          </button>
+
+        <div className="mk-fg">
+          <label>Exam Type</label>
+          <select value={selExam} onChange={e => setSelExam(e.target.value)}>
+            {EXAM_TYPES.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
+          </select>
+        </div>
+
+        <div className="mk-fg">
+          <label>Year</label>
+          <select value={selYear} onChange={e => setSelYear(parseInt(e.target.value))}>
+            {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </div>
+
+        {selClass && selClassObj && (
+          <div className="mk-class-badge">
+            <span className="badge-inner">
+              {selClassObj.name}{selClassObj.section && ` · ${selClassObj.section}`}
+            </span>
+          </div>
         )}
       </div>
 
-      {user.role === 'student' && statistics && (
-        <div className="marks-stats">
-          <div className="stat-card">
-            <div className="stat-icon">
-              <BookOpen size={30} />
-            </div>
-            <div className="stat-info">
-              <h3>{statistics.totalExams}</h3>
-              <p>Total Exams</p>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon">
-              <Award size={30} />
-            </div>
-            <div className="stat-info">
-              <h3>{statistics.percentage}</h3>
-              <p>Average Percentage</p>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon">
-              <TrendingUp size={30} />
-            </div>
-            <div className="stat-info">
-              <h3>
-                {statistics.obtainedMarks}/{statistics.totalMarks}
-              </h3>
-              <p>Total Marks</p>
-            </div>
-          </div>
+      {/* Tabs */}
+      <div className="mk-tabs">
+        {[['entry','✏️ Mark Entry'],['view','📋 View Results'],['stats','📈 Statistics']].map(([t, label]) => (
+          <button key={t} className={tab === t ? 'active' : ''} onClick={() => setTab(t)}>
+            {label}
+          </button>
+        ))}
+        {isAdmin && selClass && (
+          <>
+            <a href={`/dashboard/admit-card?classId=${selClass}&examType=${selExam}&examYear=${selYear}`}
+               className="tab-ext" target="_blank" rel="noreferrer">🎫 Admit Cards</a>
+            <a href={`/dashboard/result-sheet?classId=${selClass}&examType=${selExam}&examYear=${selYear}`}
+               className="tab-ext green" target="_blank" rel="noreferrer">📄 Marksheets</a>
+          </>
+        )}
+      </div>
+
+      {/* No class selected */}
+      {!selClass && (
+        <div className="mk-empty">
+          <span>📚</span>
+          <p>Please select a class to get started</p>
         </div>
       )}
 
-      {loading ? (
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Loading marks...</p>
+      {/* Loading */}
+      {selClass && loading && (
+        <div className="mk-loading">
+          <div className="spin" /><span>Loading...</span>
         </div>
-      ) : (
-        <div className="marks-container">
-          {marks.length === 0 ? (
-            <div className="no-data">No marks available</div>
+      )}
+
+      {/* ═══════ MARK ENTRY ═══════ */}
+      {tab === 'entry' && selClass && !entryLoading && (
+        <div className="mk-section">
+          {!classInfo ? (
+            <div className="mk-empty">
+              <span>⚠️</span>
+              <p>Could not load class data.</p>
+              <button className="btn-retry" onClick={() => loadEntry(true)}>🔄 Retry</button>
+            </div>
+          ) : classInfo.students.length === 0 ? (
+            <div className="mk-empty">
+              <span>👥</span>
+              <p>No students found in <strong>{classInfo.class.name}</strong></p>
+            </div>
+          ) : classInfo.subjects.length === 0 ? (
+            <div className="mk-empty">
+              <span>📖</span>
+              <p>No subjects found for this class. Add subjects first.</p>
+            </div>
           ) : (
-            <div className="marks-table-container">
-              <table className="marks-table">
+            <>
+              <div className="mk-toolbar">
+                <div className="mk-toolbar-info">
+                  <strong>{classInfo.class.name}</strong>
+                  {classInfo.class.section && ` (${classInfo.class.section})`}
+                  {' — '}{selExamLabel} {selYear}
+                  <span className="mk-count">
+                    &nbsp;· {classInfo.students.length} Students &nbsp;· {classInfo.subjects.length} Subjects
+                  </span>
+                </div>
+                <div className="mk-toolbar-btns">
+                  <button className="btn-save" onClick={handleSaveAll} disabled={saving}>
+                    {saving ? <><div className="btn-spin"/>Saving...</> : '💾 Save All'}
+                  </button>
+                  {isAdmin && (
+                    <button className="btn-publish" onClick={handlePublish}>🚀 Publish</button>
+                  )}
+                </div>
+              </div>
+
+              <div className="mk-table-wrap">
+                <table className="mk-table">
+                  <thead>
+                    <tr>
+                      <th className="col-roll" rowSpan={2}>Roll</th>
+                      <th className="col-name" rowSpan={2}>Student</th>
+                      {classInfo.subjects.map(sub => (
+                        <th key={sub._id} colSpan={2} className="col-subj">
+                          {sub.name}{sub.code && <small> ({sub.code})</small>}
+                        </th>
+                      ))}
+                      <th className="col-sum" rowSpan={2}>Total</th>
+                      <th className="col-sum" rowSpan={2}>%</th>
+                      <th className="col-sum" rowSpan={2}>Grade</th>
+                    </tr>
+                    <tr>
+                      {classInfo.subjects.map(sub => {
+                        const firstStu = classInfo.students[0]?.student?._id;
+                        const full = grid[firstStu]?.[String(sub._id)]?.theoryFullMarks ?? sub.totalMarks ?? 100;
+                        return (
+                          <React.Fragment key={sub._id}>
+                            <th className="col-inp">Marks <small>/{full}</small></th>
+                            <th className="col-abs">AB</th>
+                          </React.Fragment>
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {classInfo.students.map(({ student }) => {
+                      const live = calcLive(grid, student._id, classInfo.subjects);
+                      return (
+                        <tr key={student._id}>
+                          <td className="td-roll">{student.rollNumber || '—'}</td>
+                          <td className="td-name">
+                            {student.profileImage && (
+                              <img src={student.profileImage} alt="" className="s-pic" />
+                            )}
+                            {student.name}
+                          </td>
+                          {classInfo.subjects.map(sub => {
+                            const key    = String(sub._id);
+                            const m      = grid[student._id]?.[key] || {};
+                            const full   = parseFloat(m.theoryFullMarks) || sub.totalMarks || 100;
+                            const absent = m.isAbsent ?? false;
+                            return (
+                              <React.Fragment key={key}>
+                                <td className="td-inp">
+                                  <input
+                                    type="number" min="0" max={full} step="0.5"
+                                    value={absent ? '' : (m.theoryObtained ?? '')}
+                                    placeholder={absent ? 'AB' : `0-${full}`}
+                                    disabled={absent}
+                                    onChange={e => setMark(student._id, key, 'theoryObtained', e.target.value)}
+                                    className={`minput${absent ? ' absent' : ''}`}
+                                  />
+                                </td>
+                                <td className="td-abs">
+                                  <input
+                                    type="checkbox"
+                                    checked={absent}
+                                    onChange={e => setMark(student._id, key, 'isAbsent', e.target.checked)}
+                                    className="ab-chk"
+                                  />
+                                </td>
+                              </React.Fragment>
+                            );
+                          })}
+                          <td className="td-sum">{live.obtained}/{live.full}</td>
+                          <td className="td-pct">{live.pct}%</td>
+                          <td className="td-grade" style={{ color: gradeColor(live.grade) }}>
+                            <strong>{live.grade}</strong>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mk-footer">
+                <button className="btn-save" onClick={handleSaveAll} disabled={saving}>
+                  {saving ? 'Saving...' : '💾 Save All Marks'}
+                </button>
+                {isAdmin && (
+                  <button className="btn-publish" onClick={handlePublish}>🚀 Publish Results</button>
+                )}
+                <span className="mk-hint">💡 Save marks first, then publish when done.</span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ═══════ VIEW RESULTS ═══════ */}
+      {tab === 'view' && selClass && !viewLoading && (
+        <div className="mk-section">
+          <div className="mk-toolbar">
+            <div className="mk-toolbar-info">
+              Results — {selClassObj?.name} — {selExamLabel} {selYear}
+            </div>
+            <div className="mk-toolbar-btns">
+              {isAdmin && viewMarks.length > 0 && (
+                <>
+                  <button className="btn-unp" onClick={handleUnpublish}>🔒 Unpublish</button>
+                  <a href={`/dashboard/result-sheet?classId=${selClass}&examType=${selExam}&examYear=${selYear}`}
+                     className="btn-print" target="_blank" rel="noreferrer">🖨️ Print All</a>
+                </>
+              )}
+              <button className="btn-retry" onClick={() => loadView(true)}>🔄 Refresh</button>
+            </div>
+          </div>
+
+          {viewMarks.length === 0 ? (
+            <div className="mk-empty">
+              <span>📭</span>
+              <p>No marks saved yet. Use Mark Entry to enter marks first.</p>
+            </div>
+          ) : (
+            <div className="mk-table-wrap">
+              <table className="mk-table res-table">
                 <thead>
                   <tr>
-                    {user.role !== 'student' && <th>Student</th>}
-                    <th>Subject</th>
-                    <th>Exam Type</th>
-                    <th>Exam Name</th>
-                    <th>Total Marks</th>
-                    <th>Obtained</th>
-                    <th>Percentage</th>
+                    <th>#</th>
+                    <th>Roll</th>
+                    <th>Student</th>
+                    {viewMarks[0]?.subjects?.map((s, i) => (
+                      <th key={i}>{s.subjectName || `Sub ${i+1}`}</th>
+                    ))}
+                    <th>Total</th>
+                    <th>%</th>
+                    <th>GPA</th>
                     <th>Grade</th>
-                    <th>Date</th>
+                    <th>Result</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {marks.map((mark) => (
-                    <tr key={mark._id}>
-                      {user.role !== 'student' && (
-                        <td>
-                          <div className="student-cell">
-                            <img
-                              src={mark.student?.userId?.profileImage || 'https://via.placeholder.com/30'}
-                              alt={mark.student?.userId?.name}
-                              className="student-avatar-small"
-                            />
-                            <span>{mark.student?.userId?.name}</span>
-                          </div>
+                  {[...viewMarks]
+                    .sort((a, b) => (b.percentage||0) - (a.percentage||0))
+                    .map((mark, idx) => (
+                    <tr key={mark._id} className={mark.grade === 'F' ? 'row-fail' : ''}>
+                      <td className="td-pos">#{idx + 1}</td>
+                      <td>{mark.student?.rollNumber || '—'}</td>
+                      <td className="td-name">
+                        {mark.student?.userId?.profileImage && (
+                          <img src={mark.student.userId.profileImage} alt="" className="s-pic" />
+                        )}
+                        {mark.student?.userId?.name || 'Unknown'}
+                      </td>
+                      {mark.subjects?.map((s, i) => (
+                        <td key={i} className={s.isAbsent ? 'td-ab' : ''}>
+                          {s.isAbsent
+                            ? <span className="ab-tag">AB</span>
+                            : `${s.totalObtained}/${s.totalFullMarks}`
+                          }
+                          <span className="sub-g" style={{ color: gradeColor(s.grade) }}>
+                            &nbsp;({s.isAbsent ? 'AB' : s.grade})
+                          </span>
                         </td>
-                      )}
-                      <td className="subject-cell">{mark.subject}</td>
+                      ))}
+                      <td className="td-b">{mark.totalObtained}/{mark.totalFullMarks}</td>
+                      <td className="td-pct">{mark.percentage}%</td>
+                      <td className="td-b">{mark.gpa}</td>
+                      <td style={{ color: gradeColor(mark.grade), fontWeight: 700 }}>{mark.grade}</td>
                       <td>
-                        <span className="exam-type-badge">{mark.examType.replace('_', ' ')}</span>
+                        <span className={`res-chip ${mark.result?.toLowerCase().replace(/ /g,'-')}`}>
+                          {mark.result}
+                        </span>
                       </td>
-                      <td>{mark.examName}</td>
-                      <td>{mark.totalMarks}</td>
-                      <td>{mark.obtainedMarks}</td>
-                      <td>{((mark.obtainedMarks / mark.totalMarks) * 100).toFixed(2)}%</td>
                       <td>
-                        <span className={`grade-badge ${getGradeColor(mark.grade)}`}>{mark.grade}</span>
+                        <span className={mark.isPublished ? 'pub-yes' : 'pub-no'}>
+                          {mark.isPublished ? '✅ Published' : '⏳ Draft'}
+                        </span>
                       </td>
-                      <td>{formatDate(mark.examDate)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -212,140 +552,74 @@ const Marks = () => {
         </div>
       )}
 
-      {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
-          <div className="modal-content large" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Add Marks</h2>
-              <button onClick={() => setShowCreateModal(false)} className="close-btn">
-                &times;
-              </button>
+      {/* ═══════ STATISTICS ═══════ */}
+      {tab === 'stats' && selClass && !statsLoading && (
+        <div className="mk-section stats-sec">
+          <h2>📈 Statistics — {selClassObj?.name} — {selExamLabel} {selYear}</h2>
+
+          {!stats ? (
+            <div className="mk-empty">
+              <span>📊</span>
+              <p>No statistics yet. Save and publish marks first.</p>
+              <button className="btn-retry" onClick={() => loadStats(true)}>🔄 Refresh</button>
             </div>
-            <div className="modal-body">
-              <form onSubmit={handleCreateMark}>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Select Student *</label>
-                    <select
-                      value={createForm.student}
-                      onChange={(e) => setCreateForm({ ...createForm, student: e.target.value })}
-                      required
-                    >
-                      <option value="">Choose Student</option>
-                      {students.map((student) => (
-                        <option key={student._id} value={student._id}>
-                          {student.userId?.name} - {student.studentId}
-                        </option>
-                      ))}
-                    </select>
+          ) : (
+            <>
+              <div className="s-grid">
+                {[
+                  { l: 'Total Students', v: stats.total,               c: '#6366f1' },
+                  { l: 'Passed',         v: stats.passed,              c: '#16a34a' },
+                  { l: 'Failed',         v: stats.failed,              c: '#dc2626' },
+                  { l: 'Pass Rate',      v: `${stats.passRate}%`,      c: '#f59e0b' },
+                  { l: 'Avg Score',      v: `${stats.avgPercentage}%`, c: '#0284c7' },
+                  { l: 'Avg GPA',        v: stats.avgGpa,              c: '#7c3aed' },
+                  { l: 'Published',      v: stats.published,           c: '#059669' },
+                  { l: 'Unpublished',    v: stats.notPublished,        c: '#94a3b8' },
+                ].map(s => (
+                  <div key={s.l} className="s-card">
+                    <div className="s-val" style={{ color: s.c }}>{s.v}</div>
+                    <div className="s-lbl">{s.l}</div>
                   </div>
+                ))}
+              </div>
 
-                  <div className="form-group">
-                    <label>Subject *</label>
-                    <input
-                      type="text"
-                      value={createForm.subject}
-                      onChange={(e) => setCreateForm({ ...createForm, subject: e.target.value })}
-                      placeholder="e.g., Mathematics"
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Exam Type *</label>
-                    <select
-                      value={createForm.examType}
-                      onChange={(e) => setCreateForm({ ...createForm, examType: e.target.value })}
-                      required
-                    >
-                      <option value="midterm">Midterm</option>
-                      <option value="final">Final</option>
-                      <option value="class_test">Class Test</option>
-                      <option value="assignment">Assignment</option>
-                      <option value="project">Project</option>
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Exam Name *</label>
-                    <input
-                      type="text"
-                      value={createForm.examName}
-                      onChange={(e) => setCreateForm({ ...createForm, examName: e.target.value })}
-                      placeholder="e.g., First Midterm 2024"
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Total Marks *</label>
-                    <input
-                      type="number"
-                      value={createForm.totalMarks}
-                      onChange={(e) => setCreateForm({ ...createForm, totalMarks: e.target.value })}
-                      placeholder="e.g., 100"
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Obtained Marks *</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={createForm.obtainedMarks}
-                      onChange={(e) => setCreateForm({ ...createForm, obtainedMarks: e.target.value })}
-                      placeholder="e.g., 85"
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Exam Date</label>
-                    <input
-                      type="date"
-                      value={createForm.examDate}
-                      onChange={(e) => setCreateForm({ ...createForm, examDate: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="form-group full-width">
-                    <label>Remarks</label>
-                    <textarea
-                      value={createForm.remarks}
-                      onChange={(e) => setCreateForm({ ...createForm, remarks: e.target.value })}
-                      placeholder="Additional comments"
-                      rows="3"
-                    />
-                  </div>
-
-                  <div className="form-group full-width">
-                    <label className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={createForm.isPublished}
-                        onChange={(e) => setCreateForm({ ...createForm, isPublished: e.target.checked })}
-                      />
-                      <span>Publish marks (students will be able to see)</span>
-                    </label>
+              <div className="s-row2">
+                <div className="s-card wide">
+                  <div className="s-lbl">🏆 Highest Scorer</div>
+                  <div className="s-detail">
+                    {stats.highest?.student} — {stats.highest?.percentage}% · GPA: {stats.highest?.gpa} · {stats.highest?.grade}
                   </div>
                 </div>
-
-                <div className="modal-actions">
-                  <button type="button" className="btn-secondary" onClick={() => setShowCreateModal(false)}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn-primary">
-                    Save Marks
-                  </button>
+                <div className="s-card wide">
+                  <div className="s-lbl">📉 Lowest Scorer</div>
+                  <div className="s-detail">
+                    {stats.lowest?.student} — {stats.lowest?.percentage}% · GPA: {stats.lowest?.gpa} · {stats.lowest?.grade}
+                  </div>
                 </div>
-              </form>
-            </div>
-          </div>
+              </div>
+
+              <div className="s-card full-w">
+                <div className="s-lbl">Grade Distribution</div>
+                <div className="g-bars">
+                  {['A+','A','A-','B','C','D','F'].map(g => {
+                    const count = stats.gradeDistribution?.[g] || 0;
+                    const pct   = stats.total > 0 ? (count / stats.total) * 100 : 0;
+                    return (
+                      <div key={g} className="g-bar-row">
+                        <span className="g-lbl" style={{ color: gradeColor(g) }}>{g}</span>
+                        <div className="g-bg">
+                          <div className="g-fill" style={{ width: `${pct}%`, background: gradeColor(g) }} />
+                        </div>
+                        <span className="g-cnt">{count} ({pct.toFixed(0)}%)</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
   );
-};
-
-export default Marks;
+}

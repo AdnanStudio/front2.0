@@ -47,7 +47,7 @@
 }
 
 .president-card {
-  border-left: 5px solid #667eea;
+  border-left: 5px solid #9a9a9a;
   display: flex;
   align-items: center;
   gap: 30px;
@@ -81,7 +81,7 @@
 
 .designation {
   font-size: 16px;
-  color: #667eea;
+  color: #2980b9;
   font-weight: 600;
   margin-bottom: 15px;
 }
@@ -120,7 +120,7 @@
 
 .member-name {
   font-size: 14px;
-  color: #667eea;
+  color: #2980b9;
   margin-bottom: 15px;
   font-weight: 600;
 }
@@ -157,7 +157,7 @@
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
   text-align: center;
   transition: all 0.3s;
-  border-top: 4px solid #667eea;
+  border-top: 4px solid #2980b9;
 }
 
 .responsibility-card:hover {
@@ -166,7 +166,7 @@
 }
 
 .responsibility-card svg {
-  color: #667eea;
+  color: #2980b9;
   margin-bottom: 20px;
 }
 
@@ -208,7 +208,7 @@
   border-radius: 12px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
   text-align: center;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #2980b9;
 }
 
 .meeting-card h4 {
@@ -227,7 +227,7 @@
 .time {
   display: block;
   font-size: 14px;
-  color: #667eea;
+  color: #2980b9;
   font-weight: 600;
   margin-top: 10px;
 }
@@ -311,7 +311,7 @@
 }
 
 .contact-item svg {
-  color: #667eea;
+  color: #2980b9;
   min-width: 20px;
 }
 
@@ -379,7 +379,7 @@
 
 .principal-qualifications h3 svg,
 .principal-experience h3 svg {
-  color: #667eea;
+  color: #2980b9;
 }
 
 .principal-qualifications ul,
@@ -438,7 +438,7 @@
   top: 0;
   bottom: 0;
   width: 3px;
-  background: linear-gradient(to bottom, #667eea, #764ba2);
+  background: rgb(35, 167, 255);
 }
 
 .experience-item {
@@ -454,14 +454,14 @@
   width: 12px;
   height: 12px;
   background: white;
-  border: 3px solid #667eea;
+  border: 3px solid #2980b9;
   border-radius: 50%;
 }
 
 .experience-item .year {
   display: block;
   font-size: 14px;
-  color: #667eea;
+  color: #2980b9;
   font-weight: 700;
   margin-bottom: 8px;
 }
@@ -540,7 +540,7 @@
 }
 
 .stat-card svg {
-  color: #667eea;
+  color: #2980b9;
   margin-bottom: 20px;
 }
 
@@ -588,7 +588,7 @@
 
 .filter-select:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #2980b9;
 }
 
 /* Teachers Grid */
@@ -606,7 +606,7 @@
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
   text-align: center;
   transition: all 0.3s;
-  border-top: 4px solid #667eea;
+  border-top: 4px solid #2980b9;
 }
 
 .teacher-card:hover {
@@ -635,7 +635,7 @@
 
 .teacher-designation {
   font-size: 14px;
-  color: #667eea;
+  color: #2980b9;
   font-weight: 600;
   margin-bottom: 20px;
 }
@@ -674,7 +674,7 @@
 
 .subject-tag-small {
   background: #e8f0fe;
-  color: #667eea;
+  color: #2980b9;
   padding: 6px 12px;
   border-radius: 15px;
   font-size: 12px;
@@ -821,7 +821,7 @@
   text-align: center;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
   transition: all 0.3s;
-  border-top: 4px solid #667eea;
+  border-top: 4px solid #2980b9;
 }
 
 .stat-box-staff:hover {
@@ -855,7 +855,7 @@
 }
 
 .category-header svg {
-  color: #667eea;
+  color: #2980b9;
 }
 
 .category-header h2 {
@@ -1068,7 +1068,7 @@
   border-radius: 50%;
   overflow: hidden;
   margin: 0 auto 20px;
-  border: 5px solid #667eea;
+  border: 5px solid #2980b9;
   box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
   transition: all 0.4s ease;
 }
@@ -1093,7 +1093,7 @@
 
 .member-card:hover .member-image-container {
   transform: scale(1.05);
-  border-color: #764ba2;
+  border-color: #56abe4;
   box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
 }
 
@@ -1103,13 +1103,13 @@
 
 /* Updated President Card with Image */
 .president-card {
-  border-left: 5px solid #667eea;
+  border-left: 5px solid #2980b9;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   padding: 40px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 20%);
+  background: whitesmoke;
 }
 
 .president-card .member-badge {
@@ -1119,7 +1119,7 @@
 /* Secretary Card Update */
 .secretary-card {
   background: linear-gradient(135deg, #fff 0%, #f7fafc 100%);
-  border-top: 4px solid #667eea;
+  border-top: 4px solid #2980b9;
   text-align: center;
   padding: 35px;
 }
@@ -1151,7 +1151,7 @@
 }
 
 .member-contact .contact-item svg {
-  color: #667eea;
+  color: #2980b9;
   flex-shrink: 0;
 }
 

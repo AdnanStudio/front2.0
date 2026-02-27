@@ -1,7 +1,7 @@
 /* ==================== TEACHERS PUBLIC PAGE ==================== */
 .teachers-public-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+  background: whitesmoke;
 }
 
 .page-container {
@@ -21,7 +21,7 @@
   font-weight: 800;
   color: #1a202c;
   margin-bottom: 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -36,7 +36,7 @@
 /* ==================== TEACHERS GRID ==================== */
 .teachers-grid-public {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 35px;
   animation: fadeInUp 0.8s ease-out;
 }
@@ -45,10 +45,13 @@
 .teacher-card-public {
   background: white;
   border-radius: 20px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
+  text-align: center;
+  padding-top: 80px;
+  margin-top: 80px;
 }
 
 .teacher-card-public::before {
@@ -58,10 +61,11 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.5s ease;
+  border-radius: 20px 20px 0 0;
 }
 
 .teacher-card-public:hover {
@@ -73,36 +77,34 @@
   transform: scaleX(1);
 }
 
-/* ==================== TEACHER IMAGE ==================== */
+/* ==================== TEACHER IMAGE — ROUND (GoverningBody style) ==================== */
 .teacher-image-wrapper {
-  width: 100%;
-  height: 300px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
   overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  position: relative;
-}
-
-.teacher-image-wrapper::after {
-  content: '';
+  margin: 0 auto;
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.2) 100%);
-  opacity: 0;
-  transition: opacity 0.4s ease;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid #2980b9;
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.25);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: all 0.4s ease;
 }
 
-.teacher-card-public:hover .teacher-image-wrapper::after {
-  opacity: 1;
+.teacher-card-public:hover .teacher-image-wrapper {
+  transform: translateX(-50%) scale(1.07);
+  border-color: white;
+  box-shadow: 0 15px 35px #2980b9;
 }
 
 .teacher-image-wrapper img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .teacher-card-public:hover .teacher-image-wrapper img {
@@ -111,11 +113,11 @@
 
 /* ==================== TEACHER INFO ==================== */
 .teacher-info-public {
-  padding: 28px;
+  padding: 10px 28px 28px;
 }
 
 .teacher-info-public h3 {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: #1a202c;
   margin-bottom: 8px;
@@ -124,13 +126,13 @@
 }
 
 .teacher-card-public:hover .teacher-info-public h3 {
-  color: #667eea;
+  color: #2980b9;
 }
 
 .teacher-designation {
-  color: #667eea;
+  color: #2980b9;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14px;
   margin-bottom: 20px;
   display: inline-block;
   padding: 6px 14px;
@@ -140,7 +142,7 @@
 }
 
 .teacher-card-public:hover .teacher-designation {
-  background: #667eea;
+  background: #2980b9;
   color: white;
   transform: scale(1.05);
 }
@@ -151,12 +153,13 @@
   align-items: flex-start;
   gap: 12px;
   color: #4a5568;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   font-size: 14px;
   padding: 10px;
   border-radius: 10px;
   background: #f7fafc;
   transition: all 0.3s ease;
+  text-align: left;
 }
 
 .teacher-detail:hover {
@@ -185,7 +188,6 @@
   font-weight: 700;
   box-shadow: 0 4px 10px rgba(150, 230, 161, 0.3);
   transition: all 0.3s ease;
-  animation: fadeIn 0.5s ease-out;
 }
 
 .teacher-card-public:hover .experience-badge {
@@ -198,7 +200,6 @@
   margin-top: 18px;
   padding-top: 18px;
   border-top: 2px solid #edf2f7;
-  animation: fadeIn 0.6s ease-out;
 }
 
 .contact-detail {
@@ -211,6 +212,7 @@
   padding: 8px;
   border-radius: 8px;
   transition: all 0.3s ease;
+  text-align: left;
 }
 
 .contact-detail:hover {
@@ -251,37 +253,26 @@
 
 /* ==================== ANIMATIONS ==================== */
 @keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-30px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-/* Stagger animation for teacher cards */
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Stagger animation */
 .teacher-card-public {
   animation: fadeInScale 0.6s ease-out backwards;
 }
@@ -293,55 +284,17 @@
 .teacher-card-public:nth-child(5) { animation-delay: 0.5s; }
 .teacher-card-public:nth-child(6) { animation-delay: 0.6s; }
 
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
-  .page-header-section h1 {
-    font-size: 32px;
-  }
-
   .teachers-grid-public {
-    grid-template-columns: 1fr;
-    gap: 25px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
   }
-
-  .teacher-image-wrapper {
-    height: 260px;
-  }
-
-  .teacher-info-public {
-    padding: 24px;
-  }
-
-  .teacher-info-public h3 {
-    font-size: 20px;
-  }
+  .page-header-section h1 { font-size: 30px; }
+  .teacher-image-wrapper  { width: 130px; height: 130px; top: -65px; }
+  .teacher-card-public    { padding-top: 65px; margin-top: 65px; }
 }
 
 @media (max-width: 480px) {
-  .page-container {
-    padding: 40px 15px;
-  }
-
-  .page-header-section h1 {
-    font-size: 28px;
-  }
-
-  .teacher-card-public:hover {
-    transform: translateY(-10px);
-  }
-
-  .teacher-image-wrapper {
-    height: 240px;
-  }
+  .teachers-grid-public { grid-template-columns: 1fr; }
 }

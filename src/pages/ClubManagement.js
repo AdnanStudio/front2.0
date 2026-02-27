@@ -1,632 +1,364 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import clubService from '../services/clubService';
 import './Dashboard.css';
+import './DashboardMembers.css';
+
+const CATEGORIES = ['Science','Literature','Debate','Cultural','Sports','IT','Photography',
+  'Environment','Social Service','Arts','Music','Drama','Other'];
+const STATUSES   = ['active','inactive','suspended'];
+
+const emptyForm = {
+  name:'',description:'',category:'',advisor:'',president:'',
+  vicePresident:'',meetingDay:'',meetingTime:'',meetingVenue:'',
+  establishedDate:'',budget:'',activities:'',achievements:'',
+  status:'active',order:0
+};
+
+const statusConfig = {
+  active:    {bg:'#d1fae5',color:'#065f46',dot:'active',  label:'✅ সক্রিয়',   topCls:'green'},
+  inactive:  {bg:'#fee2e2',color:'#991b1b',dot:'inactive',label:'',topCls:'red'},
+  suspended: {bg:'#fef3c7',color:'#92400e',dot:'leave',   label:'⚠️ স্থগিত',   topCls:'orange'},
+};
 
 const ClubManagement = () => {
-  const [clubs, setClubs] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editingClub, setEditingClub] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState('');
+  const [clubs,setClubs]             = useState([]);
+  const [loading,setLoading]         = useState(true);
+  const [saving,setSaving]           = useState(false);
+  const [showForm,setShowForm]       = useState(false);
+  const [editingClub,setEditingClub] = useState(null);
+  const [searchTerm,setSearchTerm]   = useState('');
+  const [filterCat,setFilterCat]     = useState('');
+  const [filterStatus,setFilterStatus]= useState('');
+  const [imageFile,setImageFile]     = useState(null);
+  const [imagePreview,setImagePreview]= useState(null);
+  const [formData,setFormData]       = useState(emptyForm);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: '',
-    advisor: '',
-    president: '',
-    vicePresident: '',
-    meetingDay: '',
-    meetingTime: '',
-    meetingVenue: '',
-    members: [],
-    establishedDate: '',
-    budget: '',
-    activities: '',
-    achievements: '',
-    status: 'active'
-  });
+  useEffect(()=>{ fetchClubs(); },[]);
 
-  const clubCategories = [
-    'Academic',
-    'Sports',
-    'Arts & Culture',
-    'Science & Technology',
-    'Social Service',
-    'Debate & Public Speaking',
-    'Environmental',
-    'Literature',
-    'Music',
-    'Drama & Theatre',
-    'Photography',
-    'Other'
-  ];
-
-  const statuses = ['active', 'inactive', 'suspended'];
-  const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-  useEffect(() => {
-    fetchClubs();
-  }, []);
-
-  const fetchClubs = () => {
-    // Mock data - Replace with API call
-    const mockClubs = [
-      {
-        _id: '1',
-        name: 'Science Club',
-        description: 'Exploring the wonders of science through experiments and projects',
-        category: 'Science & Technology',
-        advisor: 'Dr. Kamal Hossain',
-        president: 'Rafiq Ahmed (Class 10)',
-        vicePresident: 'Fatima Khan (Class 10)',
-        meetingDay: 'Thursday',
-        meetingTime: '3:00 PM',
-        meetingVenue: 'Science Lab',
-        members: ['S001', 'S002', 'S003', 'S004', 'S005'],
-        establishedDate: '2020-01-15',
-        budget: '25000',
-        activities: 'Science Fair, Lab Sessions, Guest Lectures',
-        achievements: '1st Prize in District Science Fair 2025',
-        status: 'active'
-      },
-      {
-        _id: '2',
-        name: 'Debate Club',
-        description: 'Developing critical thinking and public speaking skills',
-        category: 'Debate & Public Speaking',
-        advisor: 'Ms. Ayesha Rahman',
-        president: 'Sohel Rana (Class 9)',
-        vicePresident: 'Nadia Islam (Class 9)',
-        meetingDay: 'Tuesday',
-        meetingTime: '4:00 PM',
-        meetingVenue: 'Auditorium',
-        members: ['S006', 'S007', 'S008'],
-        establishedDate: '2019-09-01',
-        budget: '15000',
-        activities: 'Weekly Debates, Inter-school Competitions',
-        achievements: 'Winner of National Debate Championship 2024',
-        status: 'active'
-      },
-      {
-        _id: '3',
-        name: 'Art Club',
-        description: 'Expressing creativity through various art forms',
-        category: 'Arts & Culture',
-        advisor: 'Mr. Habib Khan',
-        president: 'Meena Das (Class 8)',
-        vicePresident: 'Arif Hasan (Class 8)',
-        meetingDay: 'Friday',
-        meetingTime: '2:30 PM',
-        meetingVenue: 'Art Room',
-        members: ['S009', 'S010'],
-        establishedDate: '2021-03-20',
-        budget: '20000',
-        activities: 'Art Exhibitions, Painting Workshops, Cultural Programs',
-        achievements: 'Best Art Display Award 2025',
-        status: 'active'
-      }
-    ];
-    
-    setClubs(mockClubs);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
+  const fetchClubs = async () => {
+    setLoading(true);
     try {
-      if (editingClub) {
-        // Update existing club
-        setClubs(clubs.map(c => 
-          c._id === editingClub._id 
-            ? { ...formData, _id: c._id } 
-            : c
-        ));
-        toast.success('Club updated successfully!');
+      const res = await clubService.getAllClubs();
+      setClubs(res.data?.data || res.data || []);
+    } catch { toast.error('Failed to load clubs'); }
+    finally { setLoading(false); }
+  };
+
+  const handleInput = e => {
+    const {name,value} = e.target;
+    setFormData(p=>({...p,[name]:value}));
+  };
+
+  const handleImageChange = e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (f.size>5*1024*1024){ toast.error('Max 5MB'); return; }
+    setImageFile(f);
+    setImagePreview(URL.createObjectURL(f));
+  };
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+    if (!formData.name){ toast.error('Club name required'); return; }
+    setSaving(true);
+    try {
+      const fd = new FormData();
+      Object.entries(formData).forEach(([k,v])=>fd.append(k,v));
+      if (imageFile) fd.append('image',imageFile);
+      if (editingClub){
+        await clubService.updateClub(editingClub._id,fd);
+        toast.success('Club updated!');
       } else {
-        // Add new club
-        const newClub = {
-          ...formData,
-          _id: Date.now().toString(),
-          members: []
-        };
-        setClubs([...clubs, newClub]);
-        toast.success('Club added successfully!');
+        await clubService.createClub(fd);
+        toast.success('Club created!');
       }
-      
-      resetForm();
-    } catch (error) {
-      console.error('Error saving club:', error);
-      toast.error('Failed to save club');
-    }
+      resetForm(); fetchClubs();
+    } catch(err){ toast.error(err.response?.data?.message||'Failed'); }
+    finally { setSaving(false); }
   };
 
-  const handleEdit = (club) => {
-    setEditingClub(club);
+  const handleEdit = c => {
+    setEditingClub(c);
     setFormData({
-      name: club.name,
-      description: club.description,
-      category: club.category,
-      advisor: club.advisor,
-      president: club.president,
-      vicePresident: club.vicePresident,
-      meetingDay: club.meetingDay,
-      meetingTime: club.meetingTime,
-      meetingVenue: club.meetingVenue,
-      members: club.members || [],
-      establishedDate: club.establishedDate,
-      budget: club.budget,
-      activities: club.activities,
-      achievements: club.achievements,
-      status: club.status
+      name:c.name||'',description:c.description||'',category:c.category||'',
+      advisor:c.advisor||'',president:c.president||'',vicePresident:c.vicePresident||'',
+      meetingDay:c.meetingDay||'',meetingTime:c.meetingTime||'',
+      meetingVenue:c.meetingVenue||'',
+      establishedDate:c.establishedDate?c.establishedDate.split('T')[0]:'',
+      budget:c.budget||'',activities:c.activities||'',achievements:c.achievements||'',
+      status:c.status||'active',order:c.order||0,
     });
+    setImagePreview(c.image?.url||null);
     setShowForm(true);
+    window.scrollTo({top:0,behavior:'smooth'});
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this club?')) {
-      setClubs(clubs.filter(c => c._id !== id));
-      toast.success('Club deleted successfully!');
-    }
+  const handleDelete = async id => {
+    if (!window.confirm('এই ক্লাব মুছে ফেলবেন?')) return;
+    try { await clubService.deleteClub(id); toast.success('Deleted!'); fetchClubs(); }
+    catch { toast.error('Failed to delete'); }
+  };
+
+  const handleToggle = async id => {
+    try { await clubService.toggleClubStatus(id); toast.success('Status updated!'); fetchClubs(); }
+    catch { toast.error('Failed'); }
   };
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      category: '',
-      advisor: '',
-      president: '',
-      vicePresident: '',
-      meetingDay: '',
-      meetingTime: '',
-      meetingVenue: '',
-      members: [],
-      establishedDate: '',
-      budget: '',
-      activities: '',
-      achievements: '',
-      status: 'active'
-    });
-    setEditingClub(null);
-    setShowForm(false);
+    setFormData(emptyForm); setEditingClub(null);
+    setImageFile(null); setImagePreview(null); setShowForm(false);
   };
 
-  const filteredClubs = clubs.filter(club => {
-    const matchesSearch = 
-      club.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      club.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      club.advisor.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = filterCategory === '' || club.category === filterCategory;
-    
-    return matchesSearch && matchesCategory;
+  const filtered = clubs.filter(c => {
+    const q = searchTerm.toLowerCase();
+    return (!searchTerm||c.name?.toLowerCase().includes(q)||c.category?.toLowerCase().includes(q)||c.advisor?.toLowerCase().includes(q)) &&
+      (!filterCat||c.category===filterCat) &&
+      (!filterStatus||c.status===filterStatus);
   });
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return '#10b981';
-      case 'inactive':
-        return '#6b7280';
-      case 'suspended':
-        return '#ef4444';
-      default:
-        return '#6b7280';
-    }
-  };
+  const sc = s => statusConfig[s] || statusConfig.inactive;
 
   return (
-    <div className="dashboard-page">
-      {/* Header */}
-      <div className="page-header">
-        <div>
-          <h2>🎯 Club Management</h2>
-          <p>Manage school clubs and extracurricular activities</p>
+    <div className="dm-page dashboard-page">
+
+      {/* ── Header ── */}
+      <div className="dm-header">
+        <div className="dm-header-left">
+          <br></br>
+          <h2>🏆 Club Management</h2>
+          <br></br>
         </div>
-        <button 
-          className="btn-primary"
-          onClick={() => setShowForm(!showForm)}
-        >
-          {showForm ? '✕ Cancel' : '+ Add Club'}
+        <button className="dm-btn-add" onClick={()=>{ resetForm(); setShowForm(!showForm); }}>
+          {showForm ? '✕ বাতিল' : '+ নতুন ক্লাব'}
         </button>
       </div>
 
-      {/* Statistics */}
-      <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', marginBottom: '25px' }}>
-        <div className="stat-card" style={{ background: '#dbeafe', borderLeft: '4px solid #3b82f6' }}>
-          <h3 style={{ color: '#1e40af' }}>Total Clubs</h3>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e3a8a' }}>{clubs.length}</p>
-        </div>
-        <div className="stat-card" style={{ background: '#d1fae5', borderLeft: '4px solid #10b981' }}>
-          <h3 style={{ color: '#065f46' }}>Active Clubs</h3>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#064e3b' }}>
-            {clubs.filter(c => c.status === 'active').length}
-          </p>
-        </div>
-        <div className="stat-card" style={{ background: '#fef3c7', borderLeft: '4px solid #f59e0b' }}>
-          <h3 style={{ color: '#92400e' }}>Total Members</h3>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#78350f' }}>
-            {clubs.reduce((sum, c) => sum + (c.members?.length || 0), 0)}
-          </p>
-        </div>
+      {/* ── Stats ── */}
+      <div className="dm-stats">
+        {[
+          {label:'মোট',       count:clubs.length,                                 color:'#667eea'},
+          {label:'সক্রিয়',  count:clubs.filter(c=>c.status==='active').length,   color:'#10b981'},
+          {label:'নিষ্ক্রিয়',count:clubs.filter(c=>c.status==='inactive').length, color:'#ef4444'},
+          {label:'স্থগিত',   count:clubs.filter(c=>c.status==='suspended').length,color:'#f59e0b'},
+        ].map(s=>(
+          <div key={s.label} className="dm-stat" style={{'--stat-color':s.color}}>
+            <div className="dm-stat-value">{s.count}</div>
+            <div className="dm-stat-label">{s.label}</div>
+          </div>
+        ))}
       </div>
 
-      {/* Add/Edit Form */}
+      {/* ── Form ── */}
       {showForm && (
-        <div className="form-container" style={{ marginBottom: '30px' }}>
-          <h3>{editingClub ? 'Edit Club' : 'Add New Club'}</h3>
-          
-          <form onSubmit={handleSubmit} className="form-grid">
-            <div className="form-group">
-              <label>Club Name *</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="e.g., Science Club"
-                required
-              />
+        <div className="dm-form-card">
+          <div className="dm-form-title">
+            {editingClub ? '✏️ Edit' : ''}
+          </div>
+          <form onSubmit={handleSubmit}>
+            <div className="dm-form-grid">
+              <div className="dm-form-group">
+                <label>নাম *</label>
+                <input name="name" value={formData.name} onChange={handleInput} placeholder="name" required />
+              </div>
+              <div className="dm-form-group">
+                <label>ক্যাটাগরি</label>
+                <select name="category" value={formData.category} onChange={handleInput}>
+                  <option value="">Select category</option>
+                  {CATEGORIES.map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="dm-form-group">
+                <label>উপদেষ্টা (Advisor)</label>
+                <input name="advisor" value={formData.advisor} onChange={handleInput} placeholder="Teacher advisor name" />
+              </div>
+              <div className="dm-form-group">
+                <label>সভাপতি (President)</label>
+                <input name="president" value={formData.president} onChange={handleInput} placeholder="Club president" />
+              </div>
+              <div className="dm-form-group">
+                <label>সহ-সভাপতি</label>
+                <input name="vicePresident" value={formData.vicePresident} onChange={handleInput} placeholder="Vice president" />
+              </div>
+              <div className="dm-form-group">
+                <label>দিন</label>
+                <select name="meetingDay" value={formData.meetingDay} onChange={handleInput}>
+                  <option value="">Select day</option>
+                  {['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'].map(d=>(
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="dm-form-group">
+                <label>সময়</label>
+                <input name="meetingTime" value={formData.meetingTime} onChange={handleInput} placeholder="e.g. 3:00 PM" />
+              </div>
+              <div className="dm-form-group">
+                <label>স্থান</label>
+                <input name="meetingVenue" value={formData.meetingVenue} onChange={handleInput} placeholder="Meeting venue" />
+              </div>
+              <div className="dm-form-group">
+                <label>প্রতিষ্ঠার তারিখ</label>
+                <input type="date" name="establishedDate" value={formData.establishedDate} onChange={handleInput} />
+              </div>
+              <div className="dm-form-group">
+                <label>বাজেট (৳)</label>
+                <input type="number" name="budget" value={formData.budget} onChange={handleInput} placeholder="0" />
+              </div>
+              <div className="dm-form-group">
+                <label>স্ট্যাটাস</label>
+                <select name="status" value={formData.status} onChange={handleInput}>
+                  {STATUSES.map(s=><option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
+                </select>
+              </div>
+              <div className="dm-form-group">
+                <label>ছবি</label>
+                <input type="file" accept="image/*" onChange={handleImageChange} />
+                {imagePreview && <img src={imagePreview} alt="preview" className="dm-image-preview" />}
+              </div>
+              <div className="dm-form-group full-span">
+                <label>বিবরণ</label>
+                <textarea name="description" value={formData.description} onChange={handleInput} rows={3} placeholder="Club description..." />
+              </div>
+              <div className="dm-form-group full-span">
+                <label>কার্যক্রম (Activities)</label>
+                <textarea name="activities" value={formData.activities} onChange={handleInput} rows={2} placeholder="Club activities..." />
+              </div>
+              <div className="dm-form-group full-span">
+                <label>অর্জনসমূহ (Achievements)</label>
+                <textarea name="achievements" value={formData.achievements} onChange={handleInput} rows={2} placeholder="Club achievements..." />
+              </div>
             </div>
-
-            <div className="form-group">
-              <label>Category *</label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Select Category</option>
-                {clubCategories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Club Advisor *</label>
-              <input
-                type="text"
-                name="advisor"
-                value={formData.advisor}
-                onChange={handleInputChange}
-                placeholder="e.g., Dr. Kamal Hossain"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Status *</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                required
-              >
-                {statuses.map(status => (
-                  <option key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>President</label>
-              <input
-                type="text"
-                name="president"
-                value={formData.president}
-                onChange={handleInputChange}
-                placeholder="e.g., Rafiq Ahmed (Class 10)"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Vice President</label>
-              <input
-                type="text"
-                name="vicePresident"
-                value={formData.vicePresident}
-                onChange={handleInputChange}
-                placeholder="e.g., Fatima Khan (Class 10)"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Meeting Day</label>
-              <select
-                name="meetingDay"
-                value={formData.meetingDay}
-                onChange={handleInputChange}
-              >
-                <option value="">Select Day</option>
-                {weekDays.map(day => (
-                  <option key={day} value={day}>{day}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Meeting Time</label>
-              <input
-                type="time"
-                name="meetingTime"
-                value={formData.meetingTime}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Meeting Venue</label>
-              <input
-                type="text"
-                name="meetingVenue"
-                value={formData.meetingVenue}
-                onChange={handleInputChange}
-                placeholder="e.g., Science Lab"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Established Date</label>
-              <input
-                type="date"
-                name="establishedDate"
-                value={formData.establishedDate}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Annual Budget (৳)</label>
-              <input
-                type="number"
-                name="budget"
-                value={formData.budget}
-                onChange={handleInputChange}
-                placeholder="e.g., 25000"
-              />
-            </div>
-
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-              <label>Description *</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                rows="3"
-                placeholder="Describe the club's purpose and objectives..."
-                required
-              ></textarea>
-            </div>
-
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-              <label>Activities</label>
-              <textarea
-                name="activities"
-                value={formData.activities}
-                onChange={handleInputChange}
-                rows="2"
-                placeholder="e.g., Science Fair, Lab Sessions, Guest Lectures"
-              ></textarea>
-            </div>
-
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-              <label>Achievements</label>
-              <textarea
-                name="achievements"
-                value={formData.achievements}
-                onChange={handleInputChange}
-                rows="2"
-                placeholder="List major achievements and awards..."
-              ></textarea>
-            </div>
-
-            <div className="form-actions" style={{ gridColumn: '1 / -1' }}>
-              <button type="button" className="btn-secondary" onClick={resetForm}>
-                Cancel
-              </button>
-              <button type="submit" className="btn-primary">
-                {editingClub ? 'Update Club' : 'Add Club'}
+            <div className="dm-form-actions">
+              <button type="button" className="dm-btn-cancel" onClick={resetForm}>বাতিল</button>
+              <button type="submit" className="dm-btn-submit" disabled={saving}>
+                {saving ? 'সংরক্ষণ...' : editingClub ? 'আপডেট করুন' : 'যোগ করুন'}
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Search and Filter */}
-      <div className="search-filter-section">
-        <div className="search-box">
-          <i className="fas fa-search"></i>
-          <input
-            type="text"
-            placeholder="Search by club name, category, or advisor..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      {/* ── Toolbar ── */}
+      <div className="dm-toolbar">
+        <div className="dm-search">
+          <i className="fas fa-search dm-search-icon"></i>
+          <input type="text" placeholder="ক্লাবের নাম, ক্যাটাগরি দিয়ে খুঁজুন..."
+            value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} />
         </div>
-
-        <select
-          className="filter-select"
-          value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
-        >
-          <option value="">All Categories</option>
-          {clubCategories.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
+        <div className="dm-filter">
+          <select value={filterCat} onChange={e=>setFilterCat(e.target.value)}>
+            <option value="">সব ক্যাটাগরি</option>
+            {CATEGORIES.map(c=><option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div className="dm-filter">
+          <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}>
+            <option value="">সব স্ট্যাটাস</option>
+            {STATUSES.map(s=><option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
+          </select>
+        </div>
       </div>
 
-      {/* Clubs Grid */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', 
-        gap: '20px',
-        marginTop: '25px'
-      }}>
-        {filteredClubs.length === 0 ? (
-          <div style={{ 
-            gridColumn: '1 / -1', 
-            textAlign: 'center', 
-            padding: '40px', 
-            color: '#9ca3af' 
-          }}>
-            <i className="fas fa-users" style={{ fontSize: '48px', marginBottom: '15px' }}></i>
-            <p>No clubs found</p>
-          </div>
-        ) : (
-          filteredClubs.map(club => (
-            <div 
-              key={club._id} 
-              style={{
-                background: 'white',
-                border: '2px solid #e5e7eb',
-                borderRadius: '12px',
-                padding: '20px',
-                transition: 'all 0.3s'
-              }}
-            >
-              {/* Club Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '15px' }}>
-                <div>
-                  <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#2c3e50' }}>
-                    {club.name}
-                  </h3>
-                  <span style={{
-                    padding: '4px 12px',
-                    borderRadius: '12px',
-                    fontSize: '11px',
-                    fontWeight: '500',
-                    background: '#e0e7ff',
-                    color: '#4338ca'
-                  }}>
-                    {club.category}
-                  </span>
-                </div>
-                <span style={{
-                  padding: '4px 12px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  fontWeight: '600',
-                  background: getStatusColor(club.status) + '20',
-                  color: getStatusColor(club.status)
-                }}>
-                  {club.status.charAt(0).toUpperCase() + club.status.slice(1)}
-                </span>
-              </div>
+      {/* ── Cards ── */}
+      {loading ? (
+        <div className="dm-loading"><div className="spinner"/></div>
+      ) : filtered.length===0 ? (
+        <div className="dm-empty">
+          <span className="dm-empty-icon">🏆</span>
+          <p>কোনো ক্লাব পাওয়া যায়নি</p>
+        </div>
+      ) : (
+        <div className="dm-cards-grid">
+          {filtered.map(c=>{
+            const cfg = sc(c.status);
+            return (
+              <div key={c._id} className="dm-member-card">
+                <div className={`dm-status-dot ${cfg.dot}`}/>
 
-              {/* Description */}
-              <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '15px', lineHeight: '1.5' }}>
-                {club.description}
-              </p>
-
-              {/* Details */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '15px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-                  <i className="fas fa-user-tie" style={{ color: '#6b7280', width: '16px' }}></i>
-                  <span style={{ color: '#4b5563' }}><strong>Advisor:</strong> {club.advisor}</span>
-                </div>
-                
-                {club.president && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-                    <i className="fas fa-crown" style={{ color: '#f59e0b', width: '16px' }}></i>
-                    <span style={{ color: '#4b5563' }}><strong>President:</strong> {club.president}</span>
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-                  <i className="fas fa-users" style={{ color: '#6b7280', width: '16px' }}></i>
-                  <span style={{ color: '#4b5563' }}><strong>Members:</strong> {club.members?.length || 0}</span>
+                {/* Image as top banner */}
+                <div className={`dm-member-card-top ${cfg.topCls}`}
+                  style={c.image?.url?{background:'none',padding:0}:undefined}>
+                  {c.image?.url && (
+                    <img src={c.image.url} alt={c.name}
+                      style={{width:'100%',height:'100%',objectFit:'cover'}}
+                      onError={e=>e.target.style.display='none'} />
+                  )}
                 </div>
 
-                {club.meetingDay && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-                    <i className="fas fa-calendar" style={{ color: '#6b7280', width: '16px' }}></i>
-                    <span style={{ color: '#4b5563' }}>
-                      <strong>Meetings:</strong> {club.meetingDay}, {club.meetingTime}
+                <div className="dm-member-card-body" style={{textAlign:'left'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+                    <div>
+                      <div className="dm-member-name">{c.name}</div>
+                      {c.category && (
+                        <span style={{display:'inline-block',background:'#e0e7ff',color:'#4338ca',
+                          fontSize:11,padding:'2px 10px',borderRadius:12,fontWeight:600,marginTop:3}}>
+                          {c.category}
+                        </span>
+                      )}
+                    </div>
+                    <span className="dm-member-badge" style={{background:cfg.bg,color:cfg.color,fontSize:11}}>
+                      {cfg.label}
                     </span>
                   </div>
-                )}
 
-                {club.budget && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-                    <i className="fas fa-money-bill-wave" style={{ color: '#10b981', width: '16px' }}></i>
-                    <span style={{ color: '#4b5563' }}>
-                      <strong>Budget:</strong> ৳{parseInt(club.budget).toLocaleString()}
-                    </span>
+                  <div className="dm-member-info">
+                    {c.advisor && (
+                      <div className="dm-member-info-row">
+                        <i className="fas fa-user-tie"/>
+                        <span>উপদেষ্টা: <strong>{c.advisor}</strong></span>
+                      </div>
+                    )}
+                    {c.president && (
+                      <div className="dm-member-info-row">
+                        <i className="fas fa-crown"/>
+                        <span>সভাপতি: <strong>{c.president}</strong></span>
+                      </div>
+                    )}
+                    {c.meetingDay && (
+                      <div className="dm-member-info-row">
+                        <i className="fas fa-calendar"/>
+                        <span>{c.meetingDay}{c.meetingTime && ` — ${c.meetingTime}`}</span>
+                      </div>
+                    )}
+                    {c.meetingVenue && (
+                      <div className="dm-member-info-row">
+                        <i className="fas fa-map-marker-alt"/>
+                        <span>{c.meetingVenue}</span>
+                      </div>
+                    )}
+                    {c.budget && (
+                      <div className="dm-member-info-row">
+                        <i className="fas fa-coins"/>
+                        <span>বাজেট: ৳{parseInt(c.budget).toLocaleString()}</span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {/* Achievements */}
-              {club.achievements && (
-                <div style={{
-                  background: '#fef3c7',
-                  padding: '10px',
-                  borderRadius: '8px',
-                  marginBottom: '15px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                    <i className="fas fa-trophy" style={{ color: '#f59e0b', fontSize: '14px' }}></i>
-                    <strong style={{ fontSize: '12px', color: '#92400e' }}>Achievement:</strong>
+                  {c.achievements && (
+                    <div style={{background:'#fffbeb',borderRadius:8,padding:'8px 10px',
+                      marginBottom:10,fontSize:12,color:'#92400e',borderLeft:'3px solid #f59e0b'}}>
+                      🏅 {c.achievements}
+                    </div>
+                  )}
+
+                  <div className="dm-member-actions">
+                    <button className="dm-action-btn edit"   onClick={()=>handleEdit(c)}>
+                      <i className="fas fa-edit"/> Edit
+                    </button>
+                    {/* <button className="dm-action-btn toggle" onClick={()=>handleToggle(c._id)}>
+                      <i className="fas fa-toggle-on"/>
+                    </button> */}
+                    <button className="dm-action-btn delete" onClick={()=>handleDelete(c._id)}>
+                      <i className="fas fa-trash"/>✘
+                    </button>
                   </div>
-                  <p style={{ fontSize: '12px', color: '#78350f', margin: 0 }}>
-                    {club.achievements}
-                  </p>
                 </div>
-              )}
-
-              {/* Actions */}
-              <div style={{ display: 'flex', gap: '10px', paddingTop: '15px', borderTop: '1px solid #e5e7eb' }}>
-                <button
-                  onClick={() => handleEdit(club)}
-                  style={{
-                    flex: 1,
-                    padding: '8px',
-                    background: '#dbeafe',
-                    color: '#1e40af',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: '500'
-                  }}
-                >
-                  <i className="fas fa-edit"></i> Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(club._id)}
-                  style={{
-                    flex: 1,
-                    padding: '8px',
-                    background: '#fee2e2',
-                    color: '#991b1b',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: '500'
-                  }}
-                >
-                  <i className="fas fa-trash"></i> Delete
-                </button>
               </div>
-            </div>
-          ))
-        )}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

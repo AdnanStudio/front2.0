@@ -1,535 +1,325 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import teacherTrainingService from '../services/teacherTrainingService';
 import './Dashboard.css';
+import './DashboardMembers.css';
+
+const TRAINING_TYPES = [
+  'Pedagogical Skills','Subject Knowledge','Technology Integration',
+  'Classroom Management','Assessment & Evaluation','Student Psychology',
+  'Leadership Development','Special Education','Soft Skills','Other'
+];
+const STATUSES = ['upcoming','ongoing','completed','cancelled'];
+
+const emptyForm = {
+  name:'',description:'',trainer:'',trainingType:'',
+  startDate:'',endDate:'',duration:'',venue:'',
+  totalSeats:'',status:'upcoming',budget:'',materials:'',phone:''
+};
+
+const statusTagCls = {
+  upcoming:'status-upcoming', ongoing:'status-ongoing',
+  completed:'status-completed', cancelled:'status-cancelled',
+};
 
 const TeacherTrainingManagement = () => {
-  const [trainings, setTrainings] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editingTraining, setEditingTraining] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [trainings,setTrainings]             = useState([]);
+  const [loading,setLoading]                 = useState(true);
+  const [saving,setSaving]                   = useState(false);
+  const [showForm,setShowForm]               = useState(false);
+  const [editingTraining,setEditingTraining] = useState(null);
+  const [searchTerm,setSearchTerm]           = useState('');
+  const [filterStatus,setFilterStatus]       = useState('');
+  const [imageFile,setImageFile]             = useState(null);
+  const [imagePreview,setImagePreview]       = useState(null);
+  const [formData,setFormData]               = useState(emptyForm);
 
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    trainer: '',
-    trainingType: '',
-    startDate: '',
-    endDate: '',
-    duration: '',
-    venue: '',
-    totalSeats: '',
-    participants: [],
-    status: 'upcoming',
-    budget: '',
-    materials: ''
-  });
+  useEffect(()=>{ fetchTrainings(); },[]);
 
-  const trainingTypes = [
-    'Pedagogical Skills',
-    'Subject Knowledge',
-    'Technology Integration',
-    'Classroom Management',
-    'Assessment & Evaluation',
-    'Student Psychology',
-    'Leadership Development',
-    'Special Education',
-    'Soft Skills',
-    'Other'
-  ];
-
-  const statuses = ['upcoming', 'ongoing', 'completed', 'cancelled'];
-
-  useEffect(() => {
-    fetchTrainings();
-  }, []);
-
-  const fetchTrainings = () => {
-    // Mock data - Replace with API call
-    const mockTrainings = [
-      {
-        _id: '1',
-        title: 'Digital Teaching Methods',
-        description: 'Learn modern digital teaching techniques',
-        trainer: 'Dr. Rahman Ahmed',
-        trainingType: 'Technology Integration',
-        startDate: '2026-02-10',
-        endDate: '2026-02-12',
-        duration: '3 days',
-        venue: 'Training Hall, Main Building',
-        totalSeats: 30,
-        participants: ['T001', 'T002', 'T003'],
-        status: 'upcoming',
-        budget: '50000',
-        materials: 'Laptop, Projector, Handouts'
-      },
-      {
-        _id: '2',
-        title: 'Effective Classroom Management',
-        description: 'Strategies for better classroom control',
-        trainer: 'Prof. Sultana Begum',
-        trainingType: 'Classroom Management',
-        startDate: '2026-01-20',
-        endDate: '2026-01-22',
-        duration: '3 days',
-        venue: 'Conference Room',
-        totalSeats: 25,
-        participants: ['T004', 'T005'],
-        status: 'completed',
-        budget: '40000',
-        materials: 'Training Manual, Case Studies'
-      }
-    ];
-    
-    setTrainings(mockTrainings);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
+  const fetchTrainings = async () => {
+    setLoading(true);
     try {
-      if (editingTraining) {
-        // Update existing training
-        setTrainings(trainings.map(t => 
-          t._id === editingTraining._id 
-            ? { ...formData, _id: t._id } 
-            : t
-        ));
-        toast.success('Training updated successfully!');
+      const res = await teacherTrainingService.getAllTrainings();
+      setTrainings(res.data?.data || res.data || []);
+    } catch { toast.error('Failed to load trainings'); }
+    finally { setLoading(false); }
+  };
+
+  const handleInput = e => {
+    const {name,value} = e.target;
+    setFormData(p=>({...p,[name]:value}));
+  };
+
+  const handleImageChange = e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (f.size > 5*1024*1024){ toast.error('Max 5MB'); return; }
+    setImageFile(f);
+    setImagePreview(URL.createObjectURL(f));
+  };
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+    if (!formData.name||!formData.trainer){ toast.error('Name & trainer required'); return; }
+    setSaving(true);
+    try {
+      const fd = new FormData();
+      Object.entries(formData).forEach(([k,v])=>fd.append(k,v));
+      if (imageFile) fd.append('image',imageFile);
+      if (editingTraining){
+        await teacherTrainingService.updateTraining(editingTraining._id,fd);
+        toast.success('Training updated!');
       } else {
-        // Add new training
-        const newTraining = {
-          ...formData,
-          _id: Date.now().toString(),
-          participants: []
-        };
-        setTrainings([...trainings, newTraining]);
-        toast.success('Training added successfully!');
+        await teacherTrainingService.createTraining(fd);
+        toast.success('Training created!');
       }
-      
-      resetForm();
-    } catch (error) {
-      console.error('Error saving training:', error);
-      toast.error('Failed to save training');
-    }
+      resetForm(); fetchTrainings();
+    } catch(err){ toast.error(err.response?.data?.message||'Failed'); }
+    finally { setSaving(false); }
   };
 
-  const handleEdit = (training) => {
-    setEditingTraining(training);
+  const handleEdit = t => {
+    setEditingTraining(t);
     setFormData({
-      title: training.title,
-      description: training.description,
-      trainer: training.trainer,
-      trainingType: training.trainingType,
-      startDate: training.startDate,
-      endDate: training.endDate,
-      duration: training.duration,
-      venue: training.venue,
-      totalSeats: training.totalSeats,
-      participants: training.participants || [],
-      status: training.status,
-      budget: training.budget,
-      materials: training.materials
+      name:t.name||'',description:t.description||'',trainer:t.trainer||'',
+      trainingType:t.trainingType||'',
+      startDate:t.startDate?t.startDate.split('T')[0]:'',
+      endDate:t.endDate?t.endDate.split('T')[0]:'',
+      duration:t.duration||'',venue:t.venue||'',
+      totalSeats:t.totalSeats||'',status:t.status||'upcoming',
+      budget:t.budget||'',materials:t.materials||'',phone:t.phone||'',
     });
+    setImagePreview(t.image?.url||null);
     setShowForm(true);
+    window.scrollTo({top:0,behavior:'smooth'});
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this training?')) {
-      setTrainings(trainings.filter(t => t._id !== id));
-      toast.success('Training deleted successfully!');
-    }
+  const handleDelete = async id => {
+    if (!window.confirm('এই ট্রেনিং মুছে ফেলবেন?')) return;
+    try { await teacherTrainingService.deleteTraining(id); toast.success('Deleted!'); fetchTrainings(); }
+    catch { toast.error('Failed to delete'); }
+  };
+
+  const handleToggle = async id => {
+    try { await teacherTrainingService.toggleTrainingStatus(id); toast.success('Status updated!'); fetchTrainings(); }
+    catch { toast.error('Failed'); }
   };
 
   const resetForm = () => {
-    setFormData({
-      title: '',
-      description: '',
-      trainer: '',
-      trainingType: '',
-      startDate: '',
-      endDate: '',
-      duration: '',
-      venue: '',
-      totalSeats: '',
-      participants: [],
-      status: 'upcoming',
-      budget: '',
-      materials: ''
-    });
-    setEditingTraining(null);
-    setShowForm(false);
+    setFormData(emptyForm); setEditingTraining(null);
+    setImageFile(null); setImagePreview(null); setShowForm(false);
   };
 
-  const filteredTrainings = trainings.filter(training => {
-    const matchesSearch = 
-      training.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      training.trainer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      training.trainingType.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = filterStatus === '' || training.status === filterStatus;
-    
-    return matchesSearch && matchesStatus;
+  const fmtDate = d => d ? new Date(d).toLocaleDateString('bn-BD') : '—';
+
+  const filtered = trainings.filter(t => {
+    const q = searchTerm.toLowerCase();
+    return (!searchTerm || t.name?.toLowerCase().includes(q)||
+      t.trainer?.toLowerCase().includes(q)||t.trainingType?.toLowerCase().includes(q)) &&
+      (!filterStatus || t.status===filterStatus);
   });
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'upcoming':
-        return '#3b82f6';
-      case 'ongoing':
-        return '#f59e0b';
-      case 'completed':
-        return '#10b981';
-      case 'cancelled':
-        return '#ef4444';
-      default:
-        return '#6b7280';
-    }
-  };
-
   return (
-    <div className="dashboard-page">
-      {/* Header */}
-      <div className="page-header">
-        <div>
+    <div className="dm-page dashboard-page">
+
+      {/* ── Header ── */}
+      <div className="dm-header">
+        <div className="dm-header-left">
+          <br></br>
           <h2>🎓 Teacher Training Management</h2>
-          <p>Manage professional development programs for teachers</p>
+          <br></br>
+          
         </div>
-        <button 
-          className="btn-primary"
-          onClick={() => setShowForm(!showForm)}
-        >
-          {showForm ? '✕ Cancel' : '+ Add Training'}
+        <button className="dm-btn-add" onClick={()=>{ resetForm(); setShowForm(!showForm); }}>
+          {showForm ? '✕ বাতিল' : '+ নতুন ট্রেনিং'}
         </button>
       </div>
 
-      {/* Statistics */}
-      <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', marginBottom: '25px' }}>
-        <div className="stat-card" style={{ background: '#dbeafe', borderLeft: '4px solid #3b82f6' }}>
-          <h3 style={{ color: '#1e40af' }}>Total Trainings</h3>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e3a8a' }}>{trainings.length}</p>
-        </div>
-        <div className="stat-card" style={{ background: '#fef3c7', borderLeft: '4px solid #f59e0b' }}>
-          <h3 style={{ color: '#92400e' }}>Upcoming</h3>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#78350f' }}>
-            {trainings.filter(t => t.status === 'upcoming').length}
-          </p>
-        </div>
-        <div className="stat-card" style={{ background: '#d1fae5', borderLeft: '4px solid #10b981' }}>
-          <h3 style={{ color: '#065f46' }}>Completed</h3>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#064e3b' }}>
-            {trainings.filter(t => t.status === 'completed').length}
-          </p>
-        </div>
+      {/* ── Stats ── */}
+      <div className="dm-stats">
+        {[
+          {label:'মোট',    count:trainings.length,                                    color:'#667eea'},
+          {label:'আসন্ন', count:trainings.filter(t=>t.status==='upcoming').length,   color:'#3b82f6'},
+          {label:'চলমান', count:trainings.filter(t=>t.status==='ongoing').length,    color:'#f59e0b'},
+          {label:'সম্পন্ন',count:trainings.filter(t=>t.status==='completed').length, color:'#10b981'},
+        ].map(s=>(
+          <div key={s.label} className="dm-stat" style={{'--stat-color':s.color}}>
+            <div className="dm-stat-value">{s.count}</div>
+            <div className="dm-stat-label">{s.label}</div>
+          </div>
+        ))}
       </div>
 
-      {/* Add/Edit Form */}
+      {/* ── Form ── */}
       {showForm && (
-        <div className="form-container" style={{ marginBottom: '30px' }}>
-          <h3>{editingTraining ? 'Edit Training' : 'Add New Training'}</h3>
-          
-          <form onSubmit={handleSubmit} className="form-grid">
-            <div className="form-group">
-              <label>Training Title *</label>
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="e.g., Digital Teaching Methods"
-                required
-              />
+        <div className="dm-form-card">
+          <div className="dm-form-title">
+            {editingTraining ? '✏️ Edit' : ''}
+          </div>
+          <form onSubmit={handleSubmit}>
+            <div className="dm-form-grid">
+              <div className="dm-form-group">
+                <label>নাম *</label>
+                <input name="name" value={formData.name} onChange={handleInput} placeholder="e.g. Digital Teaching Methods" required />
+              </div>
+              <div className="dm-form-group">
+                <label>প্রশিক্ষক *</label>
+                <input name="trainer" value={formData.trainer} onChange={handleInput} placeholder="Trainer name" required />
+              </div>
+              <div className="dm-form-group">
+                <label>ট্রেনিং ধরন</label>
+                <select name="trainingType" value={formData.trainingType} onChange={handleInput}>
+                  <option value="">Select type</option>
+                  {TRAINING_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="dm-form-group">
+                <label>স্ট্যাটাস</label>
+                <select name="status" value={formData.status} onChange={handleInput}>
+                  {STATUSES.map(s=><option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
+                </select>
+              </div>
+              <div className="dm-form-group">
+                <label>শুরুর তারিখ</label>
+                <input type="date" name="startDate" value={formData.startDate} onChange={handleInput} />
+              </div>
+              <div className="dm-form-group">
+                <label>শেষের তারিখ</label>
+                <input type="date" name="endDate" value={formData.endDate} onChange={handleInput} />
+              </div>
+              <div className="dm-form-group">
+                <label>সময়কাল</label>
+                <input name="duration" value={formData.duration} onChange={handleInput} placeholder="e.g. 3 days" />
+              </div>
+              <div className="dm-form-group">
+                <label>স্থান (Venue)</label>
+                <input name="venue" value={formData.venue} onChange={handleInput} placeholder="Training venue" />
+              </div>
+              <div className="dm-form-group">
+                <label>মোট আসন</label>
+                <input type="number" name="totalSeats" value={formData.totalSeats} onChange={handleInput} placeholder="0" />
+              </div>
+              <div className="dm-form-group">
+                <label>বাজেট (৳)</label>
+                <input type="number" name="budget" value={formData.budget} onChange={handleInput} placeholder="0" />
+              </div>
+              <div className="dm-form-group">
+                <label>ফোন</label>
+                <input name="phone" value={formData.phone} onChange={handleInput} placeholder="Contact number" />
+              </div>
+              <div className="dm-form-group">
+                <label>ছবি</label>
+                <input type="file" accept="image/*" onChange={handleImageChange} />
+                {imagePreview && <img src={imagePreview} alt="preview" className="dm-image-preview" />}
+              </div>
+              <div className="dm-form-group full-span">
+                <label>বিবরণ</label>
+                <textarea name="description" value={formData.description} onChange={handleInput} rows={3} placeholder="Training objectives..." />
+              </div>
+              <div className="dm-form-group full-span">
+                <label>প্রয়োজনীয় উপকরণ</label>
+                <textarea name="materials" value={formData.materials} onChange={handleInput} rows={2} placeholder="e.g. Laptop, Projector..." />
+              </div>
             </div>
-
-            <div className="form-group">
-              <label>Trainer Name *</label>
-              <input
-                type="text"
-                name="trainer"
-                value={formData.trainer}
-                onChange={handleInputChange}
-                placeholder="e.g., Dr. Rahman Ahmed"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Training Type *</label>
-              <select
-                name="trainingType"
-                value={formData.trainingType}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Select Type</option>
-                {trainingTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Status *</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                required
-              >
-                {statuses.map(status => (
-                  <option key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Start Date *</label>
-              <input
-                type="date"
-                name="startDate"
-                value={formData.startDate}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>End Date *</label>
-              <input
-                type="date"
-                name="endDate"
-                value={formData.endDate}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Duration</label>
-              <input
-                type="text"
-                name="duration"
-                value={formData.duration}
-                onChange={handleInputChange}
-                placeholder="e.g., 3 days, 2 weeks"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Total Seats *</label>
-              <input
-                type="number"
-                name="totalSeats"
-                value={formData.totalSeats}
-                onChange={handleInputChange}
-                min="1"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Venue *</label>
-              <input
-                type="text"
-                name="venue"
-                value={formData.venue}
-                onChange={handleInputChange}
-                placeholder="e.g., Training Hall, Main Building"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Budget (৳)</label>
-              <input
-                type="number"
-                name="budget"
-                value={formData.budget}
-                onChange={handleInputChange}
-                placeholder="e.g., 50000"
-              />
-            </div>
-
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-              <label>Description *</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                rows="3"
-                placeholder="Describe the training objectives and content..."
-                required
-              ></textarea>
-            </div>
-
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-              <label>Materials Needed</label>
-              <textarea
-                name="materials"
-                value={formData.materials}
-                onChange={handleInputChange}
-                rows="2"
-                placeholder="e.g., Laptop, Projector, Handouts, Training Manual"
-              ></textarea>
-            </div>
-
-            <div className="form-actions" style={{ gridColumn: '1 / -1' }}>
-              <button type="button" className="btn-secondary" onClick={resetForm}>
-                Cancel
-              </button>
-              <button type="submit" className="btn-primary">
-                {editingTraining ? 'Update Training' : 'Add Training'}
+            <div className="dm-form-actions">
+              <button type="button" className="dm-btn-cancel" onClick={resetForm}>বাতিল</button>
+              <button type="submit" className="dm-btn-submit" disabled={saving}>
+                {saving ? 'সংরক্ষণ...' : editingTraining ? 'আপডেট করুন' : 'যোগ করুন'}
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Search and Filter */}
-      <div className="search-filter-section">
-        <div className="search-box">
-          <i className="fas fa-search"></i>
-          <input
-            type="text"
-            placeholder="Search by title, trainer, or type..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      {/* ── Toolbar ── */}
+      <div className="dm-toolbar">
+        <div className="dm-search">
+          <i className="fas fa-search dm-search-icon"></i>
+          <input type="text" placeholder="নাম, প্রশিক্ষক বা ধরন দিয়ে খুঁজুন..."
+            value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} />
         </div>
-
-        <select
-          className="filter-select"
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-        >
-          <option value="">All Status</option>
-          {statuses.map(status => (
-            <option key={status} value={status}>
-              {status.charAt(0).toUpperCase() + status.slice(1)}
-            </option>
-          ))}
-        </select>
+        <div className="dm-filter">
+          <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}>
+            <option value="">সব স্ট্যাটাস</option>
+            {STATUSES.map(s=><option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
+          </select>
+        </div>
       </div>
 
-      {/* Trainings List */}
-      <div className="table-container">
-        {filteredTrainings.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#9ca3af' }}>
-            <i className="fas fa-graduation-cap" style={{ fontSize: '48px', marginBottom: '15px' }}></i>
-            <p>No trainings found</p>
-          </div>
-        ) : (
-          <table>
+      {/* ── Table ── */}
+      {loading ? (
+        <div className="dm-loading"><div className="spinner"/></div>
+      ) : filtered.length===0 ? (
+        <div className="dm-empty">
+          <span className="dm-empty-icon">🎓</span>
+          <p>কোনো ট্রেনিং পাওয়া যায়নি</p>
+        </div>
+      ) : (
+        <div className="dm-table-wrap">
+          <table className="dm-table">
             <thead>
               <tr>
-                <th>Training Title</th>
-                <th>Trainer</th>
-                <th>Type</th>
-                <th>Date</th>
-                <th>Duration</th>
-                <th>Venue</th>
-                <th>Seats</th>
-                <th>Status</th>
-                <th>Budget</th>
-                <th>Actions</th>
+                <th>ট্রেনিং</th>
+                <th>প্রশিক্ষক</th>
+                <th>ধরন</th>
+                <th>তারিখ</th>
+                <th>সময়কাল</th>
+                <th>স্থান</th>
+                <th>আসন</th>
+                <th>স্ট্যাটাস</th>
+                <th>বাজেট</th>
+                <th>অ্যাকশন</th>
               </tr>
             </thead>
             <tbody>
-              {filteredTrainings.map(training => (
-                <tr key={training._id}>
+              {filtered.map(t=>(
+                <tr key={t._id}>
                   <td>
-                    <strong>{training.title}</strong>
-                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                      {training.description.substring(0, 50)}...
+                    <div className="dm-table-training-cell">
+                      {t.image?.url
+                        ? <img src={t.image.url} alt={t.name} className="dm-table-training-thumb"
+                            onError={e=>e.target.style.display='none'} />
+                        : <div className="dm-table-training-placeholder">🎓</div>
+                      }
+                      <div>
+                        <div className="dm-table-training-name">{t.name}</div>
+                        {t.description && (
+                          <div className="dm-table-training-desc">
+                            {t.description.substring(0,60)}{t.description.length>60&&'...'}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
-                  <td>{training.trainer}</td>
+                  <td><strong>{t.trainer||'—'}</strong></td>
+                  <td>{t.trainingType ? <span className="dm-tag type">{t.trainingType}</span> : '—'}</td>
                   <td>
-                    <span style={{
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      background: '#e0e7ff',
-                      color: '#4338ca'
-                    }}>
-                      {training.trainingType}
+                    {t.startDate&&<div>{fmtDate(t.startDate)}</div>}
+                    {t.endDate&&<div style={{fontSize:12,color:'#9ca3af'}}>→ {fmtDate(t.endDate)}</div>}
+                    {!t.startDate&&!t.endDate&&'—'}
+                  </td>
+                  <td>{t.duration||'—'}</td>
+                  <td>{t.venue||'—'}</td>
+                  <td><strong>{t.totalSeats||'—'}</strong></td>
+                  <td>
+                    <span className={`dm-tag ${statusTagCls[t.status]||''}`}>
+                      {t.status?t.status.charAt(0).toUpperCase()+t.status.slice(1):'—'}
                     </span>
                   </td>
+                  <td>{t.budget?`৳${parseInt(t.budget).toLocaleString()}`:'—'}</td>
                   <td>
-                    <div>{new Date(training.startDate).toLocaleDateString()}</div>
-                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                      to {new Date(training.endDate).toLocaleDateString()}
-                    </div>
-                  </td>
-                  <td>{training.duration}</td>
-                  <td>{training.venue}</td>
-                  <td>
-                    <span style={{ fontWeight: '600' }}>
-                      {training.participants.length} / {training.totalSeats}
-                    </span>
-                  </td>
-                  <td>
-                    <span style={{
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      background: getStatusColor(training.status) + '20',
-                      color: getStatusColor(training.status)
-                    }}>
-                      {training.status.charAt(0).toUpperCase() + training.status.slice(1)}
-                    </span>
-                  </td>
-                  <td>৳{parseInt(training.budget).toLocaleString()}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        onClick={() => handleEdit(training)}
-                        style={{
-                          padding: '6px 12px',
-                          background: '#dbeafe',
-                          color: '#1e40af',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '13px'
-                        }}
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button
-                        onClick={() => handleDelete(training._id)}
-                        style={{
-                          padding: '6px 12px',
-                          background: '#fee2e2',
-                          color: '#991b1b',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '13px'
-                        }}
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
+                    <div style={{display:'flex',gap:6}}>
+                      <button className="dm-action-btn edit"   onClick={()=>handleEdit(t)}><i className="fas fa-edit"/>Edit</button>
+                      {/* <button className="dm-action-btn toggle" onClick={()=>handleToggle(t._id)}><i className="fas fa-toggle-on"/></button> */}
+                      <button className="dm-action-btn delete" onClick={()=>handleDelete(t._id)}><i className="fas fa-trash"/>✘</button>
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -43,9 +43,11 @@ const Teachers = () => {
       <div className="page-container">
         <div className="page-header-section">
           <h1>Our Teachers</h1>
-          <p>Meet our dedicated and qualified teaching staff</p>
         </div>
-
+        {/* <div className="page-header-section">
+          <p style={{ color: "#2980b9", fontSize: "30px" , fontFamily: "sans-serif", fontWeight: "bold" }}>Our Teachers</p>
+        </div> */}
+        
         {loading ? (
           <div className="teachers-grid-public">
             <SkeletonLoader type="card" count={6} />

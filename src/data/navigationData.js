@@ -27,9 +27,7 @@ export const navigationData = [
     path: '/administration',
     subItems: [
       { id: 'governing', label: 'Governing Body', path: '/administration/governing-body' },
-      { id: 'principal', label: 'Principal', path: '/administration/principal' },
       { id: 'teachers', label: 'Teachers', path: '/administration/teachers' },
-      { id: 'staff', label: 'Staff', path: '/administration/staff' },
       // ✅ NEW: Teacher Training
       { id: 'teacher-training', label: 'Teacher Training', path: '/administration/teacher-training' },
       // ✅ NEW: Club Management

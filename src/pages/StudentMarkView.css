@@ -1,0 +1,149 @@
+/* ===== STUDENT MARK VIEW ===== */
+.student-mark-page { padding: 24px; max-width: 1200px; }
+.smark-loading { text-align: center; padding: 60px; color: #6366f1; font-size: 1.1rem; }
+
+.smark-header h1 { font-size: 1.8rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+.smark-header p { color: #64748b; margin-bottom: 24px; }
+
+.smark-empty { text-align: center; padding: 60px 20px; color: #94a3b8; }
+.smark-empty span { font-size: 3rem; display: block; margin-bottom: 12px; }
+
+.smark-layout { display: flex; gap: 20px; align-items: flex-start; }
+
+/* Sidebar */
+.smark-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+}
+.smark-sidebar h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 12px; font-weight: 600; }
+
+.smark-exam-btn {
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+.smark-exam-btn:hover { border-color: #6366f1; background: #f5f3ff; }
+.smark-exam-btn.active { border-color: #6366f1; background: #ede9fe; }
+
+.exam-btn-title { font-weight: 600; font-size: 0.9rem; color: #1e293b; }
+.exam-btn-year { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+.exam-btn-gpa { font-size: 0.8rem; font-weight: 600; margin-top: 4px; }
+
+.result-badge-small {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-top: 6px;
+}
+.result-badge-small.pass { background: #dcfce7; color: #16a34a; }
+.result-badge-small.fail { background: #fee2e2; color: #dc2626; }
+.result-badge-small.not-published { background: #f1f5f9; color: #64748b; }
+
+/* Main */
+.smark-main { flex: 1; min-width: 0; }
+
+/* Summary */
+.smark-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.smark-summary-item {
+  flex: 1;
+  min-width: 100px;
+  text-align: center;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+.smi-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 600; margin-bottom: 4px; }
+.smi-val { font-size: 1.1rem; font-weight: 700; color: #1e293b; }
+.smi-val.highlight { color: #6366f1; }
+.smi-result { font-size: 1rem; font-weight: 700; padding: 4px 12px; border-radius: 16px; display: inline-block; }
+.smi-result.pass { background: #dcfce7; color: #16a34a; }
+.smi-result.fail { background: #fee2e2; color: #dc2626; }
+
+/* Subjects table */
+.smark-subjects {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 20px;
+}
+.smark-subjects h3 { font-size: 1rem; font-weight: 700; color: #1e293b; margin-bottom: 16px; }
+
+.smark-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.smark-table th {
+  background: #f1f5f9;
+  padding: 10px 12px;
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
+  color: #374151;
+}
+.smark-table td {
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+  vertical-align: middle;
+}
+.smark-table tbody tr:hover { background: #f8fafc; }
+.smark-table .fail-row { background: #fff5f5; }
+.smark-table .absent-row { background: #fefce8; }
+.smark-table .total-row { background: #f0f4ff; font-weight: 700; }
+
+.subject-name-cell { text-align: left; }
+.sub-code { display: block; font-size: 0.7rem; color: #94a3b8; }
+.bold-cell { font-weight: 700; }
+.absent-tag { background: #fef9c3; color: #854d0e; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+
+.grade-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+.text-right { text-align: right !important; }
+
+/* GPA Visual Bar */
+.gpa-visual {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+.gpa-bar-label { font-size: 0.8rem; color: #64748b; font-weight: 600; white-space: nowrap; }
+.gpa-bar-bg { flex: 1; height: 12px; background: #f1f5f9; border-radius: 6px; overflow: hidden; }
+.gpa-bar-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+.gpa-bar-val { font-weight: 700; font-size: 0.9rem; white-space: nowrap; min-width: 55px; }
+
+@media (max-width: 768px) {
+  .smark-layout { flex-direction: column; }
+  .smark-sidebar { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+  .smark-exam-btn { width: auto; flex: 1; min-width: 140px; }
+  .smark-summary { gap: 8px; }
+  .smark-summary-item { min-width: 80px; }
+}

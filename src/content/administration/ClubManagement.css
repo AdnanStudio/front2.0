@@ -1,7 +1,7 @@
 /* ==================== CLUB MANAGEMENT PAGE ==================== */
 .club-management-public-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  background: whitesmoke;
 }
 
 .page-container {
@@ -21,7 +21,7 @@
   font-weight: 800;
   color: #1a202c;
   margin-bottom: 15px;
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  background: #2980b9;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -36,7 +36,7 @@
 /* ==================== CLUBS GRID ==================== */
 .clubs-grid-public {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 35px;
   animation: fadeInUp 0.8s ease-out;
 }
@@ -45,50 +45,63 @@
 .club-card-public {
   background: white;
   border-radius: 20px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   border: 1px solid rgba(0, 0, 0, 0.05);
+  text-align: center;
+  padding-top: 90px;
+  margin-top: 90px;
 }
 
 .club-card-public::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(250, 112, 154, 0.1) 0%, rgba(254, 225, 64, 0.1) 100%);
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, rgba(250,112,154,0.07) 0%, rgba(254,225,64,0.07) 100%);
   opacity: 0;
   transition: opacity 0.4s ease;
   pointer-events: none;
+  border-radius: 20px;
 }
 
 .club-card-public:hover {
-  transform: translateY(-15px) rotate(-1deg);
-  box-shadow: 0 25px 60px rgba(250, 112, 154, 0.3);
+  transform: translateY(-15px);
+  box-shadow: 0 25px 60px rgba(102, 102, 102, 0.28);
 }
 
-.club-card-public:hover::after {
-  opacity: 1;
-}
+.club-card-public:hover::after { opacity: 1; }
 
-/* ==================== CLUB IMAGE ==================== */
+/* ==================== CLUB IMAGE — ROUND (GoverningBody style) ==================== */
 .club-image-public {
-  width: 100%;
-  height: 280px;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
   overflow: hidden;
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-  position: relative;
+  position: absolute;
+  top: -85px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid #2980b9;
+  box-shadow: 0 10px 25px whitesmoke;
+  background: linear-gradient(135deg, #2980b9 0%, #fee140 100%);
+  transition: all 0.4s ease;
+  z-index: 2;
+}
+
+.club-card-public:hover .club-image-public {
+  transform: translateX(-50%) scale(1.07);
+  border-color: whitesmoke;
+  box-shadow: 0 15px 35px #2980b9;
 }
 
 .club-image-public img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  filter: brightness(0.95);
+  filter: brightness(0.97);
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .club-card-public:hover .club-image-public img {
@@ -96,69 +109,62 @@
   filter: brightness(1.05);
 }
 
-/* Category Badge */
+/* Category Badge — sits below image */
 .club-category-badge {
-  position: absolute;
-  top: 15px;
-  left: 15px;
-  padding: 8px 18px;
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 6px 18px;
   border-radius: 25px;
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: white;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-  animation: slideInLeft 0.6s ease-out;
+  background: linear-gradient(135deg, #fa709a, #fee140);
+  box-shadow: 0 4px 12px rgba(250, 112, 154, 0.3);
+  animation: slideInDown 0.5s ease-out;
 }
 
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ==================== CLUB CONTENT ==================== */
 .club-content-public {
-  padding: 30px;
+  padding: 8px 28px 28px;
   position: relative;
   z-index: 1;
 }
 
 .club-content-public h3 {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: #1a202c;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   line-height: 1.3;
   transition: color 0.3s ease;
 }
 
 .club-card-public:hover .club-content-public h3 {
-  color: #fa709a;
+  color: #2980b9;
 }
 
 .club-description {
   color: #4a5568;
   line-height: 1.8;
   font-size: 15px;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
+  text-align: left;
 }
 
 /* ==================== CLUB DETAILS ==================== */
 .club-details {
   display: grid;
-  gap: 14px;
-  padding-top: 20px;
+  gap: 12px;
+  padding-top: 18px;
   border-top: 2px solid #f7fafc;
+  text-align: left;
 }
 
 .club-detail-item {
@@ -172,19 +178,17 @@
 }
 
 .club-detail-item:hover {
-  background: #edf2f7;
+  background: #fff5f0;
   transform: translateX(5px);
 }
 
 .club-detail-item svg {
-  color: #fa709a;
+  color: #2980b9;
   flex-shrink: 0;
   margin-top: 2px;
 }
 
-.club-detail-item > div {
-  flex: 1;
-}
+.club-detail-item > div { flex: 1; }
 
 .club-detail-item strong {
   display: block;
@@ -205,12 +209,12 @@
 
 /* ==================== CLUB ACHIEVEMENTS ==================== */
 .club-achievements {
-  margin-top: 20px;
-  padding: 15px;
+  margin-top: 18px;
+  padding: 14px;
   background: linear-gradient(135deg, #fff5e6 0%, #ffe6f0 100%);
   border-radius: 12px;
-  border-left: 4px solid #fa709a;
-  animation: fadeIn 0.5s ease-out;
+  border-left: 4px solid #2980b9;
+  text-align: left;
 }
 
 .club-achievements strong {
@@ -219,13 +223,13 @@
   gap: 8px;
   font-size: 13px;
   font-weight: 700;
-  color: #fa709a;
+  color: #2980b9;
   margin-bottom: 8px;
 }
 
 .club-achievements strong::before {
   content: '🏆';
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .club-achievements p {
@@ -254,70 +258,44 @@
 
 /* ==================== ANIMATIONS ==================== */
 @keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-30px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.club-card-public {
+  animation: fadeInScale 0.6s ease-out backwards;
+}
+
+.club-card-public:nth-child(1) { animation-delay: 0.1s; }
+.club-card-public:nth-child(2) { animation-delay: 0.2s; }
+.club-card-public:nth-child(3) { animation-delay: 0.3s; }
+.club-card-public:nth-child(4) { animation-delay: 0.4s; }
+.club-card-public:nth-child(5) { animation-delay: 0.5s; }
+.club-card-public:nth-child(6) { animation-delay: 0.6s; }
 
 /* ==================== RESPONSIVE ==================== */
-@media (max-width: 768px) {
-  .page-header-section h1 {
-    font-size: 32px;
-  }
-
-  .clubs-grid-public {
-    grid-template-columns: 1fr;
-    gap: 25px;
-  }
-
-  .club-image-public {
-    height: 240px;
-  }
-
-  .club-content-public {
-    padding: 24px;
-  }
-
-  .club-content-public h3 {
-    font-size: 20px;
-  }
+@media (max-width: 900px) {
+  .clubs-grid-public      { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+  .page-header-section h1 { font-size: 30px; }
+  .club-image-public      { width: 130px; height: 130px; top: -65px; }
+  .club-card-public       { padding-top: 70px; margin-top: 70px; }
 }
 
-@media (max-width: 480px) {
-  .page-container {
-    padding: 40px 15px;
-  }
-
-  .page-header-section h1 {
-    font-size: 28px;
-  }
-
-  .club-card-public:hover {
-    transform: translateY(-10px) rotate(0deg);
-  }
+@media (max-width: 520px) {
+  .clubs-grid-public { grid-template-columns: 1fr; }
 }

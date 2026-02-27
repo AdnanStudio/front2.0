@@ -26,10 +26,9 @@ import AcademicCalendar from '../content/academic/AcademicCalendar';
 
 // Administration sub-pages
 import GoverningBody from '../content/administration/GoverningBody';
-import Principal from '../content/administration/Principal';
+
 import Teachers from '../content/administration/Teachers';
-import Staff from '../content/administration/Staff';
-// ✅ NEW IMPORTS
+
 import TeacherTraining from '../content/administration/TeacherTraining';
 import ClubManagementPublic from '../content/administration/ClubManagement';
 
@@ -114,9 +113,9 @@ const PublicHome = () => {
 
         {/* Administration Sub-routes */}
         <Route path="/administration/governing-body" element={<GoverningBody />} />
-        <Route path="/administration/principal" element={<Principal />} />
+        
         <Route path="/administration/teachers" element={<Teachers />} />
-        <Route path="/administration/staff" element={<Staff />} />
+        
         {/* ✅ NEW ROUTES */}
         <Route path="/administration/teacher-training" element={<TeacherTraining />} />
         <Route path="/administration/club-management" element={<ClubManagementPublic />} />

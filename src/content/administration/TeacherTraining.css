@@ -1,7 +1,7 @@
 /* ==================== TEACHER TRAINING PAGE ==================== */
 .teacher-training-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: whitesmoke;
 }
 
 .page-container {
@@ -21,7 +21,7 @@
   font-weight: 800;
   color: #1a202c;
   margin-bottom: 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -36,7 +36,7 @@
 /* ==================== TRAININGS GRID ==================== */
 .trainings-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
   gap: 35px;
   animation: fadeInUp 0.8s ease-out;
 }
@@ -45,24 +45,26 @@
 .training-card-public {
   background: white;
   border-radius: 20px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   border: 1px solid rgba(0, 0, 0, 0.05);
+  text-align: center;
+  padding-top: 90px;
+  margin-top: 90px;
 }
 
 .training-card-public::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   height: 5px;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: #2980b9;
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.4s ease;
+  border-radius: 20px 20px 0 0;
 }
 
 .training-card-public:hover {
@@ -74,13 +76,26 @@
   transform: scaleX(1);
 }
 
-/* ==================== TRAINING IMAGE ==================== */
+/* ==================== TRAINING IMAGE — ROUND (GoverningBody style) ==================== */
 .training-image-public {
-  width: 100%;
-  height: 300px;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
   overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  position: relative;
+  position: absolute;
+  top: -85px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid #2980b9;
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.25);
+  background: white;
+  transition: all 0.4s ease;
+}
+
+.training-card-public:hover .training-image-public {
+  transform: translateX(-50%) scale(1.07);
+  border-color: white;
+  box-shadow: 0 15px 35px #2980b9;
 }
 
 .training-image-public img {
@@ -91,42 +106,36 @@
 }
 
 .training-card-public:hover .training-image-public img {
-  transform: scale(1.15) rotate(2deg);
+  transform: scale(1.15);
 }
 
-/* Status Badge */
+/* Status Badge — under image */
 .training-status-badge {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  padding: 8px 18px;
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 6px 18px;
   border-radius: 25px;
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: white;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
   animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.05); }
 }
 
 /* ==================== TRAINING CONTENT ==================== */
 .training-content-public {
-  padding: 30px;
+  padding: 8px 30px 30px;
 }
 
 .training-content-public h3 {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: #1a202c;
   margin-bottom: 10px;
@@ -135,7 +144,7 @@
 }
 
 .training-card-public:hover .training-content-public h3 {
-  color: #667eea;
+  color: #2980b9;
 }
 
 .training-type {
@@ -147,6 +156,12 @@
   font-size: 13px;
   font-weight: 600;
   margin-bottom: 15px;
+  transition: all 0.3s ease;
+}
+
+.training-card-public:hover .training-type {
+  background: #667eea;
+  color: white;
 }
 
 .training-description {
@@ -154,6 +169,7 @@
   line-height: 1.8;
   font-size: 15px;
   margin-bottom: 20px;
+  text-align: left;
 }
 
 /* ==================== TRAINING DETAILS GRID ==================== */
@@ -162,16 +178,21 @@
   gap: 12px;
   padding-top: 20px;
   border-top: 2px solid #f7fafc;
+  text-align: left;
 }
 
 .training-detail-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  transition: transform 0.3s ease;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f7fafc;
+  transition: all 0.3s ease;
 }
 
 .training-detail-item:hover {
+  background: #edf2f7;
   transform: translateX(5px);
 }
 
@@ -181,9 +202,7 @@
   margin-top: 2px;
 }
 
-.training-detail-item > div {
-  flex: 1;
-}
+.training-detail-item > div { flex: 1; }
 
 .training-detail-item strong {
   display: block;
@@ -221,70 +240,44 @@
 
 /* ==================== ANIMATIONS ==================== */
 @keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-30px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.training-card-public {
+  animation: fadeInScale 0.6s ease-out backwards;
+}
+
+.training-card-public:nth-child(1) { animation-delay: 0.1s; }
+.training-card-public:nth-child(2) { animation-delay: 0.2s; }
+.training-card-public:nth-child(3) { animation-delay: 0.3s; }
+.training-card-public:nth-child(4) { animation-delay: 0.4s; }
+.training-card-public:nth-child(5) { animation-delay: 0.5s; }
+.training-card-public:nth-child(6) { animation-delay: 0.6s; }
 
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
-  .page-header-section h1 {
-    font-size: 32px;
-  }
-
-  .trainings-grid {
-    grid-template-columns: 1fr;
-    gap: 25px;
-  }
-
-  .training-image-public {
-    height: 250px;
-  }
-
-  .training-content-public {
-    padding: 24px;
-  }
-
-  .training-content-public h3 {
-    font-size: 20px;
-  }
+  .trainings-grid         { grid-template-columns: 1fr 1fr; gap: 24px; }
+  .page-header-section h1 { font-size: 30px; }
+  .training-image-public  { width: 130px; height: 130px; top: -65px; }
+  .training-card-public   { padding-top: 70px; margin-top: 70px; }
 }
 
-@media (max-width: 480px) {
-  .page-container {
-    padding: 40px 15px;
-  }
-
-  .page-header-section h1 {
-    font-size: 28px;
-  }
-
-  .training-card-public:hover {
-    transform: translateY(-8px) scale(1.01);
-  }
+@media (max-width: 520px) {
+  .trainings-grid { grid-template-columns: 1fr; }
 }

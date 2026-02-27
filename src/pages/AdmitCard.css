@@ -1,0 +1,294 @@
+/* ===== ADMIT CARD PAGE ===== */
+.admit-loading { text-align: center; padding: 60px; color: #6366f1; font-size: 1.1rem; }
+
+.admit-page { padding: 24px; background: #f8fafc; min-height: 100vh; }
+
+/* Controls */
+.admit-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 16px 20px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.admit-controls h2 { font-size: 1.2rem; font-weight: 700; color: #1e293b; margin: 0; }
+.admit-controls p { color: #64748b; font-size: 0.85rem; margin: 4px 0 0; }
+.admit-ctrl-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.admit-ctrl-btns button {
+  padding: 8px 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.admit-ctrl-btns button:hover { border-color: #6366f1; color: #6366f1; }
+.admit-ctrl-btns .print-btn {
+  background: #6366f1;
+  color: white;
+  border-color: #6366f1;
+}
+.admit-ctrl-btns .print-btn:hover { background: #4f46e5; }
+
+/* Selector */
+.admit-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: white;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 24px;
+}
+.admit-select-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  transition: all 0.2s;
+  background: #f8fafc;
+}
+.admit-select-item.selected { border-color: #6366f1; background: #ede9fe; color: #4f46e5; }
+.admit-select-item input { accent-color: #6366f1; }
+
+/* ===== ADMIT CARD ITSELF ===== */
+.admit-card-wrapper {
+  margin-bottom: 30px;
+}
+
+.admit-card {
+  width: 210mm;
+  min-height: 297mm;
+  background: white;
+  margin: 0 auto;
+  border: 2.5px solid #1e293b;
+  position: relative;
+  padding: 14mm 12mm;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 11pt;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Watermark */
+.admit-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  height: 180px;
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 0;
+}
+.admit-watermark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* All content above watermark */
+.admit-card > *:not(.admit-watermark) { position: relative; z-index: 1; }
+
+/* Header */
+.admit-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 3px double #1e293b;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+.admit-logo {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+}
+.admit-school-info { flex: 1; text-align: center; }
+.admit-school-name {
+  font-size: 16pt;
+  font-weight: bold;
+  color: #1e293b;
+  margin: 0 0 2px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.admit-school-info p { margin: 1px 0; font-size: 9pt; color: #374151; }
+.admit-title-band {
+  background: #1e293b;
+  color: white;
+  padding: 4px 16px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 6px;
+}
+.admit-title-band h2 { margin: 0; font-size: 13pt; letter-spacing: 3px; text-transform: uppercase; }
+.admit-title-band span { font-size: 9pt; }
+
+/* Student Section */
+.admit-student-section {
+  display: flex;
+  gap: 12px;
+  border: 1.5px solid #94a3b8;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+.admit-student-details { flex: 1; }
+.admit-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+  gap: 8px;
+}
+.admit-row label {
+  font-size: 9.5pt;
+  color: #64748b;
+  min-width: 110px;
+  font-weight: bold;
+}
+.admit-val {
+  font-size: 10.5pt;
+  font-weight: 600;
+  color: #1e293b;
+  border-bottom: 1px dotted #94a3b8;
+  flex: 1;
+  padding-bottom: 1px;
+}
+
+.admit-photo-box {
+  width: 90px;
+  height: 110px;
+  border: 2px solid #94a3b8;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.admit-photo { width: 100%; height: 100%; object-fit: cover; }
+.admit-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 9pt;
+  background: #f8fafc;
+}
+
+/* Subjects */
+.admit-subjects-section { margin-bottom: 10px; }
+.admit-subjects-section h3 {
+  font-size: 10.5pt;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1.5px solid #1e293b;
+  padding-bottom: 3px;
+  margin-bottom: 6px;
+  color: #1e293b;
+}
+.admit-subjects-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5pt;
+}
+.admit-subjects-table th {
+  background: #f1f5f9;
+  border: 1px solid #94a3b8;
+  padding: 5px 8px;
+  text-align: center;
+  font-weight: bold;
+  color: #1e293b;
+}
+.admit-subjects-table td {
+  border: 1px solid #94a3b8;
+  padding: 5px 8px;
+  text-align: center;
+  color: #374151;
+}
+.sub-name-cell { text-align: left !important; font-weight: 500; }
+.date-blank, .time-blank, .venue-blank { min-width: 70px; }
+
+/* Instructions */
+.admit-instructions {
+  border: 1px solid #94a3b8;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+.admit-instructions h4 { font-size: 9.5pt; margin: 0 0 5px; text-decoration: underline; color: #1e293b; }
+.admit-instructions ol { margin: 0; padding-left: 18px; }
+.admit-instructions li { font-size: 9pt; margin-bottom: 2px; color: #374151; }
+
+/* Signatures */
+.admit-signatures {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 12px;
+  gap: 20px;
+}
+.admit-sig-box { text-align: center; flex: 1; }
+.admit-sig-box p { font-size: 8.5pt; margin: 3px 0 0; color: #374151; }
+.sig-line { border-bottom: 1px solid #1e293b; height: 30px; margin: 0 10px; }
+
+.center-seal { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.seal-circle {
+  width: 60px;
+  height: 60px;
+  border: 2px dashed #94a3b8;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8pt;
+  color: #94a3b8;
+}
+
+/* Footer band */
+.admit-footer-band {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 6px;
+  border-top: 1.5px solid #1e293b;
+  font-size: 8pt;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  @page { size: A4; margin: 8mm; }
+
+  body * { visibility: hidden; }
+  .admit-print-area, .admit-print-area * { visibility: visible; }
+  .admit-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+
+  .no-print { display: none !important; }
+
+  .admit-card {
+    width: 100%;
+    border: 2px solid #000;
+    margin: 0;
+    padding: 10mm 10mm;
+    page-break-inside: avoid;
+  }
+
+  .page-break { page-break-after: always; }
+
+  .admit-watermark { opacity: 0.07 !important; }
+}
