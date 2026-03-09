@@ -7,7 +7,7 @@ import { ArrowLeft, Save, Upload, Loader } from 'lucide-react';
 import './StudentForm.css';
 
 const StudentForm = () => {
-  const { id } = useParams(); // Get student ID from URL (if editing)
+  const { id } = useParams();
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
 
@@ -19,7 +19,7 @@ const StudentForm = () => {
     address: '',
     dateOfBirth: '',
     studentId: '',
-    class: '',
+    class: '',      // ⚠️ Student model: class = String (class name, e.g. "Class 10")
     section: '',
     rollNumber: '',
     guardianName: '',
@@ -39,26 +39,24 @@ const StudentForm = () => {
   const [sections, setSections] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
 
-  // Fetch classes on mount
   useEffect(() => {
     fetchClasses();
   }, []);
 
-  // Fetch student data if editing
   useEffect(() => {
     if (isEditMode) {
       fetchStudentData();
     }
   }, [id]);
 
-  // Update sections when class changes
+  // Update sections when class (name) changes
   useEffect(() => {
     if (formData.class) {
       updateSections(formData.class);
     } else {
       setSections([]);
     }
-  }, [formData.class]);
+  }, [formData.class, classes]);
 
   const fetchClasses = async () => {
     try {
@@ -79,18 +77,19 @@ const StudentForm = () => {
       const response = await studentService.getStudent(id);
       const student = response.data;
 
-      // Populate form with existing data
       setFormData({
         name: student.userId?.name || '',
         email: student.userId?.email || '',
-        password: '', // Don't populate password
+        password: '',
         phone: student.userId?.phone || '',
         address: student.userId?.address || '',
-        dateOfBirth: student.userId?.dateOfBirth 
-          ? new Date(student.userId.dateOfBirth).toISOString().split('T')[0] 
+        dateOfBirth: student.userId?.dateOfBirth
+          ? new Date(student.userId.dateOfBirth).toISOString().split('T')[0]
           : '',
         studentId: student.studentId || '',
-        class: student.class?._id || student.class || '',
+        // ✅ Student.class is a String (class name), NOT ObjectId
+        // student.class could be "Class 10" directly
+        class: student.class || '',
         section: student.section || '',
         rollNumber: student.rollNumber || '',
         guardianName: student.guardianName || '',
@@ -100,7 +99,6 @@ const StudentForm = () => {
         previousSchool: student.previousSchool || ''
       });
 
-      // Set existing profile image
       if (student.userId?.profileImage) {
         setImagePreview(student.userId.profileImage);
       }
@@ -113,14 +111,15 @@ const StudentForm = () => {
     }
   };
 
-  const updateSections = (classId) => {
-    const selectedClass = classes.find(c => c._id === classId);
-    if (selectedClass) {
-      // Extract unique sections
-      const uniqueSections = [...new Set([selectedClass.section])];
+  // ✅ updateSections uses class NAME (String), not ObjectId
+  const updateSections = (className) => {
+    // Find all classes with this name, collect their sections
+    const matchingClasses = classes.filter(c => c.name === className);
+    if (matchingClasses.length > 0) {
+      const uniqueSections = [...new Set(matchingClasses.map(c => c.section))].sort();
       setSections(uniqueSections);
-      
-      // Auto-select section if only one exists
+
+      // Auto-select if only one section
       if (uniqueSections.length === 1 && !formData.section) {
         setFormData(prev => ({ ...prev, section: uniqueSections[0] }));
       }
@@ -131,32 +130,28 @@ const StudentForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    // Reset section when class changes
+    if (name === 'class') {
+      setFormData(prev => ({ ...prev, class: value, section: '' }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast.error('Image size should be less than 5MB');
         return;
       }
-
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         toast.error('Please select a valid image file');
         return;
       }
-
       setProfileImage(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
+      reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(file);
     }
   };
@@ -166,59 +161,48 @@ const StudentForm = () => {
       toast.error('Name and email are required');
       return false;
     }
-
     if (!isEditMode && !formData.password) {
       toast.error('Password is required for new students');
       return false;
     }
-
     if (!formData.studentId) {
       toast.error('Student ID is required');
       return false;
     }
-
     if (!formData.class || !formData.section) {
       toast.error('Class and section are required');
       return false;
     }
-
     if (!formData.rollNumber) {
       toast.error('Roll number is required');
       return false;
     }
-
-    // Email validation
+    if (!formData.guardianName || !formData.guardianPhone) {
+      toast.error('Guardian name and phone are required');
+      return false;
+    }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       toast.error('Please enter a valid email');
       return false;
     }
-
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       setLoading(true);
-      
+
       const submitData = new FormData();
-      
-      // Append all form fields
       Object.keys(formData).forEach(key => {
-        if (key === 'password' && isEditMode && !formData.password) {
-          // Skip empty password in edit mode
-          return;
-        }
+        if (key === 'password' && isEditMode && !formData.password) return;
+        // ✅ formData.class is already the class NAME (String), correct for Student model
         submitData.append(key, formData[key]);
       });
-      
-      // Append image if selected
+
       if (profileImage) {
         submitData.append('profileImage', profileImage);
       }
@@ -233,15 +217,17 @@ const StudentForm = () => {
 
       navigate('/dashboard/students');
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 
-                          error.message || 
-                          `Failed to ${isEditMode ? 'update' : 'add'} student`;
+      const errorMessage =
+        error.response?.data?.message || error.message || `Failed to ${isEditMode ? 'update' : 'add'} student`;
       toast.error(errorMessage);
       console.error('Submit error:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  // Get unique class names for the first dropdown
+  const uniqueClassNames = [...new Set(classes.map(c => c.name))].sort();
 
   if (fetchingData) {
     return (
@@ -318,7 +304,7 @@ const StudentForm = () => {
                 onChange={handleChange}
                 placeholder="Enter email"
                 required
-                disabled={isEditMode} // Email shouldn't change in edit mode
+                disabled={isEditMode}
               />
             </div>
 
@@ -398,36 +384,38 @@ const StudentForm = () => {
                 onChange={handleChange}
                 placeholder="e.g., STD001"
                 required
-                disabled={isEditMode} // Student ID shouldn't change
+                disabled={isEditMode}
               />
             </div>
 
+            {/* ✅ CLASS: value = class NAME (String), because Student.class is a String field */}
             <div className="form-group">
               <label>Class <span className="required">*</span></label>
-              <select 
-                name="class" 
-                value={formData.class} 
-                onChange={handleChange} 
+              <select
+                name="class"
+                value={formData.class}
+                onChange={handleChange}
                 required
                 disabled={loadingClasses}
               >
                 <option value="">
                   {loadingClasses ? 'Loading classes...' : 'Select Class'}
                 </option>
-                {classes.map((cls) => (
-                  <option key={cls._id} value={cls._id}>
-                    {cls.name}
+                {uniqueClassNames.map((className) => (
+                  <option key={className} value={className}>
+                    {className}
                   </option>
                 ))}
               </select>
             </div>
 
+            {/* ✅ SECTION: populated from classes matching selected class name */}
             <div className="form-group">
               <label>Section <span className="required">*</span></label>
-              <select 
-                name="section" 
-                value={formData.section} 
-                onChange={handleChange} 
+              <select
+                name="section"
+                value={formData.section}
+                onChange={handleChange}
                 required
                 disabled={!formData.class || sections.length === 0}
               >

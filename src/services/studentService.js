@@ -6,12 +6,11 @@ const STUDENT_API = '/students';
 export const getAllStudents = async (filters = {}) => {
   try {
     const queryParams = new URLSearchParams();
-    
-    if (filters.search) queryParams.append('search', filters.search);
-    if (filters.class) queryParams.append('class', filters.class);
+    if (filters.search)  queryParams.append('search',  filters.search);
+    if (filters.class)   queryParams.append('class',   filters.class);
     if (filters.section) queryParams.append('section', filters.section);
-    if (filters.gender) queryParams.append('gender', filters.gender);
-    if (filters.status) queryParams.append('status', filters.status);
+    if (filters.gender)  queryParams.append('gender',  filters.gender);
+    if (filters.status)  queryParams.append('status',  filters.status);
 
     const response = await api.get(`${STUDENT_API}?${queryParams.toString()}`);
     return response.data;
@@ -30,7 +29,7 @@ export const getStudent = async (id) => {
   }
 };
 
-// ============ Get Student by ID ============
+// ============ Get Student by ID (alias) ============
 export const getStudentById = async (id) => {
   try {
     const response = await api.get(`${STUDENT_API}/${id}`);
@@ -41,9 +40,12 @@ export const getStudentById = async (id) => {
 };
 
 // ============ Create Student ============
+// ✅ FormData পাঠানো হচ্ছে (image সহ) → api.js interceptor Content-Type সরিয়ে দেবে
 export const createStudent = async (studentData) => {
   try {
-    const response = await api.post(STUDENT_API, studentData);
+    const response = await api.post(STUDENT_API, studentData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Error creating student' };
@@ -51,9 +53,12 @@ export const createStudent = async (studentData) => {
 };
 
 // ============ Update Student ============
+// ✅ FormData পাঠানো হচ্ছে (image সহ) → explicit multipart/form-data
 export const updateStudent = async (id, studentData) => {
   try {
-    const response = await api.put(`${STUDENT_API}/${id}`, studentData);
+    const response = await api.put(`${STUDENT_API}/${id}`, studentData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Error updating student' };
@@ -100,7 +105,7 @@ export const getStudentProfile = async () => {
   }
 };
 
-// ============ Default Export (Object with all methods) ============
+// ============ Default Export ============
 const studentService = {
   getAllStudents,
   getStudent,
@@ -114,124 +119,3 @@ const studentService = {
 };
 
 export default studentService;
-
-
-
-
-// import api from './api';
-
-// const studentService = {
-//   // Get all students
-//   getAllStudents: async (params) => {
-//     const response = await api.get('/students', { params });
-//     return response.data;
-//   },
-
-//   // Get single student
-//   getStudent: async (id) => {
-//     const response = await api.get(`/students/${id}`);
-//     return response.data;
-//   },
-
-//   // Create student
-//   createStudent: async (studentData) => {
-//     const response = await api.post('/students', studentData);
-//     return response.data;
-//   },
-
-//   // Update student
-//   updateStudent: async (id, studentData) => {
-//     const response = await api.put(`/students/${id}`, studentData);
-//     return response.data;
-//   },
-
-//   // Delete student
-//   deleteStudent: async (id) => {
-//     const response = await api.delete(`/students/${id}`);
-//     return response.data;
-//   },
-
-//   // Get students by class
-//   getStudentsByClass: async (className, section) => {
-//     const response = await api.get(`/students/class/${className}/${section}`);
-//     return response.data;
-//   },
-
-//   // Toggle student status
-//   toggleStudentStatus: async (id) => {
-//     const response = await api.put(`/students/${id}/status`);
-//     return response.data;
-//   },
-
-//   // ✅ Get logged-in student profile
-//   getStudentProfile: async () => {
-//     try {
-//       const response = await api.get('/students/profile');
-//       return response.data;
-//     } catch (error) {
-//       throw error.response?.data || {
-//         message: 'Failed to fetch student profile'
-//       };
-//     }
-//   }
-// };
-
-// export default studentService;
-
-// // Named export (optional but convenient)
-// export const getStudentProfile = studentService.getStudentProfile;
-
-
-
-
-
-
-
-
-// import api from './api';
-
-// const studentService = {
-//   // Get all students
-//   getAllStudents: async (params) => {
-//     const response = await api.get('/students', { params });
-//     return response.data;
-//   },
-
-//   // Get single student
-//   getStudent: async (id) => {
-//     const response = await api.get(`/students/${id}`);
-//     return response.data;
-//   },
-
-//   // Create student
-//   createStudent: async (studentData) => {
-//     const response = await api.post('/students', studentData);
-//     return response.data;
-//   },
-
-//   // Update student
-//   updateStudent: async (id, studentData) => {
-//     const response = await api.put(`/students/${id}`, studentData);
-//     return response.data;
-//   },
-
-//   // Delete student
-//   deleteStudent: async (id) => {
-//     const response = await api.delete(`/students/${id}`);
-//     return response.data;
-//   },
-
-//   // Get students by class
-//   getStudentsByClass: async (className, section) => {
-//     const response = await api.get(`/students/class/${className}/${section}`);
-//     return response.data;
-//   },
-
-//   // Toggle student status
-//   toggleStudentStatus: async (id) => {
-//     const response = await api.put(`/students/${id}/status`);
-//     return response.data;
-//   }
-// };
-
-// export default studentService;

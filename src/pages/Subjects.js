@@ -41,7 +41,7 @@ const Subjects = () => {
     class: ''
   });
 
-  // Form state
+  // Form state - uses totalMarks/passingMarks on frontend side
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -97,37 +97,55 @@ const Subjects = () => {
     }
   };
 
+  // ============ Helper: Get teacher display name ============
+  // Teacher model has userId reference, so name is in teacher.userId.name
+  const getTeacherName = (teacher) => {
+    if (!teacher) return 'Not Assigned';
+    // Populated: { userId: { name: '...' } }
+    if (teacher.userId?.name) return teacher.userId.name;
+    // Direct name (fallback)
+    if (teacher.name) return teacher.name;
+    return 'Not Assigned';
+  };
+
+  // ============ Helper: Get subject full marks display ============
+  // Subject model uses theoryFullMarks, but frontend sends totalMarks
+  const getSubjectFullMarks = (subject) => {
+    return subject.theoryFullMarks || subject.totalMarks || 100;
+  };
+
+  const getSubjectPassMarks = (subject) => {
+    return subject.passMarks || subject.passingMarks || 33;
+  };
+
   // ============ Filter Function ============
   const filterSubjects = () => {
     let filtered = subjects;
 
-    // Search filter
     if (searchTerm) {
       filtered = filtered.filter(
         (subject) =>
           subject.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          subject.code.toLowerCase().includes(searchTerm.toLowerCase())
+          (subject.code && subject.code.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
-    // Department filter
     if (filters.department) {
       filtered = filtered.filter(
         (subject) => subject.department === filters.department
       );
     }
 
-    // Active status filter
     if (filters.isActive !== '') {
       filtered = filtered.filter(
         (subject) => subject.isActive === (filters.isActive === 'true')
       );
     }
 
-    // Class filter
+    // Class filter: subject.class is populated object { _id, name, section }
     if (filters.class) {
       filtered = filtered.filter(
-        (subject) => subject.class?._id === filters.class
+        (subject) => subject.class?._id === filters.class || subject.class === filters.class
       );
     }
 
@@ -177,15 +195,18 @@ const Subjects = () => {
     setSelectedSubject(subject);
     setFormData({
       name: subject.name,
-      code: subject.code,
+      code: subject.code || '',
       description: subject.description || '',
-      department: subject.department,
-      class: subject.class?._id || '',
-      teacher: subject.teacher?._id || '',
-      credits: subject.credits,
-      type: subject.type,
-      passingMarks: subject.passingMarks,
-      totalMarks: subject.totalMarks,
+      department: subject.department || 'General',
+      // subject.class is populated object, extract _id
+      class: subject.class?._id || subject.class || '',
+      // subject.teacher is populated object, extract _id
+      teacher: subject.teacher?._id || subject.teacher || '',
+      credits: subject.credits || 1,
+      type: subject.type || 'Theory',
+      // Map model fields back to form fields
+      passingMarks: subject.passMarks || subject.passingMarks || 33,
+      totalMarks: subject.theoryFullMarks || subject.totalMarks || 100,
       isActive: subject.isActive
     });
     setShowEditModal(true);
@@ -404,7 +425,7 @@ const Subjects = () => {
                 <th>Credits</th>
                 <th>Class</th>
                 <th>Teacher</th>
-                <th>Marks</th>
+                <th>Marks (Pass/Full)</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -413,19 +434,20 @@ const Subjects = () => {
               {filteredSubjects.map((subject) => (
                 <tr key={subject._id}>
                   <td>
-                    <span className="subject-code">{subject.code}</span>
+                    <span className="subject-code">{subject.code || '-'}</span>
                   </td>
                   <td>
                     <strong>{subject.name}</strong>
                   </td>
                   <td>
-                    <span className={`badge badge-${subject.department.toLowerCase()}`}>
-                      {subject.department}
+                    <span className={`badge badge-${(subject.department || 'general').toLowerCase()}`}>
+                      {subject.department || 'General'}
                     </span>
                   </td>
-                  <td>{subject.type}</td>
-                  <td>{subject.credits}</td>
+                  <td>{subject.type || 'Theory'}</td>
+                  <td>{subject.credits || '-'}</td>
                   <td>
+                    {/* subject.class is populated: { _id, name, section } */}
                     {subject.class ? (
                       <span>
                         {subject.class.name} - {subject.class.section}
@@ -435,14 +457,16 @@ const Subjects = () => {
                     )}
                   </td>
                   <td>
+                    {/* subject.teacher is populated: { userId: { name } } */}
                     {subject.teacher ? (
-                      <span>{subject.teacher.name}</span>
+                      <span>{getTeacherName(subject.teacher)}</span>
                     ) : (
                       <span className="text-muted">Not Assigned</span>
                     )}
                   </td>
                   <td>
-                    {subject.passingMarks}/{subject.totalMarks}
+                    {/* Use helper to get correct field names */}
+                    {getSubjectPassMarks(subject)}/{getSubjectFullMarks(subject)}
                   </td>
                   <td>
                     <button
@@ -516,13 +540,12 @@ const Subjects = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Subject Code *</label>
+                  <label>Subject Code</label>
                   <input
                     type="text"
                     name="code"
                     value={formData.code}
                     onChange={handleInputChange}
-                    required
                     placeholder="e.g., MATH101"
                     style={{ textTransform: 'uppercase' }}
                   />
@@ -584,24 +607,24 @@ const Subjects = () => {
                   </select>
                 </div>
 
-                {/* <div className="form-group">
+                <div className="form-group">
                   <label>Teacher</label>
                   <select
                     name="teacher"
                     value={formData.teacher}
                     onChange={handleInputChange}
                   >
-                    <option value="">Select Teacher</option>
+                    <option value="">Select Teacher (Optional)</option>
                     {teachers.map((teacher) => (
                       <option key={teacher._id} value={teacher._id}>
-                        {teacher.name}
+                        {teacher.userId?.name || teacher.name || teacher.employeeId}
                       </option>
                     ))}
                   </select>
-                </div> */}
+                </div>
 
                 <div className="form-group">
-                  <label>Credits </label>
+                  <label>Credits</label>
                   <input
                     type="number"
                     name="credits"
@@ -694,13 +717,12 @@ const Subjects = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Subject Code *</label>
+                  <label>Subject Code</label>
                   <input
                     type="text"
                     name="code"
                     value={formData.code}
                     onChange={handleInputChange}
-                    required
                     style={{ textTransform: 'uppercase' }}
                   />
                 </div>
@@ -760,30 +782,29 @@ const Subjects = () => {
                   </select>
                 </div>
 
-                {/* <div className="form-group">
+                <div className="form-group">
                   <label>Teacher</label>
                   <select
                     name="teacher"
                     value={formData.teacher}
                     onChange={handleInputChange}
                   >
-                    <option value="">Select Teacher</option>
+                    <option value="">Select Teacher (Optional)</option>
                     {teachers.map((teacher) => (
                       <option key={teacher._id} value={teacher._id}>
-                        {teacher.name}
+                        {teacher.userId?.name || teacher.name || teacher.employeeId}
                       </option>
                     ))}
                   </select>
-                </div> */}
+                </div>
 
                 <div className="form-group">
-                  <label>Credits </label>
+                  <label>Credits</label>
                   <input
                     type="number"
                     name="credits"
                     value={formData.credits}
                     onChange={handleInputChange}
-                    
                   />
                 </div>
 

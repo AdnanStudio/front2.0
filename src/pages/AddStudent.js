@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import studentService from '../services/studentService';
+import classService from '../services/classService';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Save, Upload } from 'lucide-react';
 import './StudentForm.css';
@@ -14,7 +15,7 @@ const AddStudent = () => {
     address: '',
     dateOfBirth: '',
     studentId: '',
-    class: '',
+    class: '',   // ✅ String - class name, e.g. "Class 10"
     section: '',
     rollNumber: '',
     guardianName: '',
@@ -28,13 +29,50 @@ const AddStudent = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Dynamic class/section data
+  const [classes, setClasses] = useState([]);
+  const [sections, setSections] = useState([]);
+  const [loadingClasses, setLoadingClasses] = useState(true);
+
   const navigate = useNavigate();
 
+  useEffect(() => {
+    fetchClasses();
+  }, []);
+
+  // Update sections when class changes
+  useEffect(() => {
+    if (formData.class) {
+      const matchingClasses = classes.filter(c => c.name === formData.class);
+      const uniqueSections = [...new Set(matchingClasses.map(c => c.section))].sort();
+      setSections(uniqueSections);
+      if (uniqueSections.length === 1) {
+        setFormData(prev => ({ ...prev, section: uniqueSections[0] }));
+      }
+    } else {
+      setSections([]);
+    }
+  }, [formData.class, classes]);
+
+  const fetchClasses = async () => {
+    try {
+      setLoadingClasses(true);
+      const response = await classService.getAllClasses();
+      setClasses(response.data || []);
+    } catch (error) {
+      toast.error('Failed to load classes');
+    } finally {
+      setLoadingClasses(false);
+    }
+  };
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    if (name === 'class') {
+      setFormData(prev => ({ ...prev, class: value, section: '' }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleImageChange = (e) => {
@@ -42,29 +80,31 @@ const AddStudent = () => {
     if (file) {
       setProfileImage(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
+      reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(file);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.email || !formData.password) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+    if (!formData.class || !formData.section) {
+      toast.error('Please select class and section');
       return;
     }
 
     try {
       setLoading(true);
-      
+
       const submitData = new FormData();
       Object.keys(formData).forEach(key => {
         submitData.append(key, formData[key]);
       });
-      
+
       if (profileImage) {
         submitData.append('profileImage', profileImage);
       }
@@ -78,6 +118,9 @@ const AddStudent = () => {
       setLoading(false);
     }
   };
+
+  // Get unique class names
+  const uniqueClassNames = [...new Set(classes.map(c => c.name))].sort();
 
   return (
     <div className="student-form-page">
@@ -222,25 +265,44 @@ const AddStudent = () => {
               />
             </div>
 
+            {/* ✅ value = class NAME (String), not ObjectId */}
             <div className="form-group">
               <label>Class *</label>
-              <select name="class" value={formData.class} onChange={handleChange} required>
-                <option value="">Select Class</option>
-                <option value="Class 6">Class 6</option>
-                <option value="Class 7">Class 7</option>
-                <option value="Class 8">Class 8</option>
-                <option value="Class 9">Class 9</option>
-                <option value="Class 10">Class 10</option>
+              <select
+                name="class"
+                value={formData.class}
+                onChange={handleChange}
+                required
+                disabled={loadingClasses}
+              >
+                <option value="">
+                  {loadingClasses ? 'Loading...' : 'Select Class'}
+                </option>
+                {uniqueClassNames.map((className) => (
+                  <option key={className} value={className}>
+                    {className}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div className="form-group">
               <label>Section *</label>
-              <select name="section" value={formData.section} onChange={handleChange} required>
-                <option value="">Select Section</option>
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
+              <select
+                name="section"
+                value={formData.section}
+                onChange={handleChange}
+                required
+                disabled={!formData.class || sections.length === 0}
+              >
+                <option value="">
+                  {!formData.class ? 'Select class first' : 'Select Section'}
+                </option>
+                {sections.map((section) => (
+                  <option key={section} value={section}>
+                    Section {section}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -316,10 +378,15 @@ const AddStudent = () => {
             type="button"
             className="btn-secondary"
             onClick={() => navigate('/dashboard/students')}
+            disabled={loading}
           >
             Cancel
           </button>
-          <button type="submit" className="btn-primary" disabled={loading}>
+          <button
+            type="submit"
+            className="btn-primary"
+            disabled={loading || loadingClasses}
+          >
             <Save size={20} />
             {loading ? 'Saving...' : 'Save Student'}
           </button>

@@ -215,7 +215,7 @@
   font-weight: 600;
 }
 
-/* Notice Section */
+/* Notice Section
 .notice-section {
   padding: 80px 0;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -440,264 +440,1001 @@
 
 .file-preview-btn:hover .download-icon {
   opacity: 1;
+} */
+
+/* ============================================================
+   HOME.CSS — NOTICE SECTION ADDITIONS
+   Append these styles to: src/content/Home.css
+   (Add at the end of the file)
+   ============================================================ */
+
+/* ── Notice Section Header (updated) ── */
+/* Notice Section — Home.css additions */
+/* ══════════════════════════════════════════════════
+   NoticeModal — .nm-* classes
+   Used by both Home.js and Notice.js
+══════════════════════════════════════════════════ */
+
+/* Overlay */
+.nm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+  animation: nmFadeIn 0.2s ease;
 }
 
-/* Stats Section */
-.stats-section {
-  padding: 80px 0;
-  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-  color: white;
+@keyframes nmFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-.stats-title {
-  text-align: center;
-  font-size: 36px;
-  margin-bottom: 50px;
-  font-weight: 700;
-}
-
-.highlight {
-  color: #43e97b;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 40px;
-}
-
-.stat-box {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 40px;
-  border-radius: 15px;
-  text-align: center;
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  transition: transform 0.3s, background 0.3s;
-}
-
-.stat-box:hover {
-  transform: translateY(-10px);
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.stat-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 20px;
-  color: #43e97b;
-}
-
-.stat-icon svg {
+/* Modal box */
+.nm-modal {
+  background: #fff;
+  border-radius: 18px;
   width: 100%;
-  height: 100%;
-}
-
-.stat-box h3 {
-  font-size: 48px;
-  margin-bottom: 10px;
-  font-weight: 700;
-}
-
-.stat-box p {
-  font-size: 18px;
-  opacity: 0.9;
-}
-
-/* Map Section */
-.map-section {
-  padding: 80px 0;
-  background: white;
-}
-
-.map-container {
-  width: 100%;
-  height: 500px;
-  border-radius: 15px;
+  max-width: 780px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  animation: nmSlideUp 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.map-container iframe {
+@keyframes nmSlideUp {
+  from { transform: translateY(32px) scale(0.96); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);    opacity: 1; }
+}
+
+/* ── Header ── */
+.nm-header {
+  padding: 20px 24px 16px;
+  background: #fafbff;
+  border-bottom: 1px solid #e8ecf4;
+  flex-shrink: 0;
+}
+
+.nm-header-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.nm-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.nm-new-tag {
+  background: linear-gradient(135deg, #ff6b35, #ffd166);
+  color: #7c2c00;
+  padding: 3px 9px;
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  animation: nmPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes nmPulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.08); }
+}
+
+.nm-close {
+  margin-left: auto;
+  background: #f1f3f8;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #555;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.nm-close:hover {
+  background: #e74c3c;
+  color: #fff;
+  transform: rotate(90deg);
+}
+
+.nm-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1f36;
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.nm-meta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.nm-meta span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #7c8db5;
+}
+
+/* ── Tabs ── */
+.nm-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #eef0f8;
+  background: #f7f8fc;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.nm-tab {
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #7c8db5;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.nm-tab:hover {
+  color: #1a237e;
+  background: #eef0f8;
+}
+
+.nm-tab.active {
+  color: #1a237e;
+  border-bottom-color: #1a237e;
+  background: #fff;
+}
+
+/* ── Body ── */
+.nm-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Description */
+.nm-description {
+  padding: 24px;
+}
+
+.nm-description p {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #3d4557;
+  margin: 0 0 20px;
+  white-space: pre-line;
+}
+
+.nm-desc-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.nm-desc-dl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  background: #e8f0fe;
+  color: #1a237e;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nm-desc-dl-btn:hover:not(:disabled) {
+  background: #1a237e;
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+/* ✅ Drive PDF iframe — newspaper full width */
+.nm-drive-block {
+  border-bottom: 1px solid #eef0f8;
+}
+
+.nm-drive-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: #f7f8fc;
+  border-bottom: 1px solid #eef0f8;
+}
+
+.nm-drive-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3d4557;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nm-drive-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: #e8f0fe;
+  color: #1a237e;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.nm-drive-open:hover {
+  background: #1a237e;
+  color: #fff;
+}
+
+/* ✅ Full-width Drive iframe — newspaper style */
+.nm-drive-iframe {
+  width: 100%;
+  height: 580px;
+  border: none;
+  display: block;
+  background: #f0f0f0;
+}
+
+/* ✅ Cloudinary files list */
+.nm-files-list {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Image preview for cloudinary images */
+.nm-img-preview {
+  width: 100%;
+  max-height: 340px;
+  overflow: hidden;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  background: #f5f7fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nm-img-preview img {
+  width: 100%;
+  max-height: 340px;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.nm-file-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: #f7f8fc;
+  border-radius: 12px;
+  border: 1px solid #eef0f8;
+  flex-wrap: wrap;
+}
+
+.nm-file-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nm-file-icon.pdf {
+  background: #fff0f0;
+  color: #dc2626;
+}
+
+.nm-file-icon.image,
+.nm-file-icon.jpg,
+.nm-file-icon.jpeg,
+.nm-file-icon.png,
+.nm-file-icon.webp {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.nm-file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.nm-file-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1f36;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nm-file-type {
+  font-size: 11px;
+  color: #7c8db5;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.nm-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #1a237e, #3949ab);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s;
+  white-space: nowrap;
+}
+
+.nm-download-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(26, 35, 126, 0.35);
+}
+
+.nm-download-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Footer ── */
+.nm-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: #f7f8fc;
+  border-top: 1px solid #eef0f8;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.nm-footer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  background: #e8ecf4;
+  color: #3d4d7c;
+  border: none;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nm-footer-pill:hover {
+  background: #d0d8ee;
+}
+
+.nm-footer-pill.drive {
+  background: #e8f0fe;
+  color: #1a237e;
+}
+
+.nm-footer-close {
+  margin-left: auto;
+  padding: 8px 20px;
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nm-footer-close:hover {
+  background: #c0392b;
+  transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════
+   Home Notice Board — .hm-* classes
+   Append to Home.css or keep in this file
+═══════════════════════════════════════════════════ */
+
+/* Section header */
+.hm-notice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.hm-notice-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hm-notice-bell {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #1a237e, #3949ab);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.hm-notice-heading {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a237e;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin: 0;
+}
+
+.hm-notice-total {
+  background: #1a237e;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.hm-btn-view-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: linear-gradient(135deg, #1a237e, #3949ab);
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 14px rgba(26, 35, 126, 0.3);
+}
+
+.hm-btn-view-all:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(26, 35, 126, 0.4);
+}
+
+/* Board container */
+.hm-notice-board {
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+  border: 1px solid #eef0f8;
+}
+
+.hm-no-notice {
+  text-align: center;
+  padding: 48px 20px;
+  color: #aab0c4;
+}
+
+.hm-no-notice p {
+  margin-top: 14px;
+  font-size: 16px;
+}
+
+/* Notice list */
+.hm-notice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Individual notice item */
+.hm-notice-item {
+  display: flex;
+  align-items: stretch;
+  background: #f9faff;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #eef0f8;
+  transition: all 0.25s cubic-bezier(0.34, 1.2, 0.64, 1);
+  animation: hmNiSlide 0.4s ease-out backwards;
+}
+
+@keyframes hmNiSlide {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.hm-notice-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border-color: #c5cae9;
+  background: #fff;
+}
+
+/* Left color accent bar */
+.hm-ni-accent {
+  width: 5px;
+  flex-shrink: 0;
+  border-radius: 4px 0 0 4px;
+}
+
+/* Body */
+.hm-ni-body {
+  flex: 1;
+  padding: 14px 16px;
+  min-width: 0;
+}
+
+.hm-ni-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hm-ni-badges {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.hm-ni-badge {
+  padding: 3px 9px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.hm-ni-new {
+  background: linear-gradient(135deg, #ff6b35, #ffd166);
+  color: #7c2c00;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.hm-ni-date {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* ✅ 10-word clickable title */
+.hm-ni-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px;
+  line-height: 1.45;
+  cursor: pointer;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.hm-notice-item:hover .hm-ni-title {
+  color: #1a237e;
+  text-decoration: underline;
+}
+
+/* File pills */
+.hm-ni-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.hm-ni-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.hm-ni-pill.drive {
+  background: #e8f0fe;
+  color: #1a237e;
+}
+
+.hm-ni-pill.file {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.hm-ni-pill:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.92);
+}
+
+/* Arrow button */
+.hm-ni-arrow {
+  width: 40px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #c5cae9;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.hm-notice-item:hover .hm-ni-arrow {
+  color: #1a237e;
+  transform: translateX(3px);
+}
+
+/* See all button */
+.hm-notice-more {
+  text-align: center;
+  padding: 8px 0 4px;
+}
+
+.hm-btn-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 24px;
+  background: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a237e;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.hm-btn-more:hover {
+  background: #1a237e;
+  color: #fff;
+  border-color: #1a237e;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(26, 35, 126, 0.25);
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .hm-notice-heading   { font-size: 20px; }
+  .hm-notice-bell      { width: 36px; height: 36px; }
+  .hm-ni-body          { padding: 12px 12px; }
+  .hm-ni-title         { font-size: 13px; }
+  .hm-btn-view-all     { padding: 8px 16px; font-size: 12px; }
+  .nm-drive-iframe     { height: 380px; }
+  .nm-modal            { border-radius: 12px; }
+  .nm-title            { font-size: 16px; }
+}
+/* ============================================================
+   NOTICE MODAL ADDITIONS
+   Add these classes to Home_NoticeModal.css (or paste at end)
+   These handle: inline image viewer, PDF viewer, view+download btns
+   ============================================================ */
+
+/* Back button in header */
+.nm-back-btn {
+  padding: 4px 12px;
+  background: #e8f0fe;
+  color: #1a237e;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nm-back-btn:hover {
+  background: #1a237e;
+  color: #fff;
+}
+
+/* Image zoom toolbar */
+.nm-img-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #1a1f36;
+  flex-shrink: 0;
+}
+
+.nm-toolbar-name {
+  font-size: 13px;
+  color: #a0a8c8;
+  font-weight: 500;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nm-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.nm-tool-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.2);
+}
+
+.nm-tool-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.nm-tool-btn.dl {
+  background: linear-gradient(135deg, #1a237e, #3949ab);
+  border-color: transparent;
+}
+
+.nm-tool-btn.dl:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(26,35,126,0.4);
+}
+
+.nm-zoom-pct {
+  font-size: 12px;
+  color: #a0a8c8;
+  min-width: 38px;
+  text-align: center;
+}
+
+/* Inline image viewer */
+.nm-img-viewer-wrap {
+  flex: 1;
+  background: #0d0e12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 20px;
+  min-height: 360px;
+  position: relative;
+}
+
+.nm-img-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7c8db5;
+}
+
+.nm-viewer-img {
+  max-width: 100%;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+  border-radius: 6px;
+}
+
+@keyframes nmSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.nm-spin {
+  animation: nmSpin 0.8s linear infinite;
+}
+
+/* Inline PDF viewer */
+.nm-pdf-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.nm-pdf-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: #f7f8fc;
+  border-bottom: 1px solid #eef0f8;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3d4557;
+  flex-shrink: 0;
+}
+
+.nm-pdf-iframe {
+  flex: 1;
+  width: 100%;
+  height: 520px;
+  border: none;
+  background: #f0f0f0;
+}
+
+.nm-pdf-err {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: #7c8db5;
+  padding: 40px;
+}
+
+.nm-pdf-err p {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* File item enhancements */
+.nm-file-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #f7f8fc;
+  border-radius: 12px;
+  border: 1px solid #eef0f8;
+  transition: all 0.2s;
+  flex-wrap: wrap;
+}
+
+.nm-file-item:hover {
+  background: #f0f3ff;
+  border-color: #c5cae9;
+}
+
+/* Thumbnail */
+.nm-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  cursor: pointer;
+  border: 2px solid #e8ecf4;
+  transition: all 0.2s;
+}
+
+.nm-thumb:hover {
+  border-color: #3949ab;
+  transform: scale(1.05);
+}
+
+.nm-thumb img {
   width: 100%;
   height: 100%;
-  border: 0;
+  object-fit: cover;
 }
 
-/* Tablet Responsive */
-@media (max-width: 1024px) {
-  .about-content {
-    grid-template-columns: 1fr;
-    gap: 30px;
-    padding: 3px;
-  }
-
-  .about-image {
-    height: 350px;
-  }
-
-  .message-content {
-    grid-template-columns: 1fr;
-    text-align: center;
-  }
-
-  .message-text p {
-    text-align: center;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 30px;
-  }
-
-  .section-title h2 {
-    font-size: 28px;
-  }
-
-  .notice-title {
-    font-size: 28px;
-  }
+/* View + Download buttons side by side */
+.nm-file-btns {
+  display: flex;
+  gap: 7px;
+  margin-left: auto;
+  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .container {
-    padding: 0 15px;
-  }
-
-  .hero-image-carousel {
-    height: 300px;
-  }
-
-  .about-section,
-  .message-section,
-  .stats-section,
-  .map-section {
-    padding: 50px 0;
-  }
-
-  .section-title {
-    margin-bottom: 30px;
-  }
-
-  .section-title h2 {
-    font-size: 24px;
-    padding: 0 10px;
-  }
-
-  .about-image {
-    height: 300px;
-  }
-
-  .about-large-text,
-  .message-large-text {
-    font-size: 16px !important;
-  }
-
-  .author-photo-wrapper {
-    width: 200px;
-    height: 240px;
-  }
-
-  .notice-section {
-    padding: 60px 0;
-  }
-
-  .notice-section .container {
-    padding: 0;
-    max-width: 100%;
-  }
-
-  .notice-header {
-    padding: 0 15px;
-  }
-
-  .notice-title {
-    font-size: 24px;
-  }
-
-  .btn-view-all {
-    padding: 10px 20px;
-    font-size: 14px;
-  }
-
-  .notice-board {
-    border-radius: 0;
-    padding: 20px 15px;
-  }
-
-  .notice-item-public {
-    padding: 15px;
-  }
-
-  .notice-item-public h4 {
-    font-size: 16px;
-  }
-
-  .notice-item-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .notice-files-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 25px;
-  }
-
-  .stat-box {
-    padding: 30px;
-  }
-
-  .stat-box h3 {
-    font-size: 36px;
-  }
-
-  .stats-title {
-    font-size: 24px;
-  }
-
-  .map-container {
-    height: 350px;
-  }
+.nm-view-btn {
+  padding: 7px 14px;
+  background: #e8f0fe;
+  color: #1a237e;
+  border: none;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-/* Extra Small Mobile */
-@media (max-width: 480px) {
-  .hero-image-carousel {
-    height: 250px;
-  }
-
-  .section-title h2 {
-    font-size: 20px;
-  }
-
-  .about-image {
-    height: 250px;
-  }
-
-  .notice-title {
-    font-size: 20px;
-    letter-spacing: 1px;
-  }
-
-  .notice-item-public h4 {
-    font-size: 15px;
-  }
-
-  .stat-box h3 {
-    font-size: 32px;
-  }
-
-  .stat-box p {
-    font-size: 16px;
-  }
-
-  .author-photo-wrapper {
-    width: 180px;
-    height: 220px;
-  }
+.nm-view-btn:hover {
+  background: #3949ab;
+  color: #fff;
+  transform: translateY(-1px);
 }
+
+/* Notice page list styles */
+.ni-desc {
+  font-size: 13.5px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 6px 0 10px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .nm-img-toolbar   { padding: 8px 12px; gap: 6px; }
+  .nm-toolbar-name  { font-size: 11px; max-width: 100px; }
+  .nm-pdf-iframe    { height: 360px; }
+  .nm-file-btns     { margin-left: 0; width: 100%; justify-content: flex-end; }
+  .nm-thumb         { width: 44px; height: 44px; }
+}
+
+
+
+
+
+
+
+

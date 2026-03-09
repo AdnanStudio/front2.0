@@ -29,39 +29,78 @@ const Contact = () => {
           <div className="title-underline"></div>
         </div>
 
-        <div className="contact-grid">
-          <div className="contact-info-card">
-            <div className="contact-icon">
-              <MapPin size={32} />
-            </div>
-            <h3>Address</h3>
-            <p>Malkhanagar, Sirajdikhan, Dhaka</p>
-          </div>
+        <div
+  style={{
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "20px",
+    justifyContent: "space-between"
+  }}
+>
+  <div
+    style={{
+      flex: "1 1 220px",
+      border: "1px solid #eee",
+      padding: "20px",
+      textAlign: "center",
+      borderRadius: "8px"
+    }}
+  >
+    <div>
+      <MapPin size={32} />
+    </div>
+    <h3>Address</h3>
+    <p>Malkhanagar, Sirajdikhan, Dhaka</p>
+  </div>
 
-          <div className="contact-info-card">
-            <div className="contact-icon">
-              <Phone size={32} />
-            </div>
-            <h3>Phone</h3>
-            <p>+880 1309-134590</p>
-          </div>
+  <div
+    style={{
+      flex: "1 1 220px",
+      border: "1px solid #eee",
+      padding: "20px",
+      textAlign: "center",
+      borderRadius: "8px"
+    }}
+  >
+    <div>
+      <Phone size={32} />
+    </div>
+    <h3>Phone</h3>
+    <p>+880 1309-134590</p>
+  </div>
 
-          <div className="contact-info-card">
-            <div className="contact-icon">
-              <Mail size={32} />
-            </div>
-            <h3>Email</h3>
-            <p>malkhanagarcollege@gmail.com</p>
-          </div>
+  <div
+    style={{
+      flex: "1 1 220px",
+      border: "1px solid #eee",
+      padding: "20px",
+      textAlign: "center",
+      borderRadius: "8px"
+    }}
+  >
+    <div>
+      <Mail size={32} />
+    </div>
+    <h3>Email</h3>
+    <p>malkhanagarcollege@gmail.com</p>
+  </div>
 
-          <div className="contact-info-card">
-            <div className="contact-icon">
-              <Clock size={32} />
-            </div>
-            <h3>Office Hours</h3>
-            <p>Sun - Thu: 9:00 AM - 5:00 PM</p>
-          </div>
-        </div>
+  <div
+    style={{
+      flex: "1 1 220px",
+      border: "1px solid #eee",
+      padding: "20px",
+      textAlign: "center",
+      borderRadius: "8px"
+    }}
+  >
+    <div>
+      <Clock size={32} />
+    </div>
+    <h3>Office Hours</h3>
+    <p>Sun - Thu: 9:00 AM - 5:00 PM</p>
+  </div>
+</div>
 
         <div className="map-section" style={{ marginTop: '40px' }}>
           <div className="map-container">

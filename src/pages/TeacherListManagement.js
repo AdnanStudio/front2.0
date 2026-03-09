@@ -9,7 +9,17 @@ const DEPARTMENTS  = ['Bangla','English','Mathematics','Science','Social Science
   'Arts','Music','Islamic Studies','General'];
 const DESIGNATIONS = ['Principal','Vice Principal','Head Teacher','Senior Teacher',
   'Assistant Teacher','Junior Teacher','Physical Education Teacher',
-  'Lab Assistant','Librarian','Other'];
+  'Lab Assistant','Librarian',
+  'Lecturer',
+  'Assistant Professor',
+  'Associate Professor',
+  'Computer Operator',
+  'Computer Assistant',
+  'Acting Principal',
+  '3rd Class Employees',
+  '4th Class Employees',
+  'Office Assistant',
+  'Others'];
 const BLOOD_GROUPS = ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
 const STATUSES     = ['active','on-leave','resigned','retired'];
 

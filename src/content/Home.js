@@ -1,245 +1,317 @@
-// ============================================
-// FILE PATH: frontend/src/content/Home.js
-// ============================================
-
+// FILE PATH: src/content/Home.js
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import LazyImage from '../components/LazyImage';
-import NoticeViewer from '../components/NoticeViewer';
 import SkeletonLoader from '../components/SkeletonLoader';
 import noticeService from '../services/noticeService';
 import {
-  FileText,
-  Download,
-  Calendar,
-  Bell,
-  Image as ImageIcon,
+  FileText, Download, Calendar, Bell,
+  Image as ImageIcon, ExternalLink, ArrowRight, X, Clock,
 } from 'lucide-react';
 import './Home.css';
 
-// Cache utility functions
-const CACHE_DURATION = 365 * 24 * 60 * 60 * 1000; // 1 year in milliseconds
-const CACHE_KEYS = {
-  HOME_DATA: 'home_data_cache',
-  NOTICES: 'notices_cache',
-};
-
+/* ── Cache ── */
+const CACHE_DURATION = 365 * 24 * 60 * 60 * 1000;
+const CACHE_KEYS = { HOME_DATA: 'home_data_cache', NOTICES: 'notices_cache' };
 const cacheManager = {
-  // Save data to cache with timestamp
   set: (key, data) => {
-    try {
-      const cacheData = {
-        data: data,
-        timestamp: Date.now(),
-        expiresAt: Date.now() + CACHE_DURATION,
-      };
-      localStorage.setItem(key, JSON.stringify(cacheData));
-      return true;
-    } catch (error) {
-      console.error('Cache set error:', error);
-      return false;
-    }
+    try { localStorage.setItem(key, JSON.stringify({ data, expiresAt: Date.now() + CACHE_DURATION })); } catch {}
   },
-
-  // Get data from cache if not expired
   get: (key) => {
     try {
-      const cached = localStorage.getItem(key);
-      if (!cached) return null;
-
-      const cacheData = JSON.parse(cached);
-      const now = Date.now();
-
-      // Check if cache is expired
-      if (now > cacheData.expiresAt) {
-        localStorage.removeItem(key);
-        return null;
-      }
-
-      return cacheData.data;
-    } catch (error) {
-      console.error('Cache get error:', error);
-      return null;
-    }
+      const c = localStorage.getItem(key);
+      if (!c) return null;
+      const p = JSON.parse(c);
+      if (Date.now() > p.expiresAt) { localStorage.removeItem(key); return null; }
+      return p.data;
+    } catch { return null; }
   },
-
-  // Clear specific cache
-  clear: (key) => {
-    try {
-      localStorage.removeItem(key);
-    } catch (error) {
-      console.error('Cache clear error:', error);
-    }
-  },
-
-  // Clear all caches
-  clearAll: () => {
-    try {
-      Object.values(CACHE_KEYS).forEach((key) => {
-        localStorage.removeItem(key);
-      });
-    } catch (error) {
-      console.error('Cache clear all error:', error);
-    }
-  },
-
-  // Get cache info (for debugging)
-  getInfo: (key) => {
-    try {
-      const cached = localStorage.getItem(key);
-      if (!cached) return null;
-
-      const cacheData = JSON.parse(cached);
-      const now = Date.now();
-      const remainingTime = cacheData.expiresAt - now;
-      const remainingDays = Math.floor(remainingTime / (24 * 60 * 60 * 1000));
-
-      return {
-        exists: true,
-        createdAt: new Date(cacheData.timestamp).toLocaleString(),
-        expiresAt: new Date(cacheData.expiresAt).toLocaleString(),
-        remainingDays: remainingDays,
-        isExpired: now > cacheData.expiresAt,
-      };
-    } catch (error) {
-      return null;
-    }
-  },
+  clearAll: () => { try { Object.values(CACHE_KEYS).forEach(k => localStorage.removeItem(k)); } catch {} },
 };
 
-const Home = () => {
-  const [homeData, setHomeData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [notices, setNotices] = useState([]);
-  const [showAllNotices, setShowAllNotices] = useState(false);
-  const [selectedAttachment, setSelectedAttachment] = useState(null);
-  const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
-  const [isFading, setIsFading] = useState(false);
-  const [useCache, setUseCache] = useState(true);
+/* ── Helpers ── */
+const TYPE_CFG = {
+  general:   { bg: '#e3f2fd', color: '#1565c0', label: 'General'   },
+  urgent:    { bg: '#ffebee', color: '#c62828', label: 'Urgent'    },
+  exam:      { bg: '#fff3e0', color: '#e65100', label: 'Exam'      },
+  holiday:   { bg: '#f3e5f5', color: '#7b1fa2', label: 'Holiday'   },
+  event:     { bg: '#e8f5e9', color: '#2e7d32', label: 'Event'     },
+  admission: { bg: '#fce4ec', color: '#c2185b', label: 'Admission' },
+};
 
+const fmtDate = (d) =>
+  new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+const isNew7 = (date) => (Date.now() - new Date(date)) / 86400000 < 7;
+
+const wordLimit10 = (t = '') => {
+  const w = t.trim().split(/\s+/);
+  return w.length <= 10 ? t : w.slice(0, 10).join(' ') + '…';
+};
+
+const getDriveEmbed = (url = '') => {
+  const m1 = url.match(/\/d\/([^/]+)/);
+  if (m1) return `https://drive.google.com/file/d/${m1[1]}/preview`;
+  const m2 = url.match(/[?&]id=([^&]+)/);
+  if (m2) return `https://drive.google.com/file/d/${m2[1]}/preview`;
+  return url;
+};
+
+/* ══════════════════════════════════════════
+   NoticeModal — shared, also used by Notice.js
+   via: import { NoticeModal } from '../content/Home';
+══════════════════════════════════════════ */
+export const NoticeModal = ({ notice, onClose }) => {
+  const [downloading, setDl] = useState(false);
+  const hasDrive = notice.driveLinks?.length > 0;
+  const hasFiles = notice.attachments?.length > 0;
+  const [tab, setTab] = useState(hasDrive ? 'drive' : hasFiles ? 'files' : 'info');
+  const tc = TYPE_CFG[notice.type] || TYPE_CFG.general;
+
+  useEffect(() => {
+    const esc = (e) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', esc);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', esc);
+      document.body.style.overflow = '';
+    };
+  }, [onClose]);
+
+  const handleDl = async (att) => {
+    try {
+      setDl(true);
+      const res = await fetch(att.fileUrl);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = att.fileName || `notice.${att.fileType === 'pdf' ? 'pdf' : 'jpg'}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      window.open(att.fileUrl, '_blank');
+    } finally {
+      setDl(false);
+    }
+  };
+
+  return (
+    <div
+      className="nm-overlay"
+      onClick={(e) => e.target.classList.contains('nm-overlay') && onClose()}
+    >
+      <div className="nm-modal">
+
+        {/* ── Header ── */}
+        <div className="nm-header" style={{ borderTop: `5px solid ${tc.color}` }}>
+          <div className="nm-header-top">
+            <span className="nm-badge" style={{ background: tc.bg, color: tc.color }}>
+              {tc.label}
+            </span>
+            {isNew7(notice.publishDate) && <span className="nm-new-tag">NEW</span>}
+            <button className="nm-close" onClick={onClose}><X size={20} /></button>
+          </div>
+          <h2 className="nm-title">{notice.title}</h2>
+          <div className="nm-meta">
+            <span><Calendar size={13} /> {fmtDate(notice.publishDate)}</span>
+            {notice.expiryDate && (
+              <span><Clock size={13} /> Expires: {fmtDate(notice.expiryDate)}</span>
+            )}
+          </div>
+        </div>
+
+        {/* ── Tabs ── */}
+        {(hasDrive || hasFiles) && (
+          <div className="nm-tabs">
+            <button
+              className={`nm-tab${tab === 'info' ? ' active' : ''}`}
+              onClick={() => setTab('info')}
+            >
+              📋 বিবরণ
+            </button>
+            {hasDrive && (
+              <button
+                className={`nm-tab${tab === 'drive' ? ' active' : ''}`}
+                onClick={() => setTab('drive')}
+              >
+                📄 PDF ({notice.driveLinks.length})
+              </button>
+            )}
+            {hasFiles && (
+              <button
+                className={`nm-tab${tab === 'files' ? ' active' : ''}`}
+                onClick={() => setTab('files')}
+              >
+                📎 Files ({notice.attachments.length})
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="nm-body">
+
+          {/* বিবরণ */}
+          {(tab === 'info' || (!hasDrive && !hasFiles)) && (
+            <div className="nm-description">
+              <p>{notice.description || 'No description available.'}</p>
+              {hasFiles && (
+                <div className="nm-desc-files">
+                  {notice.attachments.map((att, i) => (
+                    <button
+                      key={i}
+                      className="nm-desc-dl-btn"
+                      onClick={() => handleDl(att)}
+                      disabled={downloading}
+                    >
+                      <Download size={14} /> {att.fileName || `Download File ${i + 1}`}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ✅ Google Drive PDF — full width newspaper iframe */}
+          {tab === 'drive' && hasDrive && notice.driveLinks.map((link, i) => (
+            <div key={i} className="nm-drive-block">
+              <div className="nm-drive-bar">
+                <FileText size={15} />
+                <span className="nm-drive-label">{link.label || `PDF Document ${i + 1}`}</span>
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="nm-drive-open"
+                >
+                  <ExternalLink size={12} /> Drive-এ খুলুন
+                </a>
+              </div>
+              <iframe
+                src={getDriveEmbed(link.url)}
+                title={link.label || `PDF ${i + 1}`}
+                className="nm-drive-iframe"
+                allow="autoplay"
+              />
+            </div>
+          ))}
+
+          {/* ✅ Cloudinary image / PDF files */}
+          {tab === 'files' && hasFiles && (
+            <div className="nm-files-list">
+              {notice.attachments.map((att, i) => (
+                <div key={i} className="nm-file-item">
+                  {/* Image preview */}
+                  {att.fileType !== 'pdf' && att.fileUrl && (
+                    <div className="nm-img-preview">
+                      <img src={att.fileUrl} alt={att.fileName || `Attachment ${i + 1}`} />
+                    </div>
+                  )}
+                  <div className={`nm-file-icon ${att.fileType}`}>
+                    {att.fileType === 'pdf' ? <FileText size={22} /> : <ImageIcon size={22} />}
+                  </div>
+                  <div className="nm-file-info">
+                    <span className="nm-file-name">{att.fileName || `File ${i + 1}`}</span>
+                    <span className="nm-file-type">{att.fileType?.toUpperCase()}</span>
+                  </div>
+                  <button
+                    className="nm-download-btn"
+                    onClick={() => handleDl(att)}
+                    disabled={downloading}
+                  >
+                    <Download size={14} /> {downloading ? 'Downloading…' : 'Download'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── Footer ── */}
+        <div className="nm-footer">
+          {hasFiles && tab !== 'files' && (
+            <button className="nm-footer-pill" onClick={() => setTab('files')}>
+              📎 {notice.attachments.length} File(s)
+            </button>
+          )}
+          {hasDrive && tab !== 'drive' && (
+            <button className="nm-footer-pill drive" onClick={() => setTab('drive')}>
+              📄 {notice.driveLinks.length} PDF(s)
+            </button>
+          )}
+          <button className="nm-footer-close" onClick={onClose}>বন্ধ করুন</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════
+   Home Component
+══════════════════════════════════════════ */
+const Home = () => {
+  const navigate = useNavigate();
+
+  const [homeData,         setHomeData]         = useState(null);
+  const [loading,          setLoading]          = useState(true);
+  const [notices,          setNotices]          = useState([]);
+  const [selectedNotice,   setSelectedNotice]   = useState(null);
+  const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
+  const [isFading,         setIsFading]         = useState(false);
+
+  // ✅ Fetch on mount — no cache for notices so always fresh
   useEffect(() => {
     fetchHomeData();
     fetchPublicNotices();
-
-    // Log cache info in console (for debugging)
-    console.log('Home Data Cache Info:', cacheManager.getInfo(CACHE_KEYS.HOME_DATA));
-    console.log('Notices Cache Info:', cacheManager.getInfo(CACHE_KEYS.NOTICES));
   }, []);
 
-  // Hero carousel auto-play
   useEffect(() => {
-    const heroImages = homeData?.websiteSettings?.heroImages || [];
-    if (heroImages.length > 0) {
-      const timer = setInterval(() => {
+    const imgs = homeData?.websiteSettings?.heroImages || [];
+    if (imgs.length > 0) {
+      const t = setInterval(() => {
         setIsFading(true);
         setTimeout(() => {
-          setCurrentHeroSlide((prev) =>
-            prev === heroImages.length - 1 ? 0 : prev + 1
-          );
+          setCurrentHeroSlide(p => (p === imgs.length - 1 ? 0 : p + 1));
           setIsFading(false);
         }, 500);
       }, 10000);
-      return () => clearInterval(timer);
+      return () => clearInterval(t);
     }
   }, [homeData]);
 
-  const fetchHomeData = async (forceRefresh = false) => {
+  const fetchHomeData = async () => {
     try {
-      // Check cache first if not forcing refresh
-      if (!forceRefresh && useCache) {
-        const cachedData = cacheManager.get(CACHE_KEYS.HOME_DATA);
-        if (cachedData) {
-          console.log('Loading home data from cache');
-          setHomeData(cachedData);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Fetch from API if no cache or force refresh
-      console.log('Fetching home data from API');
-      const timestamp = new Date().getTime();
-      const response = await axios.get(
-        `https://malkhanagarcollege.onrender.com/api/public/home?t=${timestamp}`
+      const cached = cacheManager.get(CACHE_KEYS.HOME_DATA);
+      if (cached) { setHomeData(cached); setLoading(false); return; }
+      const res = await axios.get(
+        `https://malkhanagarcollege.onrender.com/api/public/home?t=${Date.now()}`
       );
-      
-      const data = response.data.data;
+      const data = res.data.data;
       setHomeData(data);
-      
-      // Save to cache
       cacheManager.set(CACHE_KEYS.HOME_DATA, data);
-      console.log('Home data cached successfully');
-      
       setLoading(false);
-    } catch (error) {
-      console.error('Failed to fetch home data:', error);
+    } catch (err) {
+      console.error(err);
       toast.error('Failed to load website data');
       setLoading(false);
     }
   };
 
-  const fetchPublicNotices = async (forceRefresh = false) => {
+  // ✅ Always fetch fresh notices — sorted latest first
+  const fetchPublicNotices = async () => {
     try {
-      // Check cache first if not forcing refresh
-      if (!forceRefresh && useCache) {
-        const cachedNotices = cacheManager.get(CACHE_KEYS.NOTICES);
-        if (cachedNotices) {
-          console.log('Loading notices from cache');
-          setNotices(cachedNotices);
-          return;
-        }
-      }
-
-      // Fetch from API if no cache or force refresh
-      console.log('Fetching notices from API');
-      const response = await noticeService.getPublicNotices();
-      const noticesData = response.data || [];
-      
-      setNotices(noticesData);
-      
-      // Save to cache
-      cacheManager.set(CACHE_KEYS.NOTICES, noticesData);
-      console.log('Notices cached successfully');
-    } catch (error) {
-      console.error('Failed to fetch notices:', error);
+      const res = await noticeService.getPublicNotices(1, 20);
+      const list = (res.data || []).sort(
+        (a, b) => new Date(b.publishDate) - new Date(a.publishDate)
+      );
+      setNotices(list);
+    } catch (err) {
+      console.error(err);
     }
-  };
-
-  const handleRefreshData = () => {
-    setLoading(true);
-    toast.loading('Refreshing data...');
-    
-    // Clear caches and refetch
-    cacheManager.clearAll();
-    
-    Promise.all([
-      fetchHomeData(true),
-      fetchPublicNotices(true)
-    ]).then(() => {
-      toast.dismiss();
-      toast.success('Data refreshed successfully!');
-    }).catch(() => {
-      toast.dismiss();
-      toast.error('Failed to refresh data');
-    });
-  };
-
-  const handleAttachmentClick = (attachment) => {
-    setSelectedAttachment(attachment);
-  };
-
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
-
-  const truncateText = (text, maxLength) => {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
   };
 
   if (loading) {
@@ -248,77 +320,39 @@ const Home = () => {
         <SkeletonLoader type="image" height="500px" />
         <div className="container" style={{ marginTop: '40px' }}>
           <SkeletonLoader type="title" />
-          <div style={{ marginTop: '20px' }}>
-            <SkeletonLoader type="text" count={5} />
-          </div>
-          
+          <div style={{ marginTop: '20px' }}><SkeletonLoader type="text" count={5} /></div>
           <div style={{ marginTop: '60px' }}>
             <SkeletonLoader type="title" />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginTop: '20px' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))',
+              gap: '20px', marginTop: '20px',
+            }}>
               <SkeletonLoader type="card" />
               <SkeletonLoader type="card" />
               <SkeletonLoader type="card" />
             </div>
-          </div>
-
-          <div style={{ marginTop: '60px' }}>
-            <SkeletonLoader type="title" />
-            <SkeletonLoader type="text" count={8} />
           </div>
         </div>
       </div>
     );
   }
 
-  const settings = homeData?.websiteSettings || {};
-  const heroImages = settings.heroImages || [];
-  const cacheInfo = cacheManager.getInfo(CACHE_KEYS.HOME_DATA);
+  const settings    = homeData?.websiteSettings || {};
+  const heroImages  = settings.heroImages || [];
+  const homeNotices = notices.slice(0, 5); // latest 5
 
   return (
     <div className="home-content">
-      {/* Cache Info Banner (Optional - can be hidden in production) */}
-      {/* {cacheInfo && (
-        <div style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
-          padding: '10px 20px',
-          textAlign: 'center',
-          fontSize: '14px',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '15px',
-          flexWrap: 'wrap'
-        }}>
-          <span>📦 Data cached • {cacheInfo.remainingDays} days remaining</span>
-          <button
-            onClick={handleRefreshData}
-            style={{
-              background: 'rgba(255,255,255,0.2)',
-              border: '1px solid rgba(255,255,255,0.3)',
-              color: 'white',
-              padding: '5px 15px',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: '500'
-            }}
-          >
-            🔄 Refresh Now
-          </button>
-        </div>
-      )} */}
 
-      {/* Hero Carousel */}
+      {/* ── Hero Carousel ── */}
       {heroImages.length > 0 && (
         <section className="hero-image-carousel">
           <div className="hero-carousel-wrapper">
             {heroImages.map((image, index) => (
               <div
                 key={index}
-                className={`hero-carousel-slide ${
-                  index === currentHeroSlide ? 'active' : ''
-                } ${isFading ? 'fading' : ''}`}
+                className={`hero-carousel-slide ${index === currentHeroSlide ? 'active' : ''} ${isFading ? 'fading' : ''}`}
               >
                 <LazyImage
                   src={image}
@@ -328,21 +362,15 @@ const Home = () => {
                 />
               </div>
             ))}
-
             {heroImages.length > 1 && (
               <div className="hero-carousel-dots">
                 {heroImages.map((_, index) => (
                   <button
                     key={index}
-                    className={`hero-dot ${
-                      index === currentHeroSlide ? 'active' : ''
-                    }`}
+                    className={`hero-dot ${index === currentHeroSlide ? 'active' : ''}`}
                     onClick={() => {
                       setIsFading(true);
-                      setTimeout(() => {
-                        setCurrentHeroSlide(index);
-                        setIsFading(false);
-                      }, 500);
+                      setTimeout(() => { setCurrentHeroSlide(index); setIsFading(false); }, 500);
                     }}
                   />
                 ))}
@@ -352,14 +380,11 @@ const Home = () => {
         </section>
       )}
 
-      {/* About Section */}
+      {/* ── About ── */}
       <section className="about-section" id="about">
         <div className="container">
           <div className="section-title">
-            <h2>
-              ABOUT{' '}
-              {settings.schoolName?.toUpperCase() || 'MALKHANAGAR COLLEGE'}
-            </h2>
+            <h2>ABOUT {settings.schoolName?.toUpperCase() || 'MALKHANAGAR COLLEGE'}</h2>
             <div className="title-underline"></div>
           </div>
           <div className="about-content">
@@ -372,26 +397,23 @@ const Home = () => {
             </div>
             <div className="about-text">
               <p className="about-intro about-large-text">
-                <b>মালখানগর কলেজ</b>  স্থানীয়ভাবে এই নামেই পরিচিত এবং শিক্ষা মন্ত্রণালয়ের
-                অধীন মাধ্যমিক ও উচ্চশিক্ষা অধিদপ্তর প্রদত্ত <b>EIIN নম্বর</b>  <b>১৩৪৫৯০</b>  বহন
-                করে। প্রতিষ্ঠানটি ১ জুলাই ১৯৯২ সালে প্রতিষ্ঠিত হয় এবং ১ জুলাই <b>২০০২ সালে সরকারি স্বীকৃতি লাভ</b> করে। এটি অনার্স পর্যায়ে অনুমোদিত
-                একটি শিক্ষা প্রতিষ্ঠান এবং এমপিওভুক্ত, যার  <b>এমপিও রেজিস্ট্রেশন নম্বর ২৯০৪১২৩১০১</b> । কলেজটি ঢাকা বোর্ডের অধীনে পরিচালিত হয়। এখানে বিজ্ঞান,
-                মানবিক ও ব্যবসায় শিক্ষা বিভাগ চালু আছে। গ্রামীণ এলাকায় অবস্থিত এই
-                কলেজে বাংলা ভার্সনে পাঠদান করা হয়।
+                <b>মালখানগর কলেজ</b> স্থানীয়ভাবে এই নামেই পরিচিত এবং শিক্ষা মন্ত্রণালয়ের অধীন
+                মাধ্যমিক ও উচ্চশিক্ষা অধিদপ্তর প্রদত্ত <b>EIIN নম্বর</b> <b>১৩৪৫৯০</b> বহন করে।
+                প্রতিষ্ঠানটি ১ জুলাই ১৯৯২ সালে প্রতিষ্ঠিত হয় এবং ১ জুলাই <b>২০০২ সালে সরকারি
+                স্বীকৃতি লাভ</b> করে। এটি অনার্স পর্যায়ে অনুমোদিত একটি শিক্ষা প্রতিষ্ঠান এবং
+                এমপিওভুক্ত, যার <b>এমপিও রেজিস্ট্রেশন নম্বর ২৯০৪১২৩১০১</b>। কলেজটি ঢাকা বোর্ডের
+                অধীনে পরিচালিত হয়।
               </p>
               <p className="about-large-text">
-                এছাড়া কলেজের পরিবেশ শান্ত ও শিক্ষাবান্ধব, যেখানে শিক্ষার্থীদের জন্য
-                পর্যাপ্ত শ্রেণিকক্ষ, লাইব্রেরি ও প্রয়োজনীয় সুযোগ-সুবিধা রয়েছে।
-                এলাকার শিক্ষার্থীদের উচ্চশিক্ষার সুযোগ বাড়াতে প্রতিষ্ঠানটি
-                গুরুত্বপূর্ণ ভূমিকা রাখছে এবং মানসম্মত শিক্ষা প্রদানে নিয়মিত কাজ করে
-                যাচ্ছে।
+                এছাড়া কলেজের পরিবেশ শান্ত ও শিক্ষাবান্ধব, যেখানে শিক্ষার্থীদের জন্য পর্যাপ্ত
+                শ্রেণিকক্ষ, লাইব্রেরি ও প্রয়োজনীয় সুযোগ-সুবিধা রয়েছে।
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Principal Message */}
+      {/* ── Principal Message ── */}
       <section className="message-section chairman-section">
         <div className="container">
           <div className="section-title">
@@ -402,7 +424,10 @@ const Home = () => {
             <div className="message-text">
               <p className="message-large-text">
                 <h4>অধ্যক্ষের বাণী :</h4><br />
-                ❝ মালখানগর কলেজ জ্ঞান, মূল্যবোধ ও আধুনিক শিক্ষার সমন্বয়ে একটি অগ্রসরমান প্রতিষ্ঠান। আমরা শিক্ষার্থীদের মেধা, দক্ষতা ও চরিত্র গঠনে প্রতিশ্রুতিবদ্ধ। প্রিয় শিক্ষার্থীরা—স্বপ্ন দেখো, শিখো এবং নৈতিকতা ও অধ্যবসায়ের সাথে এগিয়ে চলো। তোমাদের প্রতিটি অগ্রযাত্রায় মালখানগর কলেজ সর্বদা পাশে রয়েছে ❞
+                ❝ মালখানগর কলেজ জ্ঞান, মূল্যবোধ ও আধুনিক শিক্ষার সমন্বয়ে একটি অগ্রসরমান
+                প্রতিষ্ঠান। আমরা শিক্ষার্থীদের মেধা, দক্ষতা ও চরিত্র গঠনে প্রতিশ্রুতিবদ্ধ।
+                প্রিয় শিক্ষার্থীরা—স্বপ্ন দেখো, শিখো এবং নৈতিকতা ও অধ্যবসায়ের সাথে এগিয়ে
+                চলো। তোমাদের প্রতিটি অগ্রযাত্রায় মালখানগর কলেজ সর্বদা পাশে রয়েছে ❞
               </p>
             </div>
             <div className="message-author">
@@ -418,85 +443,123 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Notice Section */}
+      {/* ════════════════════════════════════
+          ✅ NOTICE BOARD — fresh on every visit
+      ════════════════════════════════════ */}
       <section className="notice-section" id="notice">
         <div className="container">
-          <div className="notice-header">
-            <h2 className="notice-title">NOTICE BOARD</h2>
-            <button
-              className="btn-view-all"
-              onClick={() => setShowAllNotices(!showAllNotices)}
-            >
-              {showAllNotices ? 'SHOW LESS' : 'VIEW ALL'}
+
+          {/* Header */}
+          <div className="hm-notice-header">
+            <div className="hm-notice-header-left">
+              <div className="hm-notice-bell"><Bell size={22} /></div>
+              <h2 className="hm-notice-heading">NOTICE BOARD</h2>
+              {notices.length > 0 && (
+                <span className="hm-notice-total">{notices.length}</span>
+              )}
+            </div>
+            {/* ✅ VIEW ALL → navigate to /notice page */}
+            <button className="hm-btn-view-all" onClick={() => navigate('/notice')}>
+              VIEW ALL <ArrowRight size={15} />
             </button>
           </div>
 
-          <div className="notice-content-wrapper">
-            <div className="notice-board">
-              {notices.length === 0 ? (
-                <div className="no-notices">
-                  <Bell size={60} color="#ccc" />
-                  <p>No notices available</p>
-                </div>
-              ) : (
-                <div className="notice-list-public">
-                  {(showAllNotices ? notices : notices.slice(0, 4)).map(
-                    (notice) => (
-                      <div key={notice._id} className="notice-item-public">
-                        <div className="notice-item-header">
-                          <div className="notice-item-left">
-                            <span className={`notice-badge ${notice.type}`}>
-                              {notice.type}
+          {/* List */}
+          <div className="hm-notice-board">
+            {notices.length === 0 ? (
+              <div className="hm-no-notice">
+                <Bell size={48} color="#ccc" />
+                <p>No notices available</p>
+              </div>
+            ) : (
+              <div className="hm-notice-list">
+                {homeNotices.map((notice, idx) => {
+                  const tc       = TYPE_CFG[notice.type] || TYPE_CFG.general;
+                  const hasDrive = notice.driveLinks?.length > 0;
+                  const hasFiles = notice.attachments?.length > 0;
+
+                  return (
+                    <div
+                      key={notice._id}
+                      className="hm-notice-item"
+                      style={{ animationDelay: `${idx * 0.07}s` }}
+                    >
+                      {/* Left accent */}
+                      <div className="hm-ni-accent" style={{ background: tc.color }} />
+
+                      <div className="hm-ni-body">
+                        <div className="hm-ni-top">
+                          <div className="hm-ni-badges">
+                            <span
+                              className="hm-ni-badge"
+                              style={{ background: tc.bg, color: tc.color }}
+                            >
+                              {tc.label}
                             </span>
-                            <div className="notice-date-public">
-                              <Calendar size={16} />
-                              <span>{formatDate(notice.publishDate)}</span>
-                            </div>
+                            {isNew7(notice.publishDate) && (
+                              <span className="hm-ni-new">NEW</span>
+                            )}
                           </div>
-                          {notice.attachments && notice.attachments.length > 0 && (
-                            <div className="notice-attachment-indicator">
-                              📎 {notice.attachments.length}
-                            </div>
-                          )}
+                          <span className="hm-ni-date">
+                            <Calendar size={12} /> {fmtDate(notice.publishDate)}
+                          </span>
                         </div>
 
-                        <h4>{truncateText(notice.title, 150)}</h4>
+                        {/* ✅ 10-word clickable title */}
+                        <h4
+                          className="hm-ni-title"
+                          onClick={() => setSelectedNotice(notice)}
+                          title={notice.title}
+                        >
+                          {wordLimit10(notice.title)}
+                        </h4>
 
-                        {notice.attachments && notice.attachments.length > 0 && (
-                          <div className="notice-files-grid">
-                            {notice.attachments.map((attachment, index) => (
+                        {/* File pills */}
+                        {(hasDrive || hasFiles) && (
+                          <div className="hm-ni-pills">
+                            {hasDrive && (
                               <button
-                                key={index}
-                                className="file-preview-btn"
-                                onClick={() => handleAttachmentClick(attachment)}
+                                className="hm-ni-pill drive"
+                                onClick={() => setSelectedNotice(notice)}
                               >
-                                {attachment.fileType === 'pdf' ? (
-                                  <>
-                                    <FileText size={18} />
-                                    <span>PDF Document</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <ImageIcon size={18} />
-                                    <span>Image File</span>
-                                  </>
-                                )}
-                                <Download size={14} className="download-icon" />
+                                <FileText size={11} /> {notice.driveLinks.length} PDF
                               </button>
-                            ))}
+                            )}
+                            {hasFiles && (
+                              <button
+                                className="hm-ni-pill file"
+                                onClick={() => setSelectedNotice(notice)}
+                              >
+                                <ImageIcon size={11} /> {notice.attachments.length} File
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
-                    )
-                  )}
-                </div>
-              )}
-            </div>
+
+                      {/* Arrow */}
+                      <button
+                        className="hm-ni-arrow"
+                        onClick={() => setSelectedNotice(notice)}
+                      >›</button>
+                    </div>
+                  );
+                })}
+
+                {notices.length > 5 && (
+                  <div className="hm-notice-more">
+                    <button className="hm-btn-more" onClick={() => navigate('/notice')}>
+                      See all {notices.length} notices <ArrowRight size={14} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* ── Stats ── */}
       <section className="stats-section">
         <div className="container">
           <h2 className="stats-title">
@@ -515,7 +578,6 @@ const Home = () => {
               <h3>{settings.totalStudents || 3000}</h3>
               <p>Student</p>
             </div>
-
             <div className="stat-box">
               <div className="stat-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -525,7 +587,6 @@ const Home = () => {
               <h3>{settings.totalTeachers || 80}</h3>
               <p>Teachers</p>
             </div>
-
             <div className="stat-box">
               <div className="stat-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -540,7 +601,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Map Section */}
+      {/* ── Map ── */}
       <section className="map-section">
         <div className="container">
           <div className="section-title">
@@ -556,15 +617,16 @@ const Home = () => {
               allowFullScreen=""
               loading="lazy"
               title="College Location"
-            ></iframe>
+            />
           </div>
         </div>
       </section>
 
-      {selectedAttachment && (
-        <NoticeViewer
-          attachment={selectedAttachment}
-          onClose={() => setSelectedAttachment(null)}
+      {/* ✅ Notice Detail Modal */}
+      {selectedNotice && (
+        <NoticeModal
+          notice={selectedNotice}
+          onClose={() => setSelectedNotice(null)}
         />
       )}
     </div>
@@ -572,368 +634,3 @@ const Home = () => {
 };
 
 export default Home;
-
-
-// import React, { useState, useEffect } from 'react';
-// import axios from 'axios';
-// import toast from 'react-hot-toast';
-// import LazyImage from '../components/LazyImage';
-// import NoticeViewer from '../components/NoticeViewer';
-// import noticeService from '../services/noticeService';
-// import SkeletonLoader from '../components/SkeletonLoader';
-// import {
-//   FileText,
-//   Download,
-//   Calendar,
-//   Bell,
-//   Image as ImageIcon,
-// } from 'lucide-react';
-// import './Home.css';
-
-// const Home = () => {
-//   const [homeData, setHomeData] = useState(null);
-//   const [loading, setLoading] = useState(true);
-//   const [notices, setNotices] = useState([]);
-//   const [showAllNotices, setShowAllNotices] = useState(false);
-//   const [selectedAttachment, setSelectedAttachment] = useState(null);
-//   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
-//   const [isFading, setIsFading] = useState(false);
-
-//   useEffect(() => {
-//     fetchHomeData();
-//     fetchPublicNotices();
-//   }, []);
-
-//   useEffect(() => {
-//     const heroImages = homeData?.websiteSettings?.heroImages || [];
-//     if (heroImages.length > 0) {
-//       const timer = setInterval(() => {
-//         setIsFading(true);
-//         setTimeout(() => {
-//           setCurrentHeroSlide((prev) =>
-//             prev === heroImages.length - 1 ? 0 : prev + 1
-//           );
-//           setIsFading(false);
-//         }, 500);
-//       }, 10000);
-//       return () => clearInterval(timer);
-//     }
-//   }, [homeData]);
-
-//   const fetchHomeData = async () => {
-//     try {
-//       const timestamp = new Date().getTime();
-//       const response = await axios.get(
-//         `https://backend-yfp1.onrender.com/api/public/home?t=${timestamp}`
-//       );
-//       setHomeData(response.data.data);
-//       setLoading(false);
-//     } catch (error) {
-//       console.error('Failed to fetch home data:', error);
-//       toast.error('Failed to load website data');
-//       setLoading(false);
-//     }
-//   };
-
-//   const fetchPublicNotices = async () => {
-//     try {
-//       const response = await noticeService.getPublicNotices();
-//       setNotices(response.data || []);
-//     } catch (error) {
-//       console.error('Failed to fetch notices:', error);
-//     }
-//   };
-
-//   const handleAttachmentClick = (attachment) => {
-//     setSelectedAttachment(attachment);
-//   };
-
-//   const formatDate = (date) => {
-//     return new Date(date).toLocaleDateString('en-GB', {
-//       day: 'numeric',
-//       month: 'short',
-//       year: 'numeric',
-//     });
-//   };
-
-//   const truncateText = (text, maxLength) => {
-//     if (text.length <= maxLength) return text;
-//     return text.substring(0, maxLength) + '...';
-//   };
-
-//   if (loading) {
-//     return (
-//       <div className="home-loading">
-//         <SkeletonLoader type="image" height="500px" />
-//         <div className="container" style={{ marginTop: '40px' }}>
-//           <SkeletonLoader type="title" />
-//           <SkeletonLoader type="text" count={5} />
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   const settings = homeData?.websiteSettings || {};
-//   const heroImages = settings.heroImages || [];
-
-//   return (
-//     <div className="home-content">
-//       {/* Hero Carousel */}
-//       {heroImages.length > 0 && (
-//         <section className="hero-image-carousel">
-//           <div className="hero-carousel-wrapper">
-//             {heroImages.map((image, index) => (
-//               <div
-//                 key={index}
-//                 className={`hero-carousel-slide ${
-//                   index === currentHeroSlide ? 'active' : ''
-//                 } ${isFading ? 'fading' : ''}`}
-//               >
-//                 <LazyImage
-//                   src={image}
-//                   alt={`Hero ${index + 1}`}
-//                   className="hero-image"
-//                   placeholderType="skeleton"
-//                 />
-//               </div>
-//             ))}
-
-//             {heroImages.length > 1 && (
-//               <div className="hero-carousel-dots">
-//                 {heroImages.map((_, index) => (
-//                   <button
-//                     key={index}
-//                     className={`hero-dot ${
-//                       index === currentHeroSlide ? 'active' : ''
-//                     }`}
-//                     onClick={() => {
-//                       setIsFading(true);
-//                       setTimeout(() => {
-//                         setCurrentHeroSlide(index);
-//                         setIsFading(false);
-//                       }, 500);
-//                     }}
-//                   />
-//                 ))}
-//               </div>
-//             )}
-//           </div>
-//         </section>
-//       )}
-
-//       {/* About Section */}
-//       <section className="about-section" id="about">
-//         <div className="container">
-//           <div className="section-title">
-//             <h2>
-//               ABOUT{' '}
-//               {settings.schoolName?.toUpperCase() || 'MALKHANAGAR COLLEGE'}
-//             </h2>
-//             <div className="title-underline"></div>
-//           </div>
-//           <div className="about-content">
-//             <div className="about-image">
-//               <LazyImage
-//                 src={settings.aboutImage || '/college.jpg'}
-//                 alt="College Building"
-//                 placeholderType="skeleton"
-//               />
-//             </div>
-//             <div className="about-text">
-//               <p className="about-intro about-large-text">
-//                 মালখানগর কলেজ স্থানীয়ভাবে এই নামেই পরিচিত এবং শিক্ষা মন্ত্রণালয়ের
-//                 অধীন মাধ্যমিক ও উচ্চশিক্ষা অধিদপ্তর প্রদত্ত EIIN নম্বর ১৩৪৫৯০ বহন
-//                 করে। প্রতিষ্ঠানটি ১ জুলাই ১৯৯২ সালে প্রতিষ্ঠিত হয় এবং ১ জুলাই
-//                 ২০০২ সালে সরকারি স্বীকৃতি লাভ করে।
-//               </p>
-//               <p className="about-large-text">
-//                 এছাড়া কলেজের পরিবেশ শান্ত ও শিক্ষাবান্ধব, যেখানে শিক্ষার্থীদের জন্য
-//                 পর্যাপ্ত শ্রেণিকক্ষ, লাইব্রেরি ও প্রয়োজনীয় সুযোগ-সুবিধা রয়েছে।
-//               </p>
-//             </div>
-//           </div>
-//         </div>
-//       </section>
-
-//       {/* Principal Message */}
-//       <section className="message-section chairman-section">
-//         <div className="container">
-//           <div className="section-title">
-//             <h2>MESSAGE FROM THE PRINCIPAL</h2>
-//             <div className="title-underline green"></div>
-//           </div>
-//           <div className="message-content">
-//             <div className="message-text">
-//               <p className="message-large-text">
-//                 অধ্যক্ষের বাণী :<br />
-//                 মালখানগর কলেজ জ্ঞান, মূল্যবোধ ও আধুনিক শিক্ষার সমন্বয়ে একটি
-//                 অগ্রসরমান প্রতিষ্ঠান।
-//               </p>
-//             </div>
-//             <div className="message-author">
-//               <LazyImage
-//                 src={settings.chairmanImage || '/sir.jpg'}
-//                 alt="Principal"
-//                 className="author-photo-wrapper"
-//                 placeholderType="spinner"
-//               />
-//               <h3>অধ্যক্ষ (ভারপ্রাপ্ত) মালখানগর কলেজ</h3>
-//             </div>
-//           </div>
-//         </div>
-//       </section>
-
-//       {/* Notice Section */}
-//       <section className="notice-section" id="notice">
-//         <div className="container">
-//           <div className="notice-header">
-//             <h2 className="notice-title">NOTICE BOARD</h2>
-//             <button
-//               className="btn-view-all"
-//               onClick={() => setShowAllNotices(!showAllNotices)}
-//             >
-//               {showAllNotices ? 'SHOW LESS' : 'VIEW ALL'}
-//             </button>
-//           </div>
-
-//           <div className="notice-content-wrapper">
-//             <div className="notice-board">
-//               {notices.length === 0 ? (
-//                 <div className="no-notices">
-//                   <Bell size={60} color="#ccc" />
-//                   <p>No notices available</p>
-//                 </div>
-//               ) : (
-//                 <div className="notice-list-public">
-//                   {(showAllNotices ? notices : notices.slice(0, 4)).map(
-//                     (notice) => (
-//                       <div key={notice._id} className="notice-item-public">
-//                         <div className="notice-item-header">
-//                           <div className="notice-item-left">
-//                             <span className={`notice-badge ${notice.type}`}>
-//                               {notice.type}
-//                             </span>
-//                             <div className="notice-date-public">
-//                               <Calendar size={16} />
-//                               <span>{formatDate(notice.publishDate)}</span>
-//                             </div>
-//                           </div>
-//                           {notice.attachments && notice.attachments.length > 0 && (
-//                             <div className="notice-attachment-indicator">
-//                               📎 {notice.attachments.length}
-//                             </div>
-//                           )}
-//                         </div>
-
-//                         <h4>{truncateText(notice.title, 150)}</h4>
-
-//                         {notice.attachments && notice.attachments.length > 0 && (
-//                           <div className="notice-files-grid">
-//                             {notice.attachments.map((attachment, index) => (
-//                               <button
-//                                 key={index}
-//                                 className="file-preview-btn"
-//                                 onClick={() => handleAttachmentClick(attachment)}
-//                               >
-//                                 {attachment.fileType === 'pdf' ? (
-//                                   <>
-//                                     <FileText size={18} />
-//                                     <span>PDF Document</span>
-//                                   </>
-//                                 ) : (
-//                                   <>
-//                                     <ImageIcon size={18} />
-//                                     <span>Image File</span>
-//                                   </>
-//                                 )}
-//                                 <Download size={14} className="download-icon" />
-//                               </button>
-//                             ))}
-//                           </div>
-//                         )}
-//                       </div>
-//                     )
-//                   )}
-//                 </div>
-//               )}
-//             </div>
-//           </div>
-//         </div>
-//       </section>
-
-//       {/* Stats Section */}
-//       <section className="stats-section">
-//         <div className="container">
-//           <h2 className="stats-title">
-//             We are in <span className="highlight">Members</span> at a glance
-//           </h2>
-//           <div className="stats-grid">
-//             <div className="stat-box">
-//               <div className="stat-icon">
-//                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-//                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-//                   <circle cx="9" cy="7" r="4"></circle>
-//                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-//                   <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-//                 </svg>
-//               </div>
-//               <h3>{settings.totalStudents || 3200}</h3>
-//               <p>Student</p>
-//             </div>
-
-//             <div className="stat-box">
-//               <div className="stat-icon">
-//                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-//                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-//                 </svg>
-//               </div>
-//               <h3>{settings.totalTeachers || 80}</h3>
-//               <p>Teachers</p>
-//             </div>
-
-//             <div className="stat-box">
-//               <div className="stat-icon">
-//                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-//                   <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-//                   <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-//                 </svg>
-//               </div>
-//               <h3>{settings.totalStaff || 40}</h3>
-//               <p>Staffs</p>
-//             </div>
-//           </div>
-//         </div>
-//       </section>
-
-//       {/* Map Section */}
-//       <section className="map-section">
-//         <div className="container">
-//           <div className="section-title">
-//             <h2>MALKHANAGAR COLLEGE</h2>
-//             <div className="title-underline"></div>
-//           </div>
-//           <div className="map-container">
-//             <iframe
-//               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2871.5546102087783!2d90.42362907405689!3d23.55754499615533!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755a52601a27fdd%3A0x6efa6be14a5985c0!2sMalkhanagar%20College!5e1!3m2!1sen!2sbd!4v1765553683999!5m2!1sen!2sbd"
-//               width="100%"
-//               height="100%"
-//               style={{ border: 0 }}
-//               allowFullScreen=""
-//               loading="lazy"
-//               title="College Location"
-//             ></iframe>
-//           </div>
-//         </div>
-//       </section>
-
-//       {selectedAttachment && (
-//         <NoticeViewer
-//           attachment={selectedAttachment}
-//           onClose={() => setSelectedAttachment(null)}
-//         />
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Home;

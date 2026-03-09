@@ -1,0 +1,647 @@
+/* ============================================
+   FILE PATH: src/pages/StudentIdCard.css
+   Horizontal ID Card — Malkhanagar College
+   Inspired by reference card design
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@600;700;800&display=swap');
+
+/* ── Page ───────────────────────────────────── */
+.icp-page {
+  padding: 28px;
+  min-height: 100vh;
+  background: #eef2f7;
+  font-family: 'Hind Siliguri', 'Segoe UI', sans-serif;
+}
+
+/* ── Top Header ─────────────────────────────── */
+.icp-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.icp-top-bar h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a2942;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icp-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: white;
+  border: 2px solid #dde4ef;
+  padding: 8px 16px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 14px;
+  transition: all 0.2s;
+  font-family: 'Hind Siliguri', sans-serif;
+}
+.icp-back-btn:hover { border-color: #c0392b; color: #c0392b; }
+
+/* ── Controls Panel ─────────────────────────── */
+.icp-controls {
+  background: white;
+  border-radius: 14px;
+  padding: 18px 22px;
+  margin-bottom: 28px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.icp-controls-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.icp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.icp-field label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.icp-field select,
+.icp-field input[type="text"] {
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #f8fafc;
+  outline: none;
+  min-width: 150px;
+  font-family: 'Hind Siliguri', sans-serif;
+  transition: border-color 0.2s;
+}
+.icp-field select:focus,
+.icp-field input:focus { border-color: #c0392b; background: #fff; }
+
+.icp-sign-upload-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icp-sign-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  transition: all 0.2s;
+  white-space: nowrap;
+  font-family: 'Hind Siliguri', sans-serif;
+}
+.icp-sign-upload-btn:hover { border-color: #c0392b; color: #c0392b; background: #fff5f5; }
+
+.icp-sign-thumb {
+  height: 38px;
+  max-width: 90px;
+  object-fit: contain;
+  border-radius: 5px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8f8f8;
+}
+
+.icp-sign-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ef4444;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+}
+
+/* Action buttons */
+.icp-btn-generate {
+  background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+  color: white;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(192,57,43,0.3);
+  font-family: 'Hind Siliguri', sans-serif;
+}
+.icp-btn-generate:hover { transform: translateY(-2px); box-shadow: 0 7px 20px rgba(192,57,43,0.4); }
+.icp-btn-generate:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+.icp-btn-print {
+  background: #1a2942;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  font-family: 'Hind Siliguri', sans-serif;
+}
+.icp-btn-print:hover { background: #0f1e30; transform: translateY(-2px); }
+
+.icp-count-badge {
+  background: #fef3c7;
+  border: 1.5px solid #fbbf24;
+  color: #92400e;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Cards Grid ─────────────────────────────── */
+.icp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(640px, 1fr));
+  gap: 32px;
+  padding-bottom: 60px;
+}
+
+/* ── Each card wrapper ──────────────────────── */
+.icp-card-wrapper {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+}
+
+.icp-card-label-bar {
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 7px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icp-card-pad {
+  padding: 16px 16px 10px;
+}
+
+.icp-card-pad.back-pad {
+  padding-top: 8px;
+  padding-bottom: 16px;
+}
+
+.icp-dl-btn {
+  margin: 0 16px 16px;
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
+  color: white;
+  border: none;
+  padding: 10px 0;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  width: calc(100% - 32px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 3px 10px rgba(192,57,43,0.2);
+  font-family: 'Hind Siliguri', sans-serif;
+}
+.icp-dl-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(192,57,43,0.35); }
+
+/* ════════════════════════════════════════════
+   THE HORIZONTAL ID CARD
+   Physical size: 85.6mm × 54mm (landscape)
+   On screen: ~640px wide container
+   ════════════════════════════════════════════ */
+
+.id-card-h {
+  width: 100%;
+  /* 85.6 / 54 = 1.585 aspect ratio */
+  aspect-ratio: 85.6 / 54;
+  position: relative;
+  overflow: hidden;
+  background: white;
+  font-family: 'Hind Siliguri', 'Segoe UI', sans-serif;
+  border-radius: 8px;
+}
+
+/* ──────────── FRONT CARD ──────────── */
+.id-card-h.front {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #dee2ea;
+}
+
+/* ─── Header ─── */
+.ich-hdr {
+  /* Deep blue like reference card */
+  background: linear-gradient(135deg, #0a2d6e 0%, #1a4a9e 50%, #1e5bb5 100%);
+  padding: 6px 12px 5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* subtle watermark circle */
+.ich-hdr::after {
+  content: '';
+  position: absolute;
+  right: -18px; top: -18px;
+  width: 70px; height: 70px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+}
+
+.ich-logo {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: white;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  border: 2px solid rgba(255,255,255,0.5);
+}
+.ich-logo img  { width: 100%; height: 100%; object-fit: cover; }
+.ich-logo-ltr  { font-size: 17px; font-weight: 900; color: #0a2d6e; font-family: Georgia, serif; }
+
+.ich-hdr-text { flex: 1; min-width: 0; }
+.ich-name-bn {
+  font-family: 'Noto Serif Bengali', 'Hind Siliguri', sans-serif;
+  font-size: 13px; font-weight: 800;
+  color: white; line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ich-name-en {
+  font-size: 7.5px; color: rgba(255,255,255,0.82);
+  letter-spacing: 0.5px; margin-top: 1px;
+}
+.ich-estd {
+  font-size: 6.5px; color: rgba(255,255,255,0.62);
+  margin-top: 1px;
+}
+
+.ich-hdr-badge {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.32);
+  color: white;
+  font-size: 6.5px; font-weight: 800;
+  padding: 3px 8px; border-radius: 20px;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  white-space: nowrap; flex-shrink: 0;
+}
+
+/* ─── Body ─── */
+.ich-body {
+  display: flex;
+  flex: 1;
+  padding: 8px 12px 6px;
+  gap: 11px;
+}
+
+/* Photo column */
+.ich-photo-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ich-photo {
+  width: 70px; height: 84px;
+  border-radius: 5px;
+  overflow: hidden;
+  /* Blue border like reference */
+  border: 2.5px solid #1a4a9e;
+  background: #dde8f5;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+.ich-photo img {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center top;
+}
+.ich-photo-ph {
+  display: flex; flex-direction: column;
+  align-items: center; color: #7a9cc4; gap: 2px;
+}
+.ich-photo-ph span { font-size: 6.5px; }
+
+.ich-sid-tag {
+  background: #1a4a9e; color: white;
+  font-size: 6.5px; font-weight: 700;
+  padding: 2px 5px; border-radius: 3px;
+  letter-spacing: 0.3px; text-align: center;
+  width: 100%;
+}
+
+/* Info column */
+.ich-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ich-sname {
+  font-size: 13px; font-weight: 800;
+  color: #1a2942; line-height: 1.25;
+  margin-bottom: 5px; padding-bottom: 5px;
+  border-bottom: 1.5px solid #dbeafe;
+}
+
+.ich-rows { display: flex; flex-direction: column; gap: 3px; }
+
+.ich-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  line-height: 1;
+}
+
+.ich-lbl {
+  font-size: 7px; font-weight: 700;
+  color: #64748b;
+  min-width: 72px;
+  letter-spacing: 0.1px;
+  text-transform: none;
+}
+
+.ich-sep { color: #1a4a9e; font-weight: 800; font-size: 8px; margin-right: 3px; }
+
+.ich-val { font-size: 8.5px; font-weight: 600; color: #1a2942; }
+
+.ich-val.blood {
+  background: #fef2f2; color: #c0392b;
+  border: 1px solid #fecaca;
+  border-radius: 3px; padding: 0 5px;
+  font-size: 8px; font-weight: 800;
+}
+
+/* ─── Footer orange bar ─── */
+.ich-ftr {
+  background: linear-gradient(90deg, #c0392b 0%, #e74c3c 40%, #e67e22 100%);
+  padding: 4px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.ich-ftr-addr  { font-size: 6.5px; color: rgba(255,255,255,0.92); letter-spacing: 0.2px; }
+.ich-ftr-valid { font-size: 6.5px; color: white; font-weight: 700; }
+
+/* ──────────── BACK CARD ──────────── */
+.id-card-h.back {
+  display: flex;
+  flex-direction: column;
+  background: #f5f8ff;
+  border: 1px solid #dee2ea;
+}
+
+.ich-bhdr {
+  background: linear-gradient(135deg, #0a2d6e 0%, #1a4a9e 100%);
+  padding: 5px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.ich-bhdr-title {
+  font-size: 8.5px; font-weight: 800; color: white;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.ich-bhdr-college {
+  font-size: 6.5px; color: rgba(255,255,255,0.7);
+}
+
+.ich-bbody {
+  display: flex; flex: 1; gap: 10px;
+  padding: 8px 12px 6px;
+}
+
+/* Back left: terms + contact */
+.ich-bleft {
+  flex: 1;
+  display: flex; flex-direction: column; gap: 5px;
+}
+
+.ich-terms-ttl {
+  font-size: 7px; font-weight: 800; color: #c0392b;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  display: flex; align-items: center; gap: 5px;
+}
+.ich-terms-ttl::before {
+  content: '';
+  display: inline-block;
+  width: 12px; height: 1.5px; background: #c0392b; border-radius: 1px;
+}
+
+.ich-term {
+  display: flex; gap: 5px; align-items: flex-start;
+}
+.ich-tdot {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: #1a4a9e; flex-shrink: 0; margin-top: 3.5px;
+}
+.ich-ttext { font-size: 6.5px; color: #475569; line-height: 1.6; }
+
+.ich-cbox {
+  margin-top: 4px; padding-top: 5px;
+  border-top: 1.5px solid #dbeafe;
+}
+.ich-cttl {
+  font-size: 7px; font-weight: 800; color: #1a4a9e;
+  text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px;
+}
+.ich-crow {
+  display: flex; align-items: center; gap: 5px; margin-bottom: 3px;
+}
+.ich-clbl { font-size: 6.5px; color: #94a3b8; font-weight: 700; min-width: 36px; }
+.ich-cval { font-size: 6.5px; color: #334155; }
+
+/* Back right: QR + validity + sign */
+.ich-bright {
+  width: 96px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: space-between;
+}
+
+.ich-qr-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.ich-qr-box {
+  width: 56px; height: 56px;
+  background: white; border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  border: 1.5px solid #dbeafe;
+  display: flex; align-items: center; justify-content: center;
+}
+.ich-qr-lbl { font-size: 6px; color: #94a3b8; }
+
+.ich-validity {
+  width: 100%;
+  background: #eff6ff; border-radius: 5px;
+  padding: 4px 6px;
+}
+.ich-vrow {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 2px;
+}
+.ich-vlbl { font-size: 5.5px; color: #94a3b8; font-weight: 700; text-transform: uppercase; }
+.ich-vval { font-size: 6.5px; color: #1a4a9e; font-weight: 700; }
+
+/* Signature */
+.ich-sign-blk {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 2px; width: 100%;
+}
+.ich-sign-img {
+  max-width: 82px; max-height: 26px;
+  object-fit: contain;
+}
+.ich-sign-line { width: 82px; border-top: 1.5px solid #94a3b8; }
+.ich-sign-lbl {
+  font-size: 6.5px; color: #475569;
+  font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* Back footer */
+.ich-bftr {
+  background: linear-gradient(90deg, #c0392b 0%, #e74c3c 40%, #e67e22 100%);
+  padding: 4px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.ich-bftr-name { font-size: 7.5px; font-weight: 800; color: white; letter-spacing: 0.3px; }
+.ich-bftr-tag  { font-size: 6.5px; color: rgba(255,255,255,0.82); font-style: italic; }
+
+/* ── Empty state ─────────────────────────────── */
+.icp-empty {
+  grid-column: 1/-1;
+  text-align: center;
+  padding: 80px 20px;
+  color: #94a3b8;
+}
+.icp-empty h3 { font-size: 20px; color: #64748b; margin: 16px 0 8px; }
+.icp-empty p  { font-size: 14px; }
+
+/* spinner */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin-ic { animation: spin 0.7s linear infinite; }
+
+/* ════════════════════════════════════════════
+   PRINT STYLES — each student = one A4 page
+   both cards (front + back) on same page
+   ════════════════════════════════════════════ */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm 10mm;
+  }
+
+  /* Hide entire UI, show only print area */
+  body > * { display: none !important; }
+  #icp-print-root { display: block !important; }
+
+  #icp-print-root {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: white;
+  }
+
+  /* Each page contains one student's front + back */
+  .icp-print-page {
+    page-break-after: always;
+    break-after: page;
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10mm;
+    height: 100vh;
+    background: white;
+  }
+
+  .icp-print-page:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Exact physical card size */
+  .icp-print-card {
+    width: 85.6mm !important;
+    height: 54mm !important;
+    min-width: 85.6mm !important;
+    min-height: 54mm !important;
+    max-width: 85.6mm !important;
+    max-height: 54mm !important;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 0.3pt solid #ccc;
+    box-shadow: none !important;
+    border-radius: 3mm;
+  }
+
+  /* The actual card inside wrapper */
+  .icp-print-card .id-card-h {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: unset !important;
+    border-radius: 3mm;
+    border: none !important;
+  }
+
+  /* Scale fonts for accurate print */
+  .ich-name-bn  { font-size: 10pt !important; }
+  .ich-name-en  { font-size: 6pt !important; }
+  .ich-sname    { font-size: 9.5pt !important; }
+  .ich-val      { font-size: 6.5pt !important; }
+  .ich-lbl      { font-size: 5.5pt !important; }
+  .ich-ttext    { font-size: 5pt !important; }
+  .ich-ftr-addr { font-size: 5pt !important; }
+}

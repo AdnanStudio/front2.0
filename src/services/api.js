@@ -1,9 +1,10 @@
+// 
+
+
 import axios from 'axios';
 
-// Render backend URL
 const API_URL = 'https://malkhanagarcollege.onrender.com/api';
 
-// Create axios instance
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -11,21 +12,28 @@ const api = axios.create({
   }
 });
 
-// Request interceptor - token add করা
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
+    // Token add করা
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // ✅ FIX: FormData হলে Content-Type DELETE করো
+    // Axios নিজেই সঠিক "multipart/form-data; boundary=xxxx" set করবে
+    // Manual set করলে boundary miss হয় → multer req.file পায় না → image save হয় না
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor - error handling
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {

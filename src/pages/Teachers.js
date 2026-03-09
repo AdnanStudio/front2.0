@@ -4,12 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import teacherService from '../services/teacherService';
 import subjectService from '../services/subjectService';
 import toast from 'react-hot-toast';
-import { 
-  GraduationCap, 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
+import ProfileAvatar from '../components/ProfileAvatar';
+import {
+  GraduationCap,
+  Plus,
+  Search,
+  Edit,
+  Trash2,
   Eye,
   BookOpen,
   Phone,
@@ -27,21 +28,15 @@ const Teachers = () => {
   const [filterSubject, setFilterSubject] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
-  
-  // Pagination states
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchSubjects();
-  }, []);
-
-  useEffect(() => {
-    fetchTeachers();
-  }, [filterSubject, currentPage]);
+  useEffect(() => { fetchSubjects(); }, []);
+  useEffect(() => { fetchTeachers(); }, [filterSubject, currentPage]);
 
   const fetchSubjects = async () => {
     try {
@@ -55,15 +50,12 @@ const Teachers = () => {
   const fetchTeachers = async () => {
     try {
       setLoading(true);
-      const params = {
-        page: currentPage,
-        limit: 9
-      };
+      const params = { page: currentPage, limit: 9 };
       if (filterSubject) params.subject = filterSubject;
       if (searchTerm) params.search = searchTerm;
 
       const data = await teacherService.getAllTeachers(params);
-      setTeachers(data.data);
+      setTeachers(data.data || []);
       setTotalPages(data.totalPages || 1);
       setTotalCount(data.count || 0);
     } catch (error) {
@@ -94,10 +86,6 @@ const Teachers = () => {
   const viewTeacherDetails = (teacher) => {
     setSelectedTeacher(teacher);
     setShowModal(true);
-  };
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
   };
 
   return (
@@ -132,15 +120,10 @@ const Teachers = () => {
 
         <div className="filter-group">
           <BookOpen size={20} />
-          <select value={filterSubject} onChange={(e) => {
-            setFilterSubject(e.target.value);
-            setCurrentPage(1);
-          }}>
+          <select value={filterSubject} onChange={(e) => { setFilterSubject(e.target.value); setCurrentPage(1); }}>
             <option value="">All Subjects</option>
             {subjects.map((subject) => (
-              <option key={subject._id} value={subject._id}>
-                {subject.name}
-              </option>
+              <option key={subject._id} value={subject._id}>{subject.name}</option>
             ))}
           </select>
         </div>
@@ -181,21 +164,23 @@ const Teachers = () => {
               teachers.map((teacher) => (
                 <div key={teacher._id} className="teacher-card">
                   <div className="teacher-card-header">
-                    <img
-                      src={teacher.userId?.profileImage || 'https://via.placeholder.com/100'}
-                      alt={teacher.userId?.name}
+                    {/* ✅ ProfileAvatar — Cloudinary image দেখাবে, না থাকলে নামের initial */}
+                    <ProfileAvatar
+                      image={teacher.userId?.profileImage}
+                      name={teacher.userId?.name}
+                      size={100}
                       className="teacher-avatar"
                     />
                     <span className={`status-badge ${teacher.userId?.isActive ? 'active' : 'inactive'}`}>
                       {teacher.userId?.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
-                  
+
                   <div className="teacher-card-body">
                     <h3>{teacher.userId?.name}</h3>
                     <p className="teacher-id">ID: {teacher.employeeId}</p>
                     <p className="teacher-qualification">{teacher.qualification}</p>
-                    
+
                     <div className="teacher-subjects">
                       {teacher.subjects?.slice(0, 2).map((sub) => (
                         <span key={sub._id} className="subject-tag">{sub.name}</span>
@@ -217,35 +202,19 @@ const Teachers = () => {
                     </div>
 
                     <div className="teacher-footer">
-                      <span className="experience-badge">
-                        {teacher.experience} years exp.
-                      </span>
-                      <span className="salary-badge">
-                        ৳{teacher.salary?.toLocaleString()}
-                      </span>
+                      <span className="experience-badge">{teacher.experience} years exp.</span>
+                      <span className="salary-badge">৳{teacher.salary?.toLocaleString()}</span>
                     </div>
                   </div>
 
                   <div className="teacher-card-actions">
-                    <button
-                      className="btn-icon btn-view"
-                      onClick={() => viewTeacherDetails(teacher)}
-                      title="View Details"
-                    >
+                    <button className="btn-icon btn-view" onClick={() => viewTeacherDetails(teacher)} title="View Details">
                       <Eye size={18} />
                     </button>
-                    <button
-                      className="btn-icon btn-edit"
-                      onClick={() => navigate(`/dashboard/teachers/edit/${teacher._id}`)}
-                      title="Edit"
-                    >
+                    <button className="btn-icon btn-edit" onClick={() => navigate(`/dashboard/teachers/edit/${teacher._id}`)} title="Edit">
                       <Edit size={18} />
                     </button>
-                    <button
-                      className="btn-icon btn-delete"
-                      onClick={() => handleDelete(teacher._id)}
-                      title="Delete"
-                    >
+                    <button className="btn-icon btn-delete" onClick={() => handleDelete(teacher._id)} title="Delete">
                       <Trash2 size={18} />
                     </button>
                   </div>
@@ -254,44 +223,32 @@ const Teachers = () => {
             )}
           </div>
 
-          {/* Pagination */}
+          {/* ── Pagination ── */}
           {totalPages > 1 && (
             <div className="pagination">
-              <button
-                className="pagination-btn"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft size={20} />
-                Previous
+              <button className="pagination-btn" onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>
+                <ChevronLeft size={20} /> Previous
               </button>
-              
               <div className="pagination-numbers">
                 {[...Array(totalPages)].map((_, index) => (
                   <button
                     key={index + 1}
                     className={`pagination-number ${currentPage === index + 1 ? 'active' : ''}`}
-                    onClick={() => handlePageChange(index + 1)}
+                    onClick={() => setCurrentPage(index + 1)}
                   >
                     {index + 1}
                   </button>
                 ))}
               </div>
-
-              <button
-                className="pagination-btn"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Next
-                <ChevronRight size={20} />
+              <button className="pagination-btn" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
+                Next <ChevronRight size={20} />
               </button>
             </div>
           )}
         </>
       )}
 
-      {/* Teacher Details Modal */}
+      {/* ── Teacher Details Modal ── */}
       {showModal && selectedTeacher && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -301,35 +258,21 @@ const Teachers = () => {
             </div>
             <div className="modal-body">
               <div className="teacher-detail-card">
-                <img
-                  src={selectedTeacher.userId?.profileImage || 'https://via.placeholder.com/150'}
-                  alt={selectedTeacher.userId?.name}
+                {/* ✅ Modal এও ProfileAvatar */}
+                <ProfileAvatar
+                  image={selectedTeacher.userId?.profileImage}
+                  name={selectedTeacher.userId?.name}
+                  size={120}
                   className="detail-photo"
                 />
                 <div className="detail-info">
-                  <div className="info-row">
-                    <label>Name:</label>
-                    <span>{selectedTeacher.userId?.name}</span>
-                  </div>
-                  <div className="info-row">
-                    <label>Employee ID:</label>
-                    <span>{selectedTeacher.employeeId}</span>
-                  </div>
-                  <div className="info-row">
-                    <label>Email:</label>
-                    <span>{selectedTeacher.userId?.email}</span>
-                  </div>
-                  <div className="info-row">
-                    <label>Phone:</label>
-                    <span>{selectedTeacher.userId?.phone || 'N/A'}</span>
-                  </div>
+                  <div className="info-row"><label>Name:</label><span>{selectedTeacher.userId?.name}</span></div>
+                  <div className="info-row"><label>Employee ID:</label><span>{selectedTeacher.employeeId}</span></div>
+                  <div className="info-row"><label>Email:</label><span>{selectedTeacher.userId?.email}</span></div>
+                  <div className="info-row"><label>Phone:</label><span>{selectedTeacher.userId?.phone || 'N/A'}</span></div>
                   <div className="info-row">
                     <label>Date of Birth:</label>
-                    <span>
-                      {selectedTeacher.userId?.dateOfBirth 
-                        ? new Date(selectedTeacher.userId.dateOfBirth).toLocaleDateString() 
-                        : 'N/A'}
-                    </span>
+                    <span>{selectedTeacher.userId?.dateOfBirth ? new Date(selectedTeacher.userId.dateOfBirth).toLocaleDateString() : 'N/A'}</span>
                   </div>
                   <div className="info-row">
                     <label>Subjects:</label>
@@ -339,26 +282,14 @@ const Teachers = () => {
                     <label>Classes:</label>
                     <span>{selectedTeacher.classes?.map(c => `${c.name}-${c.section}`).join(', ') || 'N/A'}</span>
                   </div>
-                  <div className="info-row">
-                    <label>Qualification:</label>
-                    <span>{selectedTeacher.qualification}</span>
-                  </div>
-                  <div className="info-row">
-                    <label>Experience:</label>
-                    <span>{selectedTeacher.experience} years</span>
-                  </div>
-                  <div className="info-row">
-                    <label>Salary:</label>
-                    <span>৳{selectedTeacher.salary?.toLocaleString()}</span>
-                  </div>
+                  <div className="info-row"><label>Qualification:</label><span>{selectedTeacher.qualification}</span></div>
+                  <div className="info-row"><label>Experience:</label><span>{selectedTeacher.experience} years</span></div>
+                  <div className="info-row"><label>Salary:</label><span>৳{selectedTeacher.salary?.toLocaleString()}</span></div>
                   <div className="info-row">
                     <label>Joining Date:</label>
-                    <span>{new Date(selectedTeacher.joiningDate).toLocaleDateString()}</span>
+                    <span>{selectedTeacher.joiningDate ? new Date(selectedTeacher.joiningDate).toLocaleDateString() : 'N/A'}</span>
                   </div>
-                  <div className="info-row">
-                    <label>Address:</label>
-                    <span>{selectedTeacher.userId?.address || 'N/A'}</span>
-                  </div>
+                  <div className="info-row"><label>Address:</label><span>{selectedTeacher.userId?.address || 'N/A'}</span></div>
                   <div className="info-row">
                     <label>Status:</label>
                     <span className={selectedTeacher.userId?.isActive ? 'status-active' : 'status-inactive'}>
