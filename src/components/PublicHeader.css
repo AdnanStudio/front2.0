@@ -1,478 +1,395 @@
-.main-header {
-  background: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+/* ============================================================
+   FILE: src/components/PublicHeader.css
+   ✅ NOT sticky — position: relative, scrolls with page
+   ✅ Colored pill nav items (each has its own bg color)
+   ✅ Bangla font (Hind Siliguri)
+   ✅ Seamless ticker loop (two copy trick)
+   ✅ Mobile: logo top-left, hamburger top-right
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.ph-root {
+  font-family: 'Hind Siliguri', sans-serif;
+  position: relative;   /* NOT sticky — scrolls with page */
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0,0,0,.14);
 }
 
-.header-content {
+/* ── TOP INFO STRIP ─────────────────────────────────── */
+.ph-topstrip {
+  background: #1b5e20;
+  padding: 4px 0;
+}
+.ph-topstrip-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 16px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 0;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.ph-topstrip-inner span {
+  color: rgba(255,255,255,.85);
+  font-size: 11.5px;
+  font-family: 'Hind Siliguri', sans-serif;
+  white-space: nowrap;
 }
 
-.logo-section {
+/* ── BRAND BAR ──────────────────────────────────────── */
+.ph-brand-bar {
+  background: #fff;
+  border-bottom: 2px solid #e0e0e0;
+  padding: 10px 0;
+}
+.ph-brand-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 16px;
   display: flex;
   align-items: center;
-  gap: 15px;
-  transition: transform 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  gap: 12px;
 }
 
-.logo-section:hover {
-  transform: scale(1.02);
+/* Brand clickable area */
+.ph-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  outline: none;
 }
-
-.logo-section:active {
-  transform: scale(0.98);
-}
-
-/* Water Wave Animation */
-.logo-section.water-wave-animation::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(0, 102, 204, 0.1) 25%,
-    rgba(0, 102, 204, 0.3) 50%,
-    rgba(0, 102, 204, 0.1) 75%,
-    transparent 100%
-  );
-  animation: waterWave 1.5s ease-in-out;
-  pointer-events: none;
-  z-index: 1;
-}
-
-@keyframes waterWave {
-  0% {
-    left: -100%;
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    left: 100%;
-    opacity: 0;
-  }
-}
-
-/* Additional shimmer effect for text */
-.logo-section.water-wave-animation .school-info h1,
-.logo-section.water-wave-animation .school-subtitle,
-.logo-section.water-wave-animation .school-address {
-  animation: textShimmer 1.5s ease-in-out;
-}
-
-@keyframes textShimmer {
-  0% {
-    color: #0066cc;
-    text-shadow: 0 0 5px rgba(0, 102, 204, 0);
-  }
-  50% {
-    color: #0099ff;
-    text-shadow: 0 0 10px rgba(0, 102, 204, 0.5);
-  }
-  100% {
-    color: #0066cc;
-    text-shadow: 0 0 5px rgba(0, 102, 204, 0);
-  }
-}
-
-.school-logo {
-  width: 80px;
-  height: 80px;
+/* Raw logo — no shape, no border */
+.ph-brand-logo {
+  width: 70px;
+  height: 70px;
   object-fit: contain;
-  position: relative;
-  z-index: 2;
-  transition: transform 0.3s ease;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,.15));
+  transition: transform .25s;
 }
+.ph-brand:hover .ph-brand-logo { transform: scale(1.05); }
 
-.logo-section.water-wave-animation .school-logo {
-  animation: logoGlow 1.5s ease-in-out;
-}
-
-@keyframes logoGlow {
-  0%, 100% {
-    filter: drop-shadow(0 0 0px rgba(0, 102, 204, 0));
-  }
-  50% {
-    filter: drop-shadow(0 0 10px rgba(0, 102, 204, 0.6));
-  }
-}
-
-.school-info {
-  position: relative;
-  z-index: 2;
-}
-
-.school-info h1 {
-  color: #0066cc;
-  font-size: 24px;
-  margin-bottom: 5px;
+.ph-brand-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ph-brand-name {
+  font-size: 22px;
   font-weight: 700;
-  transition: color 0.3s ease;
+  color: #0d47a1;
+  margin: 0;
+  line-height: 1.2;
+  font-family: 'Hind Siliguri', sans-serif;
+  transition: color .2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
-.school-subtitle {
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 2px;
-  transition: color 0.3s ease;
-}
-
-.school-address {
+.ph-brand:hover .ph-brand-name { color: #1b5e20; }
+.ph-brand-sub {
   font-size: 12px;
+  color: #555;
+  margin: 0;
+  font-family: 'Hind Siliguri', sans-serif;
+  white-space: nowrap;
+}
+.ph-brand-addr {
+  font-size: 11px;
   color: #999;
-  transition: color 0.3s ease;
+  margin: 0;
+  font-family: 'Hind Siliguri', sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Desktop Navigation */
-.desktop-nav {
-  display: flex;
-  align-items: center;
-  gap: 0px;
+/* Login button */
+.ph-login-btn {
+  background: linear-gradient(135deg, #1b5e20, #2e7d32);
+  color: #fff;
+  border: none;
+  padding: 9px 22px;
+  border-radius: 22px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Hind Siliguri', sans-serif;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(27,94,32,.3);
+  flex-shrink: 0;
+}
+.ph-login-btn:hover {
+  background: linear-gradient(135deg, #0a3d12, #1b5e20);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(27,94,32,.45);
 }
 
-.nav-item-wrapper {
-  position: relative;
-}
-
-.desktop-nav a {
+/* Hamburger */
+.ph-ham {
+  display: none;
+  background: none;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  padding: 7px 9px;
+  cursor: pointer;
   color: #333;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 16px;
+  flex-shrink: 0;
+  transition: all .2s;
+  margin-left: auto;
+}
+.ph-ham:hover { background: #f5f5f5; border-color: #bbb; }
+
+/* ══════════════════════════════════════════════════════
+   DESKTOP NAV BAR — colored pill buttons
+══════════════════════════════════════════════════════ */
+.ph-nav-bar {
+  background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
+  border-bottom: 3px solid #374151;
+}
+.ph-nav-inner {
+  max-width: 1280px;
+  margin: 0 auto;
   padding: 8px 12px;
   display: flex;
   align-items: center;
-  gap: 4px;
-  transition: all 0.3s;
-  border-radius: 6px;
-  white-space: nowrap;
+  flex-wrap: wrap;
+  gap: 6px;
 }
+.ph-nav-item { position: relative; }
 
-.desktop-nav a:hover,
-.desktop-nav a.active {
-  color: #0066cc;
-  background: #f0f8ff;
-}
-
-/* Dropdown Menu */
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background: white;
-  min-width: 240px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-  border-radius: 8px;
-  margin-top: 8px;
-  padding: 8px 0;
-  z-index: 9999;
-  animation: dropdownSlide 0.3s ease;
-  pointer-events: auto;
-}
-
-@keyframes dropdownSlide {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.dropdown-menu a {
-  display: block;
-  padding: 12px 20px;
-  color: #555;
-  font-size: 14px;
-  border-radius: 0;
-  background: transparent;
-  transition: all 0.2s;
-}
-
-.dropdown-menu a:hover,
-.dropdown-menu a.active {
-  background: #f8f9fa;
-  color: #0066cc;
-}
-
-.btn-login {
-  background: rgb(35, 167, 255);
-  color: white;
-  padding: 10px 25px;
-  border: none;
-  border-radius: 25px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s;
-  white-space: nowrap;
-}
-
-.btn-login:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(35, 167, 255, 0.3);
-}
-
-/* Scrolling Text */
-.scrolling-text-container {
-  background: #2980b9;
-  overflow: hidden;
-  padding: 12px 0;
-  cursor: pointer;
-  user-select: none;
-}
-
-.scrolling-text {
-  display: inline-block;
-  white-space: nowrap;
-  animation: scroll-continuous 100s linear infinite;
-  padding-left: 100%;
-}
-
-.scrolling-text.paused {
-  animation-play-state: paused;
-}
-
-.scrolling-text span {
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  padding-right: 80px;
-  display: inline-block;
-}
-
-@keyframes scroll-continuous {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
-}
-
-/* Mobile */
-.mobile-menu-btn {
-  display: none;
-  background: none;
-  border: none;
-  color: #333;
-  cursor: pointer;
-  padding: 8px;
-}
-
-.mobile-nav {
-  display: none;
-  flex-direction: column;
-  background: white;
-  padding: 20px;
-  border-top: 1px solid #e1e8ed;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.mobile-nav-item {
-  border-bottom: 1px solid #f5f7fa;
-}
-
-.mobile-nav-link {
-  display: flex;
-  justify-content: space-between;
+/* ── Pill button (each nav item) ── */
+.ph-pill {
+  display: inline-flex;
   align-items: center;
-  padding: 12px 0;
-  color: #333;
-  font-weight: 500;
-  cursor: pointer;
-  user-select: none;
-}
-
-.mobile-nav-link:active {
-  background: #f8f9fa;
-}
-
-.mobile-dropdown {
-  padding-left: 20px;
-  margin-bottom: 10px;
-  animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    max-height: 500px;
-  }
-}
-
-.mobile-dropdown a {
-  display: block;
-  padding: 10px 0;
-  color: #666;
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.2s;
-}
-
-.mobile-dropdown a:hover,
-.mobile-dropdown a.active {
-  color: #0066cc;
-}
-
-.btn-login-mobile {
-  margin-top: 15px;
-  background: rgb(35, 167, 255);
-  color: white;
-  padding: 12px;
+  gap: 5px;
+  padding: 7px 14px;
+  background: var(--pc, #1565c0);
+  color: var(--tc, #fff);
+  font-size: 18px;
+  font-weight: 700;
+  font-family: 'Hind Siliguri', sans-serif;
   border: none;
-  border-radius: 25px;
-  font-weight: 600;
+  border-radius: 5px;
   cursor: pointer;
+  text-decoration: none !important;
+  white-space: nowrap;
+  transition: all .2s;
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+  letter-spacing: .2px;
+}
+.ph-pill:hover {
+  filter: brightness(1.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.35);
+}
+.ph-pill.active {
+  filter: brightness(1.18);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0,0,0,.4);
+  outline: 2px solid rgb(78, 88, 81);
+}
+.ph-arr  { transition: transform .2s; }
+.ph-arr-up { transform: rotate(180deg); }
+
+/* ── Dropdown ── */
+.ph-dd {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+  background: #fff;
+  border-top: 4px solid var(--dc, #1565c0);
+  border-radius: 0 8px 8px 8px;
+  box-shadow: 0 14px 40px rgba(0,0,0,.2);
+  z-index: 9999;
+  overflow: hidden;
+  animation: ddPop .16s ease;
+}
+@keyframes ddPop {
+  from { opacity: 0; transform: translateY(-6px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.ph-dd-a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  color: #333 !important;
+  font-size: 18px;
+  font-weight: 500;
+  font-family: 'Hind Siliguri', sans-serif;
+  text-decoration: none !important;
+  border-bottom: 1px solid #f5f5f5;
+  transition: all .16s;
+}
+.ph-dd-a:last-child { border-bottom: none; }
+.ph-dd-a:hover,
+.ph-dd-a.active {
+  background: #f8f8f8;
+  color: var(--dc, #1565c0) !important;
+  padding-left: 22px;
+}
+.ph-dd-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════
+   TICKER — seamless double-copy loop
+══════════════════════════════════════════════════════ */
+.ph-ticker {
+  background: linear-gradient(90deg, #0d47a1, #1565c0, #0d47a1);
+  display: flex;
+  align-items: center;
+  height: 34px;
+  overflow: hidden;
+}
+.ph-tk-badge {
+  background: #ffd600;
+  color: #1a237e;
+  font-size: 16px;
+  font-weight: 800;
+  font-family: 'Hind Siliguri', sans-serif;
+  padding: 0 14px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ph-tk-track {
+  flex: 1;
+  overflow: hidden;
+}
+/* Two identical copies; animating -50% = one full seamless cycle */
+.ph-tk-belt {
+  display: flex;
+  width: max-content;
+  animation: tkRun 60s linear infinite;
+}
+.ph-tk-track:hover .ph-tk-belt { animation-play-state: paused; }
+.ph-tk-txt {
+  white-space: nowrap;
+  color: rgba(255,255,255,.93);
+  font-size: 18px;
+  font-weight: 600;
+  font-family: 'Hind Siliguri', sans-serif;
+}
+@keyframes tkRun {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ph-tk-all {
+  background: #ffd600;
+  color: #1a237e !important;
+  font-size: 16px;
+  font-weight: 800;
+  font-family: 'Hind Siliguri', sans-serif;
+  padding: 0 14px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  text-decoration: none !important;
+  flex-shrink: 0;
+  transition: background .2s;
+  white-space: nowrap;
+}
+.ph-tk-all:hover { background: #ffca28; }
+
+/* ══════════════════════════════════════════════════════
+   MOBILE NAV DRAWER
+══════════════════════════════════════════════════════ */
+.ph-mob-drawer {
+  background: #fff;
+  border-top: 3px solid #1b5e20;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+}
+.ph-mob-item { border-bottom: 1px solid #f0f0f0; }
+.ph-mob-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background .16s;
+  border-left: 5px solid transparent;
+  gap: 8px;
+}
+.ph-mob-row:hover { background: #f9f9f9; }
+.ph-mob-label-pill {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 16px;
+  font-size: 14.5px;
+  font-weight: 700;
+  font-family: 'Hind Siliguri', sans-serif;
+  letter-spacing: .2px;
+  flex: 1;
+}
+.ph-mob-sub { background: #f9f9f9; padding: 4px 0; }
+.ph-mob-sub-a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 28px;
+  color: #444 !important;
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: 'Hind Siliguri', sans-serif;
+  text-decoration: none !important;
+  border-bottom: 1px solid #ebebeb;
+  transition: all .16s;
+}
+.ph-mob-sub-a:last-child { border-bottom: none; }
+.ph-mob-sub-a:hover,
+.ph-mob-sub-a.active { background: #f0f7ff; color: #1565c0 !important; padding-left: 34px; }
+.ph-mob-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ph-mob-footer {
+  padding: 14px 18px;
+  background: #f5f5f5;
+  border-top: 1px solid #e0e0e0;
+}
+.ph-mob-login {
   width: 100%;
+  background: linear-gradient(135deg, #1b5e20, #2e7d32);
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 22px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Hind Siliguri', sans-serif;
+  cursor: pointer;
+  transition: all .2s;
 }
+.ph-mob-login:hover { background: linear-gradient(135deg, #0a3d12, #1b5e20); }
 
-.rotated {
-  transform: rotate(180deg);
-  transition: transform 0.3s;
+/* ── RESPONSIVE ────────────────────────────────────── */
+@media (min-width:1024px) {
+  .ph-brand-bar { display: none; }
 }
-
-/* Tablet */
 @media (max-width: 1024px) {
-  .desktop-nav {
-    display: none;
-  }
-
-  .mobile-menu-btn {
-    display: block;
-  }
-
-  .mobile-nav {
-    display: flex;
-  }
-
-  .school-info h1 {
-    font-size: 20px;
-  }
-
-  .school-logo {
-    width: 60px;
-    height: 60px;
-  }
+  .ph-tk-all {display: none;}
+  .ph-nav-bar    { display: none; }
+  .ph-login-btn  { display: none; }
+  .ph-ham        { display: flex; }
 }
-
-/* Mobile */
 @media (max-width: 768px) {
-  .header-content {
-    padding: 10px 0;
-  }
-
-  .logo-section {
-    gap: 12px;
-  }
-
-  .school-logo {
-    width: 60px;
-    height: 60px;
-  }
-
-  .school-info h1 {
-    font-size: 16px;
-  }
-
-  .school-subtitle {
-    font-size: 11px;
-  }
-
-  .school-address {
-    font-size: 10px;
-  }
-
-  .scrolling-text span {
-    font-size: 14px;
-    padding-right: 60px;
-  }
-
-  .mobile-nav {
-    max-height: 60vh;
-  }
-
-  /* Mobile Animation Adjustments */
-  @keyframes waterWave {
-    0% {
-      left: -100%;
-      opacity: 0;
-    }
-    15% {
-      opacity: 1;
-    }
-    85% {
-      opacity: 1;
-    }
-    100% {
-      left: 100%;
-      opacity: 0;
-    }
-  }
+  .ph-brand-logo { width: 50px; height: 50px; }
+  .ph-brand-name { font-size: 15px; }
+  .ph-brand-sub  { font-size: 10px; }
+  .ph-brand-addr { display: none; }
+  .ph-topstrip   { display: none; }
 }
-
-@media (max-width: 480px) {
-  .logo-section {
-    gap: 10px;
-  }
-
-  .school-logo {
-    width: 50px;
-    height: 50px;
-  }
-
-  .school-info h1 {
-    font-size: 14px;
-  }
-
-  .school-subtitle,
-  .school-address {
-    font-size: 10px;
-  }
-
-  .scrolling-text span {
-    font-size: 13px;
-    padding-right: 50px;
-  }
-
-  /* Extra smooth animation for small screens */
-  .logo-section.water-wave-animation::before {
-    animation: waterWave 1.8s ease-in-out;
-  }
-}
-
-/* Reduce motion for users who prefer it */
-@media (prefers-reduced-motion: reduce) {
-  .logo-section.water-wave-animation::before,
-  .logo-section.water-wave-animation .school-info h1,
-  .logo-section.water-wave-animation .school-subtitle,
-  .logo-section.water-wave-animation .school-address,
-  .logo-section.water-wave-animation .school-logo {
-    animation: none;
-  }
-  
-  .logo-section:hover {
-    transform: none;
-  }
+@media (max-width: 420px) {
+  .ph-brand-logo { width: 40px; height: 40px; }
+  .ph-brand-name { font-size: 13px; }
+  .ph-brand-sub  { display: none; }
 }

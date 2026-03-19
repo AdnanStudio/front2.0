@@ -1,0 +1,16 @@
+/* ============================================================
+   FILE PATH: src/components/PublicLayout.css
+   Layout wrapper that adds PublicHeader + PublicFooter
+   around all public content pages.
+   ============================================================ */
+
+.pl-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+}
+
+.pl-main {
+  flex: 1;
+}

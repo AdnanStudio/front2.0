@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Phone, Mail, BookOpen, Award } from 'lucide-react';
-import PublicHeader from '../../components/PublicHeader';
-import PublicFooter from '../../components/PublicFooter';
+
 import SkeletonLoader from '../../components/SkeletonLoader';
 import teacherListService from '../../services/teacherListService';
 import axios from 'axios';
@@ -38,7 +37,7 @@ const Teachers = () => {
 
   return (
     <div className="teachers-public-page">
-      <PublicHeader settings={settings} currentPath="/administration/teachers" />
+      
 
       <div className="page-container">
         <div className="page-header-section">
@@ -114,7 +113,7 @@ const Teachers = () => {
         )}
       </div>
 
-      <PublicFooter settings={settings} />
+      
     </div>
   );
 };

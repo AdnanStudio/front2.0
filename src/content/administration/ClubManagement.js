@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Award, Calendar } from 'lucide-react';
-import PublicHeader from '../../components/PublicHeader';
-import PublicFooter from '../../components/PublicFooter';
+
 import SkeletonLoader from '../../components/SkeletonLoader';
 import clubService from '../../services/clubService';
 import axios from 'axios';
@@ -38,7 +37,7 @@ const ClubManagementPublic = () => {
 
   return (
     <div className="club-management-public-page">
-      <PublicHeader settings={settings} currentPath="/administration/club-management" />
+      
 
       <div className="page-container">
         <div className="page-header-section">
@@ -126,7 +125,7 @@ const ClubManagementPublic = () => {
         )}
       </div>
 
-      <PublicFooter settings={settings} />
+      
     </div>
   );
 };

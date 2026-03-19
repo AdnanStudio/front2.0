@@ -1,616 +1,621 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
-import axios from 'axios';
+// src/pages/PublicHome.js
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import SkeletonLoader from '../components/SkeletonLoader';
 import PublicHeader from '../components/PublicHeader';
 import PublicFooter from '../components/PublicFooter';
-import Home from '../content/Home';
-import About from '../content/About';
-import Academic from '../content/Academic';
-import Administration from '../content/Administration';
-import Admission from '../content/Admission';
-import Gallery from '../content/Gallery';
-import Notice from '../content/Notice';
-import Contact from '../content/Contact';
-
-// About sub-pages
-import CollegeHistory from '../content/about/CollegeHistory';
-import MissionVision from '../content/about/MissionVision';
-import Facilities from '../content/about/Facilities';
-import Achievements from '../content/about/Achievements';
-
-// Academic sub-pages
-import Programs from '../content/academic/Programs';
-import Departments from '../content/academic/Departments';
-import Syllabus from '../content/academic/Syllabus';
-import AcademicCalendar from '../content/academic/AcademicCalendar';
-
-// Administration sub-pages
-import GoverningBody from '../content/administration/GoverningBody';
-
-import Teachers from '../content/administration/Teachers';
-
-import TeacherTraining from '../content/administration/TeacherTraining';
-import ClubManagementPublic from '../content/administration/ClubManagement';
-
-// Admission sub-pages
-import AdmissionProcedure from '../content/admission/AdmissionProcedure';
-import Requirements from '../content/admission/Requirements';
-import ApplyOnline from '../content/admission/ApplyOnline';
-
-// Gallery sub-pages
-import PhotoGallery from '../content/gallery/PhotoGallery';
-import VideoGallery from '../content/gallery/VideoGallery';
-import Events from '../content/gallery/Events';
-
 import './PublicHome.css';
 
-const PublicHome = () => {
-  const location = useLocation();
-  const [settings, setSettings] = useState({
-    schoolName: 'MALKHANAGAR COLLEGE',
-    schoolAddress: 'Malkhanagar, Sirajdikhan, Dhaka',
-    logo: '/logo.png',
-    scrollingTexts: []
-  });
-  const [settingsLoaded, setSettingsLoaded] = useState(false);
+const API = process.env.REACT_APP_API_URL || 'https://malkhanagarcollege.onrender.com/api';
 
+/* ── 5 varied 3D transition classes ── */
+const TRANSITIONS = ['ph-t-slide3d', 'ph-t-cube', 'ph-t-flip', 'ph-t-zoom', 'ph-t-swipe'];
+
+/* ── Quick-access hero buttons ── */
+const HERO_BTNS = [
+  { label: 'শিক্ষক পরিষদ',          path: '/about/faculty-council',         color: '#c62828' },
+  { label: 'অর্গানোগ্রাম',            path: '/about/organogram',              color: '#6a1b9a' },
+  { label: 'শিক্ষকবৃন্দ',             path: '/administration/teachers',       color: '#1565c0' },
+  { label: 'পরিচালনা পর্ষদ',          path: '/administration/governing-body', color: '#2e7d32' },
+  { label: 'ভর্তি আবেদন',            path: '/admission/apply',               color: '#e65100' },
+  { label: 'উচ্চ মাধ্যমিক',           path: '/admission/hsc',                 color: '#00695c' },
+  { label: 'স্নাতক (পাস)',            path: '/admission/degree-pass',         color: '#827717' },
+  { label: 'ফর্ম ফিলাপ',             path: '/form/hsc',                      color: '#4527a0' },
+  { label: 'পরীক্ষার ফলাফল',         path: '/result/internal',               color: '#37474f' },
+  { label: 'নোটিশ বোর্ড',            path: '/notices',                       color: '#1b5e20' },
+  { label: 'গ্রন্থাগার',              path: '/library',                       color: '#4e342e' },
+  { label: 'ই-লাইব্রেরি',             path: '/e-library',                     color: '#880e4f' },
+  { label: 'একাডেমিক ক্যালেন্ডার',  path: '/academic/calendar',             color: '#0277bd' },
+  { label: 'ফটো গ্যালারি',           path: '/gallery/photos',                color: '#558b2f' },
+];
+
+/* ── Full navigation data from all content folders ── */
+const CONTENT_SECTIONS = [
+  {
+    title: 'প্রতিষ্ঠান পরিচিতি',
+    icon: '🏛️',
+    color: '#6a1b9a',
+    // maps to: content/about/ + content/pages/
+    items: [
+      ['কলেজের ইতিহাস',       '/about/history'],
+      ['মিশন ও ভিশন',         '/about/mission-vision'],
+      ['সুযোগ-সুবিধা',        '/about/facilities'],
+      ['সাফল্যসমূহ',          '/about/achievements'],
+      ['শিক্ষক পরিষদ',        '/about/faculty-council'],
+      ['অর্গানোগ্রাম',         '/about/organogram'],
+      ['পরিচালনা পর্ষদ',      '/administration/governing-body'],
+      ['অধ্যক্ষের বাণী',      '/about/principal'],
+      ['স্টাফ ও কর্মচারী',    '/about/staff'],
+    ],
+  },
+  {
+    title: 'প্রশাসন',
+    icon: '👨‍💼',
+    color: '#1565c0',
+    // maps to: content/administration/
+    items: [
+      ['শিক্ষকবৃন্দ',          '/administration/teachers'],
+      ['পরিচালনা পর্ষদ',       '/administration/governing-body'],
+      ['শিক্ষক প্রশিক্ষণ',     '/administration/teacher-training'],
+      ['ক্লাব ব্যবস্থাপনা',    '/administration/club-management'],
+    ],
+  },
+  {
+    title: 'একাডেমিক',
+    icon: '📘',
+    color: '#00695c',
+    // maps to: content/academic/ + content/pages/
+    items: [
+      ['উচ্চ মাধ্যমিক রুটিন',     '/academic/hsc-routine'],
+      ['স্নাতক (পাস)',             '/academic/degree-pass'],
+      ['স্নাতক (সম্মান)',          '/academic/degree-honors'],
+      ['বিভাগসমূহ',               '/academic/departments'],
+      ['প্রোগ্রামসমূহ',            '/academic/programs'],
+      ['সিলেবাস',                  '/academic/syllabus'],
+      ['একাডেমিক ক্যালেন্ডার',    '/academic/calendar'],
+    ],
+  },
+  {
+    title: 'ভর্তি',
+    icon: '📋',
+    color: '#e65100',
+    // maps to: content/admission/
+    items: [
+      ['অনলাইনে আবেদন',       '/admission/apply'],
+      ['উচ্চ মাধ্যমিক ভর্তি', '/admission/hsc'],
+      ['স্নাতক পাস ভর্তি',    '/admission/degree-pass'],
+      ['স্নাতক ভর্তি',        '/admission/degree'],
+      ['ভর্তির শর্তাবলী',     '/admission/requirements'],
+      ['ভর্তির পদ্ধতি',       '/admission/procedure'],
+    ],
+  },
+  {
+    title: 'পরীক্ষা ও ফলাফল',
+    icon: '📊',
+    color: '#c62828',
+    items: [
+      ['অভ্যন্তরীণ এডমিট কার্ড', '/result/admit-card'],
+      ['অভ্যন্তরীণ ফলাফল',       '/result/internal'],
+      ['উচ্চ মাধ্যমিক ফলাফল',    '/result/hsc'],
+      ['স্নাতক পাস ফলাফল',       '/result/degree-pass'],
+      ['স্নাতক ফলাফল',            '/result/degree'],
+    ],
+  },
+  {
+    title: 'ফর্ম পূরণ',
+    icon: '📝',
+    color: '#4527a0',
+    items: [
+      ['এইচএসসি ফর্ম',   '/form/hsc'],
+      ['স্নাতক পাস ফর্ম', '/form/degree-pass'],
+      ['স্নাতক ফর্ম',     '/form/degree'],
+    ],
+  },
+  {
+    title: 'গ্যালারি',
+    icon: '📷',
+    color: '#558b2f',
+    // maps to: content/gallery/
+    items: [
+      ['ফটো গ্যালারি',  '/gallery/photos'],
+      ['ভিডিও গ্যালারি', '/gallery/videos'],
+      ['ইভেন্টসমূহ',    '/gallery/events'],
+    ],
+  },
+  {
+    title: 'ডাউনলোড ও সেবা',
+    icon: '📥',
+    color: '#37474f',
+    items: [
+      ['ফর্ম ডাউনলোড',   '/notices'],
+      ['সিটিজেন চার্টার', '/about/history'],
+      ['নোটিশ বোর্ড',    '/notices'],
+      ['অফিস আদেশ',      '/notices'],
+    ],
+  },
+  {
+    title: 'অনলাইন শিক্ষা',
+    icon: '💻',
+    color: '#0277bd',
+    items: [
+      ['EasyCollegeMate',  '/easy-college-mate'],
+      ['ই-লাইব্রেরি',      '/e-library'],
+      ['গ্রন্থাগার',        '/library'],
+      ['ইউটিউব লিংক',     '/easy-college-mate'],
+    ],
+  },
+  {
+    title: 'সহশিক্ষা কার্যক্রম',
+    icon: '🎨',
+    color: '#1b5e20',
+    // maps to: content/administration/ clubs
+    items: [
+      ['ক্লাব ব্যবস্থাপনা', '/administration/club-management'],
+      ['শিক্ষক প্রশিক্ষণ',  '/administration/teacher-training'],
+      ['বিএনসিসি',          '/administration/club-management'],
+      ['রোভার স্কাউটস',     '/administration/club-management'],
+    ],
+  },
+];
+
+const IMP_LINKS = [
+  { label: 'শিক্ষা মন্ত্রণালয়',       url: 'https://moedu.gov.bd' },
+  { label: 'ঢাকা শিক্ষা বোর্ড',     url: 'https://dhakaeducationboard.gov.bd' },
+  { label: 'জাতীয় বিশ্ববিদ্যালয়',     url: 'https://www.nu.ac.bd' },
+  { label: 'শিক্ষক বাতায়ন',            url: 'https://teachers.gov.bd' },
+  { label: 'EMIS | DSHE',               url: 'https://emis.gov.bd' },
+  { label: 'জাতীয় তথ্য বাতায়ন',       url: 'https://www.bangladesh.gov.bd' },
+  { label: 'শিক্ষা পরিচালকের দপ্তর',  url: 'https://www.dshe.gov.bd' },
+];
+
+const HOTLINES = [
+  { number: '৩৩৩',  label: 'সরকারি তথ্য',   color: '#1565c0' },
+  { number: '৯৯৯',  label: 'জরুরি সেবা',     color: '#c62828' },
+  { number: '১০৯',  label: 'নারী ও শিশু',    color: '#7b1fa2' },
+  { number: '১০৬',  label: 'দুদক',            color: '#e65100' },
+  { number: '১০৯০', label: 'দুযোর্গ',        color: '#37474f' },
+  { number: '১০৯৮', label: 'শিশু সহায়তা',     color: '#2e7d32' },
+];
+
+/* ── Lightbox ── */
+function Lightbox({ images, startIdx, onClose }) {
+  const [idx, setIdx] = useState(startIdx);
+  const prev = e => { e.stopPropagation(); setIdx(i => (i - 1 + images.length) % images.length); };
+  const next = e => { e.stopPropagation(); setIdx(i => (i + 1) % images.length); };
   useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
-    try {
-      const timestamp = new Date().getTime();
-      const response = await axios.get(
-        `https://malkhanagarcollege.onrender.com/api/public/home?t=${timestamp}`
-      );
-      const websiteSettings = response.data.data?.websiteSettings || {};
-      setSettings({
-        schoolName: websiteSettings.schoolName || 'MALKHANAGAR COLLEGE',
-        schoolAddress: websiteSettings.schoolAddress || 'Malkhanagar, Sirajdikhan, Dhaka',
-        logo: websiteSettings.logo || '/logo.png',
-        scrollingTexts: websiteSettings.scrollingTexts || []
-      });
-      setSettingsLoaded(true);
-    } catch (error) {
-      console.error('Failed to fetch settings:', error);
-      setSettingsLoaded(true);
-    }
-  };
+    const kd = e => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft')  setIdx(i => (i - 1 + images.length) % images.length);
+      if (e.key === 'ArrowRight') setIdx(i => (i + 1) % images.length);
+    };
+    window.addEventListener('keydown', kd);
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', kd); document.body.style.overflow = ''; };
+  }, [onClose, images.length]);
 
   return (
-    <div className="public-home">
-      <PublicHeader 
-        settings={settings} 
-        currentPath={location.pathname}
-        loading={!settingsLoaded}
-      />
-
-      <Routes>
-        {/* Home Route */}
-        <Route path="/" element={<Home />} />
-
-        {/* Main Navigation Routes */}
-        <Route path="/about" element={<About />} />
-        <Route path="/academic" element={<Academic />} />
-        <Route path="/administration" element={<Administration />} />
-        <Route path="/admission" element={<Admission />} />
-        <Route path="/gallery" element={<Gallery />} />
-        <Route path="/notice" element={<Notice />} />
-        <Route path="/contact" element={<Contact />} />
-
-        {/* About Sub-routes */}
-        <Route path="/about/history" element={<CollegeHistory />} />
-        <Route path="/about/mission-vision" element={<MissionVision />} />
-        <Route path="/about/facilities" element={<Facilities />} />
-        <Route path="/about/achievements" element={<Achievements />} />
-
-        {/* Academic Sub-routes */}
-        <Route path="/academic/programs" element={<Programs />} />
-        <Route path="/academic/departments" element={<Departments />} />
-        <Route path="/academic/syllabus" element={<Syllabus />} />
-        <Route path="/academic/calendar" element={<AcademicCalendar />} />
-
-        {/* Administration Sub-routes */}
-        <Route path="/administration/governing-body" element={<GoverningBody />} />
-        
-        <Route path="/administration/teachers" element={<Teachers />} />
-        
-        {/* ✅ NEW ROUTES */}
-        <Route path="/administration/teacher-training" element={<TeacherTraining />} />
-        <Route path="/administration/club-management" element={<ClubManagementPublic />} />
-
-        {/* Admission Sub-routes */}
-        <Route path="/admission/procedure" element={<AdmissionProcedure />} />
-        <Route path="/admission/requirements" element={<Requirements />} />
-        <Route path="/admission/apply" element={<ApplyOnline />} />
-
-        {/* Gallery Sub-routes */}
-        <Route path="/gallery/photos" element={<PhotoGallery />} />
-        <Route path="/gallery/videos" element={<VideoGallery />} />
-        <Route path="/gallery/events" element={<Events />} />
-      </Routes>
-
-      <PublicFooter settings={settings} />
+    <div className="lb-overlay" onClick={onClose}>
+      <button className="lb-close" onClick={onClose}>✕</button>
+      <button className="lb-nav lb-prev" onClick={prev}>‹</button>
+      <div className="lb-center" onClick={e => e.stopPropagation()}>
+        <img src={images[idx].url} alt={images[idx].alt || `ছবি ${idx + 1}`} className="lb-img" />
+        <p className="lb-caption">{images[idx].alt || ''} ({idx + 1}/{images.length})</p>
+      </div>
+      <button className="lb-nav lb-next" onClick={next}>›</button>
+      <div className="lb-dots">
+        {images.map((_, i) => (
+          <button key={i} className={`lb-dot${i === idx ? ' on' : ''}`}
+            onClick={e => { e.stopPropagation(); setIdx(i); }} />
+        ))}
+      </div>
     </div>
   );
-};
+}
 
-export default PublicHome;
+/* ── Per-image skeleton wrapper ── */
+function ImgSkeleton({ src, alt, className, style, onClick }) {
+  const [loaded,  setLoaded]  = useState(false);
+  const [errored, setErrored] = useState(false);
+  return (
+    <div className="isk-wrap" style={style} onClick={onClick}>
+      {!loaded && !errored && (
+        <div className="isk-sk">
+          <SkeletonLoader type="image" height="100%" />
+        </div>
+      )}
+      {src && (
+        <img
+          src={src} alt={alt || ''}
+          className={`isk-img${loaded ? ' isk-show' : ''} ${className || ''}`}
+          onLoad={() => setLoaded(true)}
+          onError={() => { setLoaded(true); setErrored(true); }}
+        />
+      )}
+      {errored && <div className="isk-err">🖼️</div>}
+    </div>
+  );
+}
 
+/* ════════════════════════════════════════════════════════════════ */
+export default function PublicHome() {
+  const [slides,       setSlides]       = useState([]);
+  const [cur,          setCur]          = useState(0);
+  const [transIdx,     setTransIdx]     = useState(0);
+  const [animating,    setAnimating]    = useState(false);
+  const [notices,      setNotices]      = useState([]);
+  const [principalImg, setPrincipalImg] = useState(null);
+  const [presidentImg, setPresidentImg] = useState(null);
+  const [principalName,setPrincipalName]= useState('');
+  const [galleryImgs,  setGalleryImgs]  = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [lightbox,     setLightbox]     = useState({ open: false, idx: 0 });
+  const timerRef    = useRef(null);
+  const slideCount  = useRef(1);
 
+  useEffect(() => {
+    fetchAll();
+    return () => clearInterval(timerRef.current);
+  }, []); // eslint-disable-line
 
-// import React, { useState, useEffect } from "react";
-// import { useNavigate, useLocation } from "react-router-dom";
-// import axios from "axios";
-// import toast, { Toaster } from "react-hot-toast";
-// import PublicHeader from "../components/PublicHeader";
-// import PublicFooter from "../components/PublicFooter";
-// import LazyImage from "../components/LazyImage";
-// import { contentData } from "../data/contentData";
-// import NoticeViewer from "../components/NoticeViewer";
-// import noticeService from "../services/noticeService";
-// import {
-//   FileText,
-//   Download,
-//   Calendar,
-//   Bell,
-//   Image as ImageIcon,
-// } from "lucide-react";
-// import "./PublicHome.css";
+  useEffect(() => {
+    if (slideCount.current > 1) startAuto();
+    return () => clearInterval(timerRef.current);
+  }, [slides.length]); // eslint-disable-line
 
-// const PublicHome = () => {
-//   const [homeData, setHomeData] = useState(null);
-//   const [contentLoaded, setContentLoaded] = useState(false);
-//   const [currentPath, setCurrentPath] = useState("/");
-//   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
-//   const [isFading, setIsFading] = useState(false);
-//   const [notices, setNotices] = useState([]);
-//   const [showAllNotices, setShowAllNotices] = useState(false);
-//   const [selectedAttachment, setSelectedAttachment] = useState(null);
+  const startAuto = useCallback(() => {
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setTransIdx(i => (i + 1) % TRANSITIONS.length);
+      setAnimating(true);
+      setTimeout(() => {
+        setCur(p => (p + 1) % slideCount.current);
+        setAnimating(false);
+      }, 750);
+    }, 4200);
+  }, []);
 
-//   const navigate = useNavigate();
-//   const location = useLocation();
+  const goTo = useCallback((idx) => {
+    if (animating) return;
+    clearInterval(timerRef.current);
+    setTransIdx(i => (i + 1) % TRANSITIONS.length);
+    setAnimating(true);
+    setTimeout(() => { setCur(idx); setAnimating(false); startAuto(); }, 750);
+  }, [animating, startAuto]);
 
-//   useEffect(() => {
-//     fetchHomeData();
-//     fetchPublicNotices();
-//   }, []);
+  const fetchAll = async () => {
+    setLoading(true);
+    try {
+      const [sRes, nRes, hRes] = await Promise.allSettled([
+        fetch(`${API}/settings`),
+        fetch(`${API}/notices/public?limit=10`),
+        fetch(`${API}/public/home`),
+      ]);
 
-//   useEffect(() => {
-//     setCurrentPath(location.pathname);
-//   }, [location]);
+      if (sRes.status === 'fulfilled' && sRes.value.ok) {
+        const d = await sRes.value.json();
+        if (d.success && d.data) {
+          const heroImgs = [...(d.data.heroImages || [])].sort((a, b) => (a.order||0) - (b.order||0));
+          const imgs = heroImgs.map(img => ({ url: img.url, alt: img.title || 'কলেজ চিত্র' }));
+          if (imgs.length > 0) {
+            setSlides(imgs); slideCount.current = imgs.length;
+            setGalleryImgs(imgs);
+          } else {
+            const fb = [{ url: '/college.jpg', alt: 'মালখানগর কলেজ' }];
+            setSlides(fb); slideCount.current = 1;
+          }
+          if (d.data.chairmanImage?.url) setPrincipalImg(d.data.chairmanImage.url);
+          if (d.data.noticeImage?.url)   setPresidentImg(d.data.noticeImage.url);
+        }
+      }
 
-//   // Hero carousel auto-play
-//   useEffect(() => {
-//     const heroImages = homeData?.websiteSettings?.heroImages || [];
-//     if (heroImages.length > 0) {
-//       const timer = setInterval(() => {
-//         setIsFading(true);
-//         setTimeout(() => {
-//           setCurrentHeroSlide((prev) =>
-//             prev === heroImages.length - 1 ? 0 : prev + 1
-//           );
-//           setIsFading(false);
-//         }, 500);
-//       }, 10000);
-//       return () => clearInterval(timer);
-//     }
-//   }, [homeData]);
+      if (nRes.status === 'fulfilled' && nRes.value.ok) {
+        const d = await nRes.value.json();
+        if (d.success && d.data?.length) setNotices(d.data);
+      }
 
-//   const fetchHomeData = async () => {
-//     try {
-//       const timestamp = new Date().getTime();
-//       const response = await axios.get(
-//         `https://backend-yfp1.onrender.com/api/public/home?t=${timestamp}`
-//       );
-//       setHomeData(response.data.data);
-//       // Content loaded - show page with text, images will lazy load
-//       setContentLoaded(true);
-//     } catch (error) {
-//       console.error("Failed to fetch home data:", error);
-//       toast.error("Failed to load website data");
-//       setContentLoaded(true);
-//     }
-//   };
+      if (hRes.status === 'fulfilled' && hRes.value.ok) {
+        const d = await hRes.value.json();
+        if (d.success && d.data) {
+          if (d.data.principalInfo?.name) setPrincipalName(d.data.principalInfo.name);
+          if (d.data.carousels?.length > 0 && galleryImgs.length === 0) {
+            setGalleryImgs(
+              d.data.carousels.slice(0, 8)
+                .map((c, i) => ({ url: c.image, alt: c.title || `ছবি ${i+1}` }))
+                .filter(x => x.url)
+            );
+          }
+        }
+      }
+    } catch (e) { console.error(e); }
+    setLoading(false);
+  };
 
-//   const fetchPublicNotices = async () => {
-//     try {
-//       const response = await noticeService.getPublicNotices();
-//       setNotices(response.data || []);
-//     } catch (error) {
-//       console.error("Failed to fetch notices:", error);
-//     }
-//   };
+  const n = slides.length || 1;
+  const gallery = galleryImgs.length > 0 ? galleryImgs : slides;
+  const ct = TRANSITIONS[transIdx % TRANSITIONS.length];
 
-//   const handleNavigate = (path) => {
-//     setCurrentPath(path);
-//     window.scrollTo({ top: 0, behavior: "smooth" });
-//   };
+  if (loading) {
+    return (
+      <div className="ph-page">
+        <PublicHeader />
+        <SkeletonLoader type="image" height="460px" />
+        <div style={{ maxWidth: 1200, margin: '20px auto', padding: '0 14px' }}>
+          <SkeletonLoader type="text" count={3} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginTop: 20 }}>
+            <SkeletonLoader type="card" /><SkeletonLoader type="card" /><SkeletonLoader type="card" />
+          </div>
+        </div>
+        <PublicFooter />
+      </div>
+    );
+  }
 
-//   const handleAttachmentClick = (attachment) => {
-//     setSelectedAttachment(attachment);
-//   };
+  return (
+    <div className="ph-page">
+      <PublicHeader />
 
-//   const formatDate = (date) => {
-//     return new Date(date).toLocaleDateString("en-GB", {
-//       day: "numeric",
-//       month: "short",
-//       year: "numeric",
-//     });
-//   };
+      {/* ═══════ HERO CAROUSEL ═══════ */}
+      <section className="ph-hero">
+        {slides.map((slide, i) => {
+          const isActive = i === cur;
+          return (
+            <div
+              key={i}
+              className={[
+                'ph-slide',
+                isActive ? 'ph-active' : '',
+                isActive && animating ? `${ct}-out` : '',
+                i === (cur + 1) % n && animating ? `${ct}-in` : '',
+              ].filter(Boolean).join(' ')}
+            >
+              <ImgSkeleton
+                src={slide.url}
+                alt={slide.alt}
+                className="ph-slide-img"
+                style={{ width: '100%', height: '100%' }}
+              />
+            </div>
+          );
+        })}
 
-//   const getCurrentContent = () => {
-//     const pathKey = currentPath.substring(1) || "home";
-//     return contentData[pathKey] || contentData.home;
-//   };
+        {/* ── LIQUID GLASS OVERLAY ── */}
+        <div className="ph-glass-bar">
+          <div className="ph-glass-pill">
+            {/* Raw logo image — no shape/border */}
+            <img src="/logo.png" alt="লোগো" className="ph-glass-logo" />
+            <div className="ph-glass-texts">
+              <h1 className="ph-glass-title">মালখানগর কলেজ</h1>
+              <div style={{fontSize: 16}} className="ph-glass-meta">
+                <span>সিরাজদিখান, মুন্সিগঞ্জ, ঢাকা </span>
+              </div>
+              <div className="ph-glass-meta">
+                <span>𝖤𝖨𝖨𝖭: 𝟏𝟑𝟒𝟓𝟗𝟎</span>
+                {/* <span className="sep">·</span> */}
+                <span>𝖬𝖯𝖮: 𝟐𝟗𝟎𝟒𝟏𝟐𝟑𝟏𝟎𝟏</span>
+                {/* <span className="sep">·</span>
+                <span>ঢাকা বোর্ড</span> */}
+              </div>
+            </div>
+          </div>
+        </div>
 
-//   const truncateText = (text, maxLength) => {
-//     if (text.length <= maxLength) return text;
-//     return text.substring(0, maxLength) + "...";
-//   };
+        {/* Prev / Next arrows */}
+        {n > 1 && (
+          <>
+            <button className="ph-ctrl ph-prev" onClick={() => goTo((cur - 1 + n) % n)}>‹</button>
+            <button className="ph-ctrl ph-next" onClick={() => goTo((cur + 1) % n)}>›</button>
+            <div className="ph-dots">
+              {slides.map((_, i) => (
+                <button key={i} className={`ph-dot${i === cur ? ' on' : ''}`} onClick={() => goTo(i)} />
+              ))}
+            </div>
+          </>
+        )}
+      </section>
 
-//   // Show simple loader only while fetching content
-//   if (!contentLoaded) {
-//     return (
-//       <div className="public-home">
-//         <div className="content-loading-screen">
-//           <div className="simple-loader"></div>
-//         </div>
-//       </div>
-//     );
-//   }
+      {/* ── QUICK NAV BUTTONS ── */}
+      <div className="ph-hnb">
+        <div className="ph-hnb-inner">
+          {HERO_BTNS.map((b, i) => (
+            <Link key={i} to={b.path} className="ph-hnb-btn" style={{ backgroundColor: b.color }}>
+              {b.label}
+            </Link>
+          ))}
+        </div>
+      </div>
 
-//   const settings = homeData?.websiteSettings || {};
-//   const heroImages = settings.heroImages || [];
-//   const currentContent = getCurrentContent();
+      {/* ── MAIN LAYOUT ── */}
+      <div className="ph-main">
+        {/* ─── CONTENT AREA ─── */}
+        <div className="ph-content">
 
-//   return (
-//     <div className="public-home">
-//       <Toaster position="top-right" />
+          {/* NOTICE BOARD */}
+          <div className="ph-box">
+            <div className="ph-box-head green"><span>🔔</span><h3>Notice Board</h3></div>
+            <div className="ph-box-body">
+              {notices.length > 0 ? notices.slice(0, 10).map((n, i) => (
+                <div key={n._id || i} className="ph-notice-row">
+                  <span className="ph-nr-dot">▶</span>
+                  <Link to={`/notices/${n._id}`} className="ph-nr-link">{n.title}</Link>
+                  {i < 2 && <span className="ph-nr-new">নতুন</span>}
+                  {n.type === 'urgent' && <span className="ph-nr-urgent">জরুরি</span>}
+                </div>
+              )) : (
+                ['এইচএসসি ফর্ম পূরণ চলছে', 'স্নাতক ভর্তি বিজ্ঞপ্তি', 'পরীক্ষার রুটিন প্রকাশ'].map((t, i) => (
+                  <div key={i} className="ph-notice-row">
+                    <span className="ph-nr-dot">▶</span>
+                    <Link to="/notices" className="ph-nr-link">{t}</Link>
+                    {i === 0 && <span className="ph-nr-new">নতুন</span>}
+                  </div>
+                ))
+              )}
+              <div style={{ textAlign: 'right', marginTop: 10 }}>
+                <Link to="/notices" className="ph-more-btn">আরও দেখুন »</Link>
+              </div>
+            </div>
+          </div>
 
-//       {/* Header - Shows immediately */}
-//       <PublicHeader
-//         settings={settings}
-//         onNavigate={handleNavigate}
-//         currentPath={currentPath}
-//       />
+          {/* CONTENT SECTIONS GRID — all content folder files */}
+          <div className="ph-grid">
+            {CONTENT_SECTIONS.map((sec, i) => (
+              <div key={i} className="ph-card">
+                <div className="ph-card-head" style={{ backgroundColor: sec.color }}>
+                  <span>{sec.icon}</span>
+                  <h4>{sec.title}</h4>
+                </div>
+                <div className="ph-card-body">
+                  {sec.items.map(([label, path], j) => (
+                    <div key={j} className="ph-card-row">
+                      <span className="ph-row-arr">▶</span>
+                      <Link to={path} className="ph-row-link">{label}</Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
 
-//       {/* Hero Carousel - Structure shows, images lazy load */}
-//       {currentPath === "/" && heroImages.length > 0 && (
-//         <section className="hero-image-carousel">
-//           <div className="hero-carousel-wrapper">
-//             {heroImages.map((image, index) => (
-//               <div
-//                 key={index}
-//                 className={`hero-carousel-slide ${
-//                   index === currentHeroSlide ? "active" : ""
-//                 } ${isFading ? "fading" : ""}`}
-//               >
-//                 <LazyImage
-//                   src={image}
-//                   alt={`Hero ${index + 1}`}
-//                   className="hero-image"
-//                   placeholderType="skeleton"
-//                 />
-//               </div>
-//             ))}
+          {/* PHOTO GALLERY — dynamic from hero images */}
+          <div className="ph-box">
+            <div className="ph-box-head green"><span>📷</span><h3>Photo Gallery</h3></div>
+            <div className="ph-gallery-grid">
+              {gallery.slice(0, 6).map((img, i) => (
+                <button
+                  key={i} className="ph-gallery-thumb" type="button"
+                  onClick={() => setLightbox({ open: true, idx: i })}
+                  aria-label={`Open image ${i + 1}`}
+                >
+                  <ImgSkeleton
+                    src={img.url}
+                    alt={img.alt || `ছবি ${i + 1}`}
+                    className="ph-gallery-img"
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                  <div className="ph-gallery-ov">🔍</div>
+                </button>
+              ))}
+            </div>
+            <div style={{ textAlign: 'center', padding: '10px 12px 14px' }}>
+              <Link to="/gallery/photos" className="ph-more-btn">সব ছবি দেখুন »</Link>
+            </div>
+          </div>
 
-//             {heroImages.length > 1 && (
-//               <div className="hero-carousel-dots">
-//                 {heroImages.map((_, index) => (
-//                   <button
-//                     key={index}
-//                     className={`hero-dot ${
-//                       index === currentHeroSlide ? "active" : ""
-//                     }`}
-//                     onClick={() => {
-//                       setIsFading(true);
-//                       setTimeout(() => {
-//                         setCurrentHeroSlide(index);
-//                         setIsFading(false);
-//                       }, 500);
-//                     }}
-//                   />
-//                 ))}
-//               </div>
-//             )}
-//           </div>
-//         </section>
-//       )}
+          {/* GOOGLE MAP */}
+          <div className="ph-box">
+            <div className="ph-box-head green"><span>📍</span><h3>Our Location</h3></div>
+            <iframe
+              title="কলেজ অবস্থান" width="100%" height="280"
+              frameBorder="0" loading="lazy" allowFullScreen
+              style={{ display: 'block', border: 'none' }}
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2871.5546102087783!2d90.42362907405689!3d23.55754499615533!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755a52601a27fdd%3A0x6efa6be14a5985c0!2sMalkhanagar%20College!5e1!3m2!1sen!2sbd!4v1"
+            />
+          </div>
+        </div>
 
-//       {/* All Content - Text shows immediately, images lazy load */}
-//       <section className="dynamic-content-section">
-//         <div className="container">
-//           {currentPath === "/" ? (
-//             <>
-//               {/* About Section */}
-//               <section className="about-section" id="about">
-//                 <div className="section-title">
-//                   <h2>
-//                     ABOUT{" "}
-//                     {settings.schoolName?.toUpperCase() ||
-//                       "MALKHANAGAR COLLEGE"}
-//                   </h2>
-//                   <div className="title-underline"></div>
-//                 </div>
-//                 <div className="about-content">
-//                   {/* Image lazy loads */}
-//                   <div className="about-image">
-//                     <LazyImage
-//                       src={settings.aboutImage || "/college.jpg"}
-//                       alt="College Building"
-//                       placeholderType="skeleton"
-//                     />
-//                   </div>
-//                   {/* Text shows immediately */}
-//                   <div className="about-text">
-//                     <p className="about-intro about-large-text">
-//                       মালখানগর কলেজ স্থানীয়ভাবে এই নামেই পরিচিত এবং শিক্ষা
-//                 মন্ত্রণালয়ের অধীন মাধ্যমিক ও উচ্চশিক্ষা অধিদপ্তর প্রদত্ত EIIN
-//                 নম্বর ১৩৪৫৯০ বহন করে। প্রতিষ্ঠানটি ১ জুলাই ১৯৯২ সালে প্রতিষ্ঠিত
-//                 হয় এবং ১ জুলাই ২০০২ সালে সরকারি স্বীকৃতি লাভ করে। এটি অনার্স
-//                 পর্যায়ে অনুমোদিত একটি শিক্ষা প্রতিষ্ঠান এবং এমপিওভুক্ত, যার
-//                 এমপিও রেজিস্ট্রেশন নম্বর ২৯০৪১২৩১০১। কলেজটি ঢাকা বোর্ডের অধীনে
-//                 পরিচালিত হয়। এখানে বিজ্ঞান, মানবিক ও ব্যবসায় শিক্ষা বিভাগ চালু
-//                 আছে। গ্রামীণ এলাকায় অবস্থিত এই কলেজে বাংলা ভার্সনে পাঠদান করা
-//                 হয়।
-//                     </p>
-//                     <p className="about-large-text">
-//                       এছাড়া কলেজের পরিবেশ শান্ত ও শিক্ষাবান্ধব, যেখানে
-//                   শিক্ষার্থীদের জন্য পর্যাপ্ত শ্রেণিকক্ষ, লাইব্রেরি ও
-//                   প্রয়োজনীয় সুযোগ-সুবিধা রয়েছে। এলাকার শিক্ষার্থীদের
-//                   উচ্চশিক্ষার সুযোগ বাড়াতে প্রতিষ্ঠানটি গুরুত্বপূর্ণ ভূমিকা
-//                   রাখছে এবং মানসম্মত শিক্ষা প্রদানে নিয়মিত কাজ করে যাচ্ছে।
-//                     </p>
-//                   </div>
-//                 </div>
-//               </section>
+        {/* ─── SIDEBAR ─── */}
+        <aside className="ph-sidebar">
 
-//               {/* Principal Message */}
-//               <section className="message-section chairman-section">
-//                 <div className="container">
-//                   <div className="section-title">
-//                     <h2>MESSAGE FROM THE PRINCIPAL</h2>
-//                     <div className="title-underline green"></div>
-//                   </div>
-//                   <div className="message-content">
-//                     {/* Text shows immediately */}
-//                     <div className="message-text">
-//                       <p className="message-large-text">
-//                         অধ্যক্ষের বাণী :
-//                         <br/>
-//                         মালখানগর কলেজ জ্ঞান, মূল্যবোধ ও আধুনিক শিক্ষার সমন্বয়ে একটি অগ্রসরমান প্রতিষ্ঠান। আমরা শিক্ষার্থীদের মেধা, দক্ষতা ও চরিত্র গঠনে প্রতিশ্রুতিবদ্ধ। প্রিয় শিক্ষার্থীরা—স্বপ্ন দেখো, শিখো এবং নৈতিকতা ও অধ্যবসায়ের সাথে এগিয়ে চলো। তোমাদের প্রতিটি অগ্রযাত্রায় মালখানগর কলেজ সর্বদা পাশে রয়েছে।
+          {/* সভাপতির বাণী */}
+          <div className="ph-sb-card">
+            <div className="ph-sb-head green">সভাপতির বাণী</div>
+            <div className="ph-sb-body">
+              <ImgSkeleton
+                src={presidentImg || '/sir.jpg'} alt="সভাপতি"
+                style={{ width: '100%', height: 190 }}
+                className="ph-sb-photo"
+              />
+              <p className="ph-sb-name">সভাপতি</p>
+              <p className="ph-sb-title">পরিচালনা পর্ষদ, মালখানগর কলেজ</p>
+              <Link to="/administration/governing-body" className="ph-sb-view">View Details →</Link>
+            </div>
+          </div>
 
-//                       </p>
-//                     </div>
-//                     {/* Image lazy loads */}
-//                     <div className="message-author">
-//                       <LazyImage
-//                         src={settings.chairmanImage || "/sir.jpg"}
-//                         alt="Principal"
-//                         className="author-photo-wrapper"
-//                         placeholderType="spinner"
-//                       />
-//                       <h3>অধ্যক্ষ (ভারপ্রাপ্ত) মালখানগর কলেজ</h3>
-//                     </div>
-//                   </div>
-//                 </div>
-//               </section>
+          {/* অধ্যক্ষের বাণী */}
+          <div className="ph-sb-card">
+            <div className="ph-sb-head green">অধ্যক্ষের বাণী</div>
+            <div className="ph-sb-body">
+              <ImgSkeleton
+                src={principalImg || '/sir.jpg'} alt="অধ্যক্ষ"
+                style={{ width: '100%', height: 190 }}
+                className="ph-sb-photo"
+              />
+              <p className="ph-sb-name">{principalName || 'অধ্যক্ষ (ভারপ্রাপ্ত)'}</p>
+              <p className="ph-sb-title">মালখানগর কলেজ</p>
+              <Link to="/about/principal" className="ph-sb-view">View Details →</Link>
+            </div>
+          </div>
 
-//               {/* Notice Section - All text shows immediately */}
-//               <section className="notice-section" id="notice">
-//                 <div className="container">
-//                   <div className="notice-header">
-//                     <h2 className="notice-title">NOTICE BOARD</h2>
-//                     <button
-//                       className="btn-view-all"
-//                       onClick={() => setShowAllNotices(!showAllNotices)}
-//                     >
-//                       {showAllNotices ? "SHOW LESS" : "VIEW ALL"}
-//                     </button>
-//                   </div>
+          {/* Important Links */}
+          <div className="ph-sb-card">
+            <div className="ph-sb-head gdark">Important Links</div>
+            <div className="ph-sb-body no-pad">
+              {IMP_LINKS.map((l, i) => (
+                <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" className="ph-sb-link">
+                  <span className="ph-sbl-arr">▶</span> {l.label}
+                </a>
+              ))}
+            </div>
+          </div>
 
-//                   <div className="notice-content-wrapper">
-//                     <div className="notice-board">
-//                       {notices.length === 0 ? (
-//                         <div className="no-notices">
-//                           <Bell size={60} color="#ccc" />
-//                           <p>No notices available</p>
-//                         </div>
-//                       ) : (
-//                         <div className="notice-list-public">
-//                           {(showAllNotices ? notices : notices.slice(0, 4)).map(
-//                             (notice) => (
-//                               <div
-//                                 key={notice._id}
-//                                 className="notice-item-public"
-//                               >
-//                                 <div className="notice-item-header">
-//                                   <div className="notice-item-left">
-//                                     <span
-//                                       className={`notice-badge ${notice.type}`}
-//                                     >
-//                                       {notice.type}
-//                                     </span>
-//                                     <div className="notice-date-public">
-//                                       <Calendar size={16} />
-//                                       <span>
-//                                         {formatDate(notice.publishDate)}
-//                                       </span>
-//                                     </div>
-//                                   </div>
-//                                   {notice.attachments &&
-//                                     notice.attachments.length > 0 && (
-//                                       <div className="notice-attachment-indicator">
-//                                         📎 {notice.attachments.length}
-//                                       </div>
-//                                     )}
-//                                 </div>
+          {/* Calendar */}
+          <div className="ph-sb-card">
+            <div className="ph-sb-head green">Calendar</div>
+            <div className="ph-sb-body"><MiniCal /></div>
+          </div>
 
-//                                 <h4>{truncateText(notice.title, 150)}</h4>
-//                                 {/* <p className="notice-description">
-//                                   {notice.description.substring(0, 150)}
-//                                   {notice.description.length > 150 && "..."}
-//                                 </p> */}
+          {/* Hotlines */}
+          <div className="ph-sb-card">
+            <div className="ph-sb-head red">জরুরি হটলাইন</div>
+            <div className="ph-sb-body">
+              <div className="ph-hotlines">
+                {HOTLINES.map((h, i) => (
+                  <div key={i} className="ph-hot-item" style={{ borderColor: h.color }}>
+                    <span className="ph-hot-num" style={{ color: h.color }}>{h.number}</span>
+                    <span className="ph-hot-lbl">{h.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
 
-//                                 {notice.attachments &&
-//                                   notice.attachments.length > 0 && (
-//                                     <div className="notice-files-grid">
-//                                       {notice.attachments.map(
-//                                         (attachment, index) => (
-//                                           <button
-//                                             key={index}
-//                                             className="file-preview-btn"
-//                                             onClick={() =>
-//                                               handleAttachmentClick(attachment)
-//                                             }
-//                                           >
-//                                             {attachment.fileType === "pdf" ? (
-//                                               <>
-//                                                 <FileText size={18} />
-//                                                 <span>PDF Document</span>
-//                                               </>
-//                                             ) : (
-//                                               <>
-//                                                 <ImageIcon size={18} />
-//                                                 <span>Image File</span>
-//                                               </>
-//                                             )}
-//                                             <Download
-//                                               size={14}
-//                                               className="download-icon"
-//                                             />
-//                                           </button>
-//                                         )
-//                                       )}
-//                                     </div>
-//                                   )}
-//                               </div>
-//                             )
-//                           )}
-//                         </div>
-//                       )}
-//                     </div>
-//                   </div>
-//                 </div>
-//               </section>
+      <PublicFooter />
 
-//               {/* Stats Section - Shows immediately */}
-//               <section className="stats-section">
-//                 <div className="container">
-//                   <h2 className="stats-title">
-//                     We are in <span className="highlight">Members</span> at a
-//                     glance
-//                   </h2>
-//                   <div className="stats-grid">
-//                     <div className="stat-box">
-//                       <div className="stat-icon">
-//                         <svg
-//                           viewBox="0 0 24 24"
-//                           fill="none"
-//                           stroke="currentColor"
-//                           strokeWidth="2"
-//                         >
-//                           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-//                           <circle cx="9" cy="7" r="4"></circle>
-//                           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-//                           <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-//                         </svg>
-//                       </div>
-//                       <h3>{settings.totalStudents || 3200}</h3>
-//                       <p>Student</p>
-//                     </div>
+      {lightbox.open && (
+        <Lightbox
+          images={gallery.slice(0, 6)}
+          startIdx={lightbox.idx}
+          onClose={() => setLightbox({ open: false, idx: 0 })}
+        />
+      )}
+    </div>
+  );
+}
 
-//                     <div className="stat-box">
-//                       <div className="stat-icon">
-//                         <svg
-//                           viewBox="0 0 24 24"
-//                           fill="none"
-//                           stroke="currentColor"
-//                           strokeWidth="2"
-//                         >
-//                           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-//                         </svg>
-//                       </div>
-//                       <h3>{settings.totalTeachers || 80}</h3>
-//                       <p>Teachers</p>
-//                     </div>
-
-//                     <div className="stat-box">
-//                       <div className="stat-icon">
-//                         <svg
-//                           viewBox="0 0 24 24"
-//                           fill="none"
-//                           stroke="currentColor"
-//                           strokeWidth="2"
-//                         >
-//                           <rect
-//                             x="2"
-//                             y="7"
-//                             width="20"
-//                             height="14"
-//                             rx="2"
-//                             ry="2"
-//                           ></rect>
-//                           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-//                         </svg>
-//                       </div>
-//                       <h3>{settings.totalStaff || 40}</h3>
-//                       <p>Staffs</p>
-//                     </div>
-//                   </div>
-//                 </div>
-//               </section>
-
-//               {/* Map Section - Shows immediately */}
-//               <section className="map-section">
-//                 <div className="container">
-//                   <div className="section-title">
-//                     <h2>MALKHANAGAR COLLEGE</h2>
-//                     <div className="title-underline"></div>
-//                   </div>
-//                   <div className="map-container">
-//                     <iframe
-//                       src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2871.5546102087783!2d90.42362907405689!3d23.55754499615533!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755a52601a27fdd%3A0x6efa6be14a5985c0!2sMalkhanagar%20College!5e1!3m2!1sen!2sbd!4v1765553683999!5m2!1sen!2sbd"
-//                       width="100%"
-//                       height="100%"
-//                       style={{ border: 0 }}
-//                       allowFullScreen=""
-//                       loading="lazy"
-//                       title="College Location"
-//                     ></iframe>
-//                   </div>
-//                 </div>
-//               </section>
-//             </>
-//           ) : (
-//             <div className="page-content">
-//               <div className="content-header">
-//                 <h1>{currentContent.title}</h1>
-//                 <div className="title-underline"></div>
-//               </div>
-//               <div
-//                 className="content-body"
-//                 dangerouslySetInnerHTML={{ __html: currentContent.content }}
-//               />
-//             </div>
-//           )}
-//         </div>
-//       </section>
-
-
-//       {selectedAttachment && (
-//         <NoticeViewer
-//           attachment={selectedAttachment}
-//           onClose={() => setSelectedAttachment(null)}
-//         />
-//       )}
-
-//       {/* Footer - Shows immediately */}
-//       <PublicFooter settings={settings} />
-//     </div>
-//   );
-// };
-
-// export default PublicHome;
+/* ── Mini Calendar ── */
+function MiniCal() {
+  const today = new Date();
+  const y = today.getFullYear(), m = today.getMonth();
+  const MN = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const DN = ['M','T','W','T','F','S','S'];
+  const first = new Date(y, m, 1).getDay();
+  const adj   = first === 0 ? 6 : first - 1;
+  const days  = new Date(y, m + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < adj; i++) cells.push(null);
+  for (let d = 1; d <= days; d++) cells.push(d);
+  return (
+    <div className="ph-cal">
+      <div className="ph-cal-head">{MN[m]} {y}</div>
+      <div className="ph-cal-grid">
+        {DN.map((d, i) => <div key={i} className="ph-cal-dn">{d}</div>)}
+        {cells.map((d, i) => (
+          <div key={i} className={`ph-cal-d${d === today.getDate() ? ' today' : ''}${!d ? ' empty' : ''}`}>
+            {d || ''}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

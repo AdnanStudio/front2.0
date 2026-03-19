@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Phone, Calendar, MapPin, User, Clock, Users, DollarSign, BookOpen } from 'lucide-react';
-import PublicHeader from '../../components/PublicHeader';
-import PublicFooter from '../../components/PublicFooter';
 import SkeletonLoader from '../../components/SkeletonLoader';
 import teacherTrainingService from '../../services/teacherTrainingService';
 import axios from 'axios';
@@ -65,8 +63,7 @@ const TeacherTraining = () => {
 
   return (
     <div className="teacher-training-page">
-      <PublicHeader settings={settings} currentPath="/administration/teacher-training" />
-
+      
       <div className="page-container">
 
         {/* Header */}
@@ -259,7 +256,7 @@ const TeacherTraining = () => {
         )}
 
       </div>
-      <PublicFooter settings={settings} />
+      
     </div>
   );
 };

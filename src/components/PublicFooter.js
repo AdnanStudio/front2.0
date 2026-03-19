@@ -1,119 +1,75 @@
-import React from 'react';
-import { Facebook, Youtube } from 'lucide-react';
+// src/components/PublicFooter.js
+// Dynamic: school name, address, phone, email from GET /api/settings
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import './PublicFooter.css';
-
-const PublicFooter = ({ settings = {} }) => {
+const API = process.env.REACT_APP_API_URL || 'https://malkhanagarcollege.onrender.com/api';
+const QUICK_LINKS = [
+  ['/','হোম'],['/about','প্রতিষ্ঠান পরিচিতি'],['/academic','একাডেমিক'],
+  ['/administration/teachers','শিক্ষকবৃন্দ'],['/admission','এডমিশন'],
+  ['/notices','নোটিশ বোর্ড'],['/gallery/photos','গ্যালারি'],['/contact','যোগাযোগ'],
+];
+const IMP = [
+  ['https://moedu.gov.bd','শিক্ষা মন্ত্রণালয়'],
+  ['https://www.nu.ac.bd','জাতীয় বিশ্ববিদ্যালয়'],
+  ['https://dhakaeducationboard.gov.bd','ঢাকা শিক্ষা বোর্ড'],
+  ['https://emis.gov.bd','EMIS | DSHE'],
+  ['https://teachers.gov.bd','শিক্ষক বাতায়ন'],
+  ['https://www.bangladesh.gov.bd','জাতীয় তথ্য বাতায়ন'],
+];
+export default function PublicFooter() {
+  const [settings, setSettings] = useState(null);
+  useEffect(() => {
+    fetch(`${API}/settings`).then(r=>r.json()).then(d=>{ if(d.success&&d.data) setSettings(d.data); }).catch(()=>{});
+  }, []);
+  const name    = settings?.schoolName    || '𝖬𝖺𝗅𝗄𝗁𝖺𝗇𝖺𝗀𝖺𝗋 𝖢𝗈𝗅𝗅𝖾𝗀𝖾';
+  const address = settings?.schoolAddress || '𝖲𝗂𝗋𝖺𝗃𝖽𝗂𝗄𝗁𝖺𝗇, 𝖬𝗎𝗇𝗌𝗁𝗂𝗀𝖺𝗇𝗃, 𝖣𝗁𝖺𝗄𝖺';
+  const phone   = settings?.schoolPhone   || '𝟎𝟏𝟑𝟎𝟗-𝟏𝟑𝟒𝟓𝟗𝟎';
+  const email   = settings?.schoolEmail   || '𝙼𝚊𝚕𝚔𝚑𝚊𝚗𝚊𝚐𝚊𝚛𝙲𝚘𝚕𝚕𝚎𝚐𝚎@𝚐𝚖𝚊𝚒𝚕.𝚌𝚘𝚖';
   return (
-    <>
-      <footer className="main-footer">
-        <div className="container">
-          <div className="footer-grid">
-            {/* Column 1 */}
-            <div className="footer-col">
-              <div className="footer-logo-section">
-                <img
-                  src={settings.logo || '/logo.png'}
-                  alt="Logo"
-                  className="footer-logo"
-                  onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/60';
-                  }}
-                />
-                <h3>{settings.schoolName || 'Malkhanagar College'}</h3>
-              </div>
-
-              <div className="footer-address">
-                <p>
-                  <strong>{settings.schoolName || 'Malkhanagar College'}</strong>
-                </p>
-                <p>
-                  Address: {settings.schoolAddress || 'Sirajdikhan, Dhaka'}
-                </p>
-                <p>
-                  Phone: {settings.schoolPhone || '+880 1309-134590'}
-                </p>
-                <p>
-                  Email: {settings.schoolEmail || 'malkhanagarcollege@gmail.com'}
-                </p>
-              </div>
+    <footer className="pf-root">
+      <div className="pf-main">
+        <div className="pf-inner">
+          <div className="pf-col">
+            <div className="pf-logo-row">
+              <img src="/logo.png" alt="লোগো" className="pf-logo" />
+              <div><h3 className="pf-cname">{name}</h3><p className="pf-csub">𝖲𝗂𝗋𝖺𝗃𝖽𝗂𝗄𝗁𝖺𝗇, 𝖬𝗎𝗇𝗌𝗁𝗂𝗀𝖺𝗇𝗃, 𝖣𝗁𝖺𝗄𝖺</p></div>
             </div>
-
-            {/* Column 2 */}
-            <div className="footer-col">
-              <h4>Social Media</h4>
-              <div className="social-icons">
-                <a
-                  href={settings.facebookLink || 'https://www.facebook.com/malkhanagar.UC'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Facebook size={24} />
-                </a>
-
-                <a
-                  href={settings.youtubeLink || 'https://www.youtube.com/@MalkhanagarCollege'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Youtube size={24} />
-                </a>
-              </div>
-
-              <div className="app-download">
-                <h4>Download Our App</h4>
-                <div className="app-buttons">
-                  <a
-                    href={settings.playStoreLink || '/install-guide'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
-                      alt="Google Play"
-                    />
-                  </a>
-                </div>
-              </div>
+            <div className="pf-contact">
+              <p><span>📍</span> {address}</p>
+              <p><span>📞</span> {phone}</p>
+              <p><span>✉️</span> {email}</p>
             </div>
-
-            {/* Column 3 - Quick Links replaced with Helpline Image */}
-            <div className="footer-col">
-              {/* <h4></h4> */}
-              <div className="helpline-image-container">
-                <img
-                  src="https://itss.com.bd/itn/view/kso/images/Helpline.jpg"
-                  alt="Helpline Information"
-                  className="helpline-image"
-                  onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/300x400?text=Helpline';
-                  }}
-                />
-              </div>
-            </div>
-
-            
           </div>
-
-          {/* Footer Bottom */}
-          <div className="footer-bottom">
-            <p>
-              © All Rights Reserved {settings.schoolName || 'MALKHANAGAR COLLEGE'} 2025
-            </p>
-            <p>
-              Developed by{' '}
-              <a
-                href="https://amaderwebsite.com.bd/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                আমাদের ওয়েবসাইট
-              </a>
-            </p>
+          <div className="pf-col">
+            <h4 className="pf-col-title">দ্রুত লিঙ্ক</h4>
+            {QUICK_LINKS.map(([path,label],i)=>(
+              <Link key={i} to={path} className="pf-link"><span className="pf-larr">▶</span> {label}</Link>
+            ))}
+          </div>
+          <div className="pf-col">
+            <h4 className="pf-col-title">গুরুত্বপূর্ণ লিঙ্ক</h4>
+            {IMP.map(([url,label],i)=>(
+              <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="pf-link"><span className="pf-larr">▶</span> {label}</a>
+            ))}
+          </div>
+          <div className="pf-col">
+            <h4 className="pf-col-title">কলেজ তথ্য</h4>
+            {[['প্রতিষ্ঠা:','১৯৯২'],['EIIN:','𝟏𝟑𝟒𝟓𝟗𝟎']].map(([l,v],i)=>(
+              <div key={i} style={{display:'flex',gap:8,marginBottom:6}}>
+                <span style={{color:'#a5d6a7',fontSize:16,fontWeight:600,minWidth:60}}>{l}</span>
+                <span style={{color:'#fff',fontSize:16}}>{v}</span>
+              </div>
+            ))}
           </div>
         </div>
-      </footer>
-    </>
+      </div>
+      <div className="pf-bottom">
+        <div className="pf-bottom-inner">
+          <p>All rights reserved © {new Date().getFullYear()}, {name}.</p>
+          <p>Design by <a href="https://amaderwebsite.com.bd" target="_blank" rel="noopener noreferrer">আমাদের ওয়েবসাইট</a></p>
+        </div>
+      </div>
+    </footer>
   );
-};
-
-export default PublicFooter;
+}
