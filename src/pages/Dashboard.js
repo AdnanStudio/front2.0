@@ -43,7 +43,7 @@ import ClubManagement from './ClubManagement';
 import TeacherListManagement from './TeacherListManagement';
 import LibraryManagement from './LibraryManagement'; // ✅ NEW
 import GoverningBodyManagement from './../components/GoverningBodyManagement';
-import StudentIdCard from './StudentIdCard';
+import IDCardGenerator from './IDCardGenerator';
 
 import './Dashboard.css';
 
@@ -78,7 +78,7 @@ const Dashboard = () => {
               <Route path="/students" element={<Students />} />
               <Route path="/students/add" element={<StudentForm />} />
               <Route path="/students/edit/:id" element={<StudentForm />} />
-              <Route path="/students/id-cards" element={<StudentIdCard />} />
+              <Route path="/students/id-cards" element={<IDCardGenerator />} />
             </>
           )}
 

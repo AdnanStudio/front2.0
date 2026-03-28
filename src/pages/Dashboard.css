@@ -228,3 +228,7 @@
     font-size: 1rem;
   }
 }
+
+.card-icon svg {
+  color: white !important;
+}

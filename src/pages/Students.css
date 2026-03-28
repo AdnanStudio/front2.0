@@ -831,3 +831,168 @@
     padding: 8px 10px;
   }
 }
+
+
+/* ================================================================
+   Extra styles for Students.js — paste এগুলো src/pages/Students.css-এর
+   শেষে যোগ করুন
+   ================================================================ */
+
+/* ── Page header icon ── */
+.page-header-icon {
+  width: 46px; height: 46px;
+  background: white;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  color: white; flex-shrink: 0;
+}
+
+/* ── Header actions ── */
+.header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* ── ID Card button in header ── */
+.btn-idcard {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: linear-gradient(135deg, #0d5c2a, #1a7a3e);
+  color: white; border: none;
+  padding: 9px 18px; border-radius: 9px;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(13,92,42,.28);
+  font-family: inherit; white-space: nowrap;
+}
+.btn-idcard:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(13,92,42,.4); }
+
+/* ── Enhanced stats cards ── */
+.students-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  background: white;
+  border-radius: 11px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.06);
+  border: 1.5px solid #e8eef0;
+}
+.stat-icon {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.stat-total .stat-icon  { background: #e8f4fd; color: #1a7ab8; }
+.stat-active .stat-icon { background: #eaf6ed; color: #1a7a3e; }
+.stat-inactive .stat-icon{ background: #fdf2f2; color: #c0392b; }
+.stat-filtered .stat-icon{ background: #fef8e8; color: #b8850e; }
+.stat-num { font-size: 22px; font-weight: 800; color: #1a2a3a; line-height: 1; }
+.stat-lbl { font-size: 11px; color: #7a8a94; font-weight: 600; margin-top: 2px; }
+
+/* ── Filter row ── */
+.filter-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.filter-right { display: flex; align-items: center; gap: 8px; }
+.btn-clear-filter {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #fee; border: 1px solid #fcc; color: #c0392b;
+  padding: 6px 12px; border-radius: 7px; font-size: 12px;
+  font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.btn-clear-filter:hover { background: #fdd; }
+.btn-refresh {
+  width: 34px; height: 34px; border-radius: 7px;
+  background: white; border: 1.5px solid #e0e8e2;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #5a7a68; transition: all .18s;
+}
+.btn-refresh:hover { border-color: #1a7a3e; color: #1a7a3e; }
+
+/* View toggle */
+.view-toggle { display: flex; background: #f0f4f0; border-radius: 7px; padding: 2px; }
+.vt-btn {
+  width: 30px; height: 30px; border-radius: 5px;
+  background: none; border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #7a9a82; transition: all .16s;
+}
+.vt-btn.active { background: white; color: #0d5c2a; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+
+/* Search clear btn */
+.search-clear-btn { background: none; border: none; cursor: pointer; color: #aaa; padding: 3px; display: flex; }
+.search-clear-btn:hover { color: #666; }
+
+/* ── Table enhancements ── */
+.student-id-badge {
+  background: #edf7f1;
+  color: #0d5c2a;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: monospace;
+  border: 1px solid #c2deca;
+}
+.student-name-cell .student-email { font-size: 11px; color: #999; }
+
+/* ID Card icon btn in table */
+.btn-idcard-sm {
+  background: #edf7f1 !important;
+  color: #0d5c2a !important;
+  border: 1.5px solid #c2deca !important;
+}
+.btn-idcard-sm:hover { background: #d4f0de !important; }
+
+/* ── CARD VIEW GRID ── */
+.students-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.student-grid-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1.5px solid #e8eef0;
+  box-shadow: 0 1px 6px rgba(0,0,0,.06);
+  transition: box-shadow .2s, transform .2s;
+}
+.student-grid-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+.student-grid-card.inactive-card { opacity: .75; }
+.sgc-header { display: flex; gap: 10px; padding: 14px 14px 8px; align-items: flex-start; }
+.sgc-photo { flex-shrink: 0; }
+.sgc-info { flex: 1; min-width: 0; }
+.sgc-name { font-size: 14px; font-weight: 700; color: #1a2a3a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sgc-id { font-size: 10px; color: #7a9a82; font-family: monospace; margin-bottom: 5px; }
+.sgc-details { padding: 0 14px 8px; border-top: 1px solid #f0f4f0; }
+.sgc-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; border-bottom: 1px dotted #f0f0f0; }
+.sgc-row span:first-child { color: #7a9a82; font-weight: 600; }
+.sgc-row span:last-child { color: #1a2a3a; font-weight: 500; }
+.sgc-actions { display: flex; gap: 5px; padding: 8px 14px 12px; justify-content: center; }
+
+/* ── Empty state ── */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 60px 20px; gap: 14px; text-align: center;
+}
+.empty-state-icon { color: #c0d0c8; }
+.empty-state h3 { font-size: 20px; color: #3a5a48; margin: 0; }
+.empty-state p { font-size: 14px; color: #7a9a82; margin: 0; }
+
+/* ── Modal actions ── */
+.modal-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .students-stats { grid-template-columns: repeat(2, 1fr); }
+  .header-actions { gap: 6px; }
+  .btn-idcard span { display: none; }
+  .students-card-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .students-stats { grid-template-columns: 1fr 1fr; }
+}
