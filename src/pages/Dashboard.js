@@ -16,7 +16,7 @@ import EditClass from './EditClass';
 import Attendance from './Attendance';
 import AttendanceReport from './AttendanceReport';
 import Payments from './Payments';
-import Marks from './Marks';
+import MarkManagement from './MarkManagement';
 import Notifications from './Notifications';
 import WebsiteSettings from './WebsiteSettings';
 import Notices from './Notices';
@@ -115,7 +115,7 @@ const Dashboard = () => {
 
           {/* MARKS ROUTES */}
           {(user?.role === 'admin' || user?.role === 'teacher' || user?.role === 'student') && (
-            <Route path="/marks" element={<Marks />} />
+          <Route path="/marks" element={<MarkManagement />} />
           )}
 
           {/* NOTIFICATION ROUTES - All Users */}

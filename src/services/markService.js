@@ -1,43 +1,107 @@
-import api from './api';
+// ============================================================
+// FILE PATH: src/services/markService.js
+// ============================================================
+import axios from 'axios';
 
-// Get class students for mark entry (with existing marks)
-export const getClassStudentsForMark = (classId, examType, examYear) =>
-  api.get(`/marks/class/${classId}/students`, { params: { examType, examYear } });
+const API = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  timeout: 15000,
+});
 
-// Get all marks for a class
-export const getClassMarks = (classId, params) =>
-  api.get(`/marks/class/${classId}`, { params });
+// Auto-attach JWT token
+API.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
-// Get marks of a single student
-export const getStudentMarks = (studentId, params) =>
-  api.get(`/marks/student/${studentId}`, { params });
+// Log response errors in dev
+API.interceptors.response.use(
+  res => res,
+  err => {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        '[markService] Error:',
+        err.response?.status,
+        err.response?.data?.message || err.message
+      );
+    }
+    return Promise.reject(err);
+  }
+);
 
-// Get single mark record
-export const getMark = (id) => api.get(`/marks/${id}`);
+const markService = {
 
-// Save single student mark
-export const saveMark = (data) => api.post('/marks', data);
+  // ── Save / upsert one student's marks ─────────────────────
+  // POST /api/marks
+  saveMarks: (data) =>
+    API.post('/marks', data).then(r => r.data),
 
-// Save bulk marks (entire class)
-export const saveBulkMarks = (data) => api.post('/marks/bulk', data);
+  // ── Bulk save entire class ─────────────────────────────────
+  // POST /api/marks/bulk
+  saveBulkMarks: (marksArray) =>
+    API.post('/marks/bulk', { marksArray }).then(r => r.data),
 
-// Publish marks
-export const publishMarks = (data) => api.put('/marks/publish', data);
+  // ── Get all marks (admin/teacher) with filters ─────────────
+  // GET /api/marks?className=&examName=&page=&limit=
+  getAllMarks: (filters = {}) => {
+    // Strip empty values so server doesn't filter on empty strings
+    const params = {};
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v !== '' && v !== null && v !== undefined) params[k] = v;
+    });
+    return API.get('/marks', { params }).then(r => r.data);
+  },
 
-// Unpublish marks
-export const unpublishMarks = (data) => api.put('/marks/unpublish', data);
+  // ── Get one student's marks (admin) ───────────────────────
+  // GET /api/marks/student/:studentId
+  getStudentMarks: (studentId, params = {}) =>
+    API.get(`/marks/student/${studentId}`, { params }).then(r => r.data),
 
-// Delete mark
-export const deleteMark = (id) => api.delete(`/marks/${id}`);
+  // ── Get current student's own published results ────────────
+  // GET /api/marks/my
+  getMyMarks: () =>
+    API.get('/marks/my').then(r => r.data),
 
-// Get stats
-export const getMarkStats = (classId, params) =>
-  api.get(`/marks/stats/${classId}`, { params });
+  // ── Single mark by ID ──────────────────────────────────────
+  // GET /api/marks/:id
+  getMarkById: (id) =>
+    API.get(`/marks/${id}`).then(r => r.data),
 
-// Get admit card data
-export const getAdmitCardData = (classId, params) =>
-  api.get(`/marks/admit-card/${classId}`, { params });
+  // ── Update a mark ─────────────────────────────────────────
+  // PUT /api/marks/:id
+  updateMark: (id, data) =>
+    API.put(`/marks/${id}`, data).then(r => r.data),
 
-// Get result sheet data
-export const getResultSheetData = (classId, params) =>
-  api.get(`/marks/result-sheet/${classId}`, { params });
+  // ── Toggle publish ─────────────────────────────────────────
+  // PATCH /api/marks/:id/publish
+  togglePublish: (id) =>
+    API.patch(`/marks/${id}/publish`).then(r => r.data),
+
+  // ── Publish all for a class ────────────────────────────────
+  // POST /api/marks/publish-class
+  publishClassResults: (data) =>
+    API.post('/marks/publish-class', data).then(r => r.data),
+
+  // ── Delete ─────────────────────────────────────────────────
+  // DELETE /api/marks/:id
+  deleteMark: (id) =>
+    API.delete(`/marks/${id}`).then(r => r.data),
+
+  // ── Class summary stats ────────────────────────────────────
+  // GET /api/marks/stats?className=&examName=...
+  getClassStats: (params = {}) => {
+    const clean = {};
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== '' && v !== null && v !== undefined) clean[k] = v;
+    });
+    return API.get('/marks/stats', { params: clean }).then(r => r.data);
+  },
+
+  // ── Distinct exam list ─────────────────────────────────────
+  // GET /api/marks/exams
+  getExamList: () =>
+    API.get('/marks/exams').then(r => r.data),
+};
+
+export default markService;
