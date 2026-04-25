@@ -17,6 +17,9 @@ const IMP = [
   ['https://teachers.gov.bd','শিক্ষক বাতায়ন'],
   ['https://www.bangladesh.gov.bd','জাতীয় তথ্য বাতায়ন'],
 ];
+
+const APP_DOWNLOAD_LINK = 'https://drive.google.com/file/d/1nDxWsojWT5kgC0UXtnT2v8XQ5tB3u-On/view';
+
 export default function PublicFooter() {
   const [settings, setSettings] = useState(null);
   useEffect(() => {
@@ -61,13 +64,37 @@ export default function PublicFooter() {
                 <span style={{color:'#fff',fontSize:16}}>{v}</span>
               </div>
             ))}
+
+            {/* ── App Download Button ── */}
+            <div className="pf-app-section">
+              <p className="pf-app-label">আমাদের অ্যাপ ডাউনলোড করুন</p>
+              <a
+                href={APP_DOWNLOAD_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pf-playstore-btn"
+              >
+                {/* Google Play SVG Icon */}
+                <svg className="pf-play-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3.18 23.76c.3.17.64.24.98.2L15.34 12 11.6 8.26 3.18 23.76z" fill="#EA4335"/>
+                  <path d="M20.47 10.34l-2.78-1.59-3.93 3.25 3.93 3.93 2.8-1.6a2.14 2.14 0 0 0 0-4z" fill="#FBBC04"/>
+                  <path d="M3.18.24A2.1 2.1 0 0 0 2 2.13v19.74c0 .78.43 1.46 1.18 1.89L15.34 12 3.18.24z" fill="#34A853"/>
+                  <path d="M3.18.24L15.34 12l3.35-3.25-11.7-6.7A2.18 2.18 0 0 0 3.18.24z" fill="#4285F4"/>
+                </svg>
+                <div className="pf-play-text">
+                  <span className="pf-play-sub">GET IT ON</span>
+                  <span className="pf-play-main">Google Play</span>
+                </div>
+              </a>
+            </div>
+
           </div>
         </div>
       </div>
       <div className="pf-bottom">
         <div className="pf-bottom-inner">
           <p>All rights reserved © {new Date().getFullYear()}, {name}.</p>
-          <p>Design by <a href="https://amaderwebsite.com.bd" target="_blank" rel="noopener noreferrer">আমাদের ওয়েবসাইট</a></p>
+          <p>Design by <a href="https://amaderwebsite.com.bd" target="_blank" rel="noopener noreferrer">আমাদের ওয়েবসাইট</a></p>
         </div>
       </div>
     </footer>

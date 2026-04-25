@@ -1,4 +1,4 @@
-// ============================================================
+
 // FILE PATH: src/pages/StudentResults.jsx
 // Student dashboard — own published results, text list only
 // ============================================================
