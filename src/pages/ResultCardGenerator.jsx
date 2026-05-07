@@ -1,521 +1,209 @@
 /////
 // FILE PATH: src/pages/ResultCardGenerator.jsx
-// npm install html2canvas jspdf
+// Mark logic: CQ(P1+P2) + MCQ(optional) + Practical(optional)
+// Science: CQ=50/paper, MCQ=25/paper, Practical=25/paper
+// Arts   : CQ=70/paper, MCQ=30/paper
+// GP     : >79=5  >69=4  >59=3.5  >49=3  >39=2  >32=1  else=F
+// npm install html2canvas jspdf xlsx
 // ============================================================
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
-  ArrowLeft, Download, Users, User, Loader, Award,
-  Upload, X, Search, CheckSquare, Square, Eye, EyeOff,
-  RefreshCw, Filter, ChevronDown, ChevronUp, CheckCircle,
-  Plus, Trash2, Calendar, BookOpen, GraduationCap, Edit3,
-  Save, BarChart2, FileSpreadsheet, Hash, AlignLeft,
-  Target, ShieldCheck
+  ArrowLeft, Download, Loader, Award, Upload, X,
+  Search, CheckSquare, Square, Eye, EyeOff, RefreshCw,
+  Filter, ChevronDown, ChevronUp, CheckCircle, Plus,
+  Trash2, Calendar, BookOpen, GraduationCap, Edit3,
+  Save, BarChart2, FileSpreadsheet, FlaskConical,
+  Layers, ToggleLeft, ToggleRight
 } from 'lucide-react';
-import studentService  from '../services/studentService';
-import classService    from '../services/classService';
-import websiteService  from '../services/websiteService';
-import markService     from '../services/markService';
+import studentService from '../services/studentService';
+import classService   from '../services/classService';
+import websiteService from '../services/websiteService';
+import markService    from '../services/markService';
 import './ResultCardGenerator.css';
 
 // ─────────────────────────────────────────────────────────
-//  COLLEGE INFO
-// ─────────────────────────────────────────────────────────
 const COLLEGE = {
-  nameBn  : 'মালখানগর কলেজ',
-  nameEn  : 'MALKHANAGAR COLLEGE',
-  address : 'Sirajdikhan, Munshiganj',
-  eiin    : '134590',
-  phone   : '01309-134590',
-  email   : 'MalkhannagarCollege@gmail.com',
-  affil   : 'Affiliated to National University, Bangladesh',
+  nameEn : 'MALKHANAGAR COLLEGE',
+  nameBn : 'মালখানগর কলেজ',
+  address: 'Sirajdikhan, Munshiganj',
+  eiin   : '134590',
+  phone  : '01309-134590',
+  email  : 'MalkhannagarCollege@gmail.com',
 };
 
-// ─────────────────────────────────────────────────────────
-//  THEMES
-// ─────────────────────────────────────────────────────────
 const THEMES = {
-  HSC: {
-    hg:'linear-gradient(135deg,#5a0408 0%,#84070f 55%,#c0392b 100%)',
-    ac:'#e74c3c', nc:'#5a0408', th:'#5a0408',
-    vb:'#fef2f2', vc:'#84070f', vbr:'#fecaca',
-    stg:'linear-gradient(90deg,#84070f,#e74c3c,#f39c12,#84070f)',
-    sealBg:'#fff0f0',
-  },
-  Degree: {
-    hg:'linear-gradient(135deg,#064E3B 0%,#065F46 55%,#059669 100%)',
-    ac:'#059669', nc:'#064E3B', th:'#065F46',
-    vb:'#ECFDF5', vc:'#065F46', vbr:'#A7F3D0',
-    stg:'linear-gradient(90deg,#065F46,#059669,#D97706,#065F46)',
-    sealBg:'#f0fdf4',
-  },
-  Honours: {
-    hg:'linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 55%,#3b82f6 100%)',
-    ac:'#3b82f6', nc:'#1e3a8a', th:'#1d4ed8',
-    vb:'#eff6ff', vc:'#1e3a8a', vbr:'#bfdbfe',
-    stg:'linear-gradient(90deg,#1d4ed8,#3b82f6,#60a5fa,#1d4ed8)',
-    sealBg:'#f0f7ff',
-  },
+  HSC:     { hg:'linear-gradient(135deg,#5a0408,#84070f 55%,#c0392b)', nc:'#5a0408', th:'#5a0408', vb:'#fef2f2', ac:'#e74c3c' },
+  Degree:  { hg:'linear-gradient(135deg,#064E3B,#065F46 55%,#059669)', nc:'#064E3B', th:'#065F46', vb:'#ECFDF5', ac:'#059669' },
+  Honours: { hg:'linear-gradient(135deg,#1e3a8a,#1d4ed8 55%,#3b82f6)', nc:'#1e3a8a', th:'#1d4ed8', vb:'#eff6ff', ac:'#3b82f6' },
 };
-const getT = p => THEMES[p] || THEMES.Degree;
+const getT     = p => THEMES[p] || THEMES.Degree;
 const safeFile = v => (v||'').toString().replace(/\s+/g,'_').replace(/[^\w.-]/g,'');
+const blank    = v => v === '' || v === null || v === undefined;
 
 // ─────────────────────────────────────────────────────────
-//  GRADE CALCULATION  (Bangladesh National University)
+//  GRADE / GP LOGIC
 // ─────────────────────────────────────────────────────────
-const calcGrade = (obtained, fullMarks, passMarks) => {
-  const obt = parseInt(obtained, 10);
-  const fm  = parseInt(fullMarks, 10)  || 100;
-  const pm  = parseInt(passMarks,  10) || 33;
-  if (isNaN(obt) || obtained === '' || obtained === null || obtained === undefined)
-    return { grade:'—', lgrade:'—', gpa:0, status:'absent', pct:0 };
-  if (obt < pm)
-    return { grade:'F', lgrade:'F (Fail)', gpa:0, status:'fail', pct:((obt/fm)*100).toFixed(1) };
-  const pct = (obt/fm)*100;
-  if (pct >= 80) return { grade:'A+', lgrade:'A+ (Excellent)', gpa:5.0, status:'pass', pct:pct.toFixed(1) };
-  if (pct >= 70) return { grade:'A',  lgrade:'A (Very Good)',  gpa:4.0, status:'pass', pct:pct.toFixed(1) };
-  if (pct >= 60) return { grade:'A-', lgrade:'A- (Good)',      gpa:3.5, status:'pass', pct:pct.toFixed(1) };
-  if (pct >= 50) return { grade:'B',  lgrade:'B (Satisfactory)', gpa:3.0, status:'pass', pct:pct.toFixed(1) };
-  if (pct >= 40) return { grade:'C',  lgrade:'C (Average)',    gpa:2.0, status:'pass', pct:pct.toFixed(1) };
-  return             { grade:'D',  lgrade:'D (Below Average)', gpa:1.0, status:'pass', pct:pct.toFixed(1) };
-};
+function gpFromPct(pct) {
+  if (pct > 79) return { grade:'A+', gp:5.0 };
+  if (pct > 69) return { grade:'A',  gp:4.0 };
+  if (pct > 59) return { grade:'A-', gp:3.5 };
+  if (pct > 49) return { grade:'B',  gp:3.0 };
+  if (pct > 39) return { grade:'C',  gp:2.0 };
+  if (pct > 32) return { grade:'D',  gp:1.0 };
+  return             { grade:'F',  gp:0   };
+}
 
-const computeTotal = (subjects, marks) => {
-  let totalObt = 0, totalFull = 0, totalGPA = 0, subCount = 0, hasFail = false;
-  for (const sub of subjects) {
-    const obt = marks?.[sub.code];
-    if (obt === '' || obt === null || obt === undefined) continue;
-    const { gpa, status } = calcGrade(obt, sub.fullMarks, sub.passMarks);
-    totalObt  += parseInt(obt, 10) || 0;
-    totalFull += parseInt(sub.fullMarks, 10) || 100;
-    totalGPA  += gpa;
-    subCount++;
-    if (status === 'fail') hasFail = true;
+// entry = { cqP1, cqP2, mcqP1, mcqP2, pracP1, pracP2 }
+// sub   = subject config object
+function calcSubject(sub, entry) {
+  const isPair = Boolean(sub.isPair);
+  const papers = isPair ? 2 : 1;
+
+  // --- CQ (required) ---
+  const cqFMperPaper = Number(sub.cqFM) || 70;
+  const cqFMtotal    = cqFMperPaper * papers;
+  const cqPMtotal    = Number(sub.cqPM) || Math.ceil(cqFMtotal * 0.33);
+
+  if (blank(entry?.cqP1)) {
+    return {
+      grade:'—', gp:0, status:'absent',
+      cqTotal:null, mcqTotal:null, pracTotal:null,
+      totalObt:0, totalFull:cqFMtotal, pct:0,
+      cqPassed:null, mcqPassed:null, pracPassed:null,
+    };
   }
-  const gpa = subCount > 0 ? (totalGPA / subCount).toFixed(2) : '0.00';
-  const pct = totalFull > 0 ? ((totalObt/totalFull)*100).toFixed(2) : '0.00';
-  const result = subCount === 0 ? 'NOT ENTERED'
-    : hasFail ? 'FAIL'
-    : subCount < subjects.length ? 'INCOMPLETE'
-    : 'PASS';
-  const division = !hasFail && subCount > 0
-    ? parseFloat(gpa) >= 4.5 ? 'First Division (Topper)'
-    : parseFloat(gpa) >= 3.0 ? 'First Division'
-    : parseFloat(gpa) >= 2.25 ? 'Second Division'
-    : 'Third Division'
+
+  const cqP1N   = Number(entry.cqP1) || 0;
+  const cqP2N   = (isPair && !blank(entry?.cqP2)) ? Number(entry.cqP2)||0 : 0;
+  const cqTotal = cqP1N + cqP2N;
+  const cqPassed= cqTotal >= cqPMtotal;
+
+  // --- MCQ (optional) ---
+  const mcqActive = sub.hasMCQ && !blank(entry?.mcqP1);
+  const mcqFMtotal = mcqActive ? (Number(sub.mcqFM)||30)*papers : 0;
+  const mcqPMtotal = mcqActive ? (Number(sub.mcqPM)||Math.ceil(mcqFMtotal*0.33)) : 0;
+  let mcqTotal=0, mcqPassed=null;
+  if (mcqActive) {
+    const m1 = Number(entry.mcqP1)||0;
+    const m2 = (isPair && !blank(entry?.mcqP2)) ? Number(entry.mcqP2)||0 : 0;
+    mcqTotal  = m1+m2;
+    mcqPassed = mcqTotal >= mcqPMtotal;
+  }
+
+  // --- Practical (optional) ---
+  const pracActive = sub.hasPractical && !blank(entry?.pracP1);
+  const pracFMtotal = pracActive ? (Number(sub.practicalFM)||25)*papers : 0;
+  const pracPMtotal = pracActive ? (Number(sub.practicalPM)||Math.ceil(pracFMtotal*0.33)) : 0;
+  let pracTotal=0, pracPassed=null;
+  if (pracActive) {
+    const p1 = Number(entry.pracP1)||0;
+    const p2 = (isPair && !blank(entry?.pracP2)) ? Number(entry.pracP2)||0 : 0;
+    pracTotal  = p1+p2;
+    pracPassed = pracTotal >= pracPMtotal;
+  }
+
+  const totalObt  = cqTotal + mcqTotal + pracTotal;
+  const totalFull = cqFMtotal + mcqFMtotal + pracFMtotal;
+  const pct       = totalFull > 0 ? (totalObt/totalFull)*100 : 0;
+
+  const anyFail = !cqPassed
+    || (mcqPassed !== null && !mcqPassed)
+    || (pracPassed !== null && !pracPassed);
+
+  if (anyFail) {
+    return {
+      grade:'F', gp:0, status:'fail',
+      cqTotal, mcqTotal: mcqActive?mcqTotal:null, pracTotal: pracActive?pracTotal:null,
+      totalObt, totalFull, pct,
+      cqPassed, mcqPassed, pracPassed,
+      cqFMtotal, mcqFMtotal, pracFMtotal, cqPMtotal, mcqPMtotal, pracPMtotal,
+    };
+  }
+
+  const { grade, gp } = gpFromPct(pct);
+  return {
+    grade, gp, status:'pass',
+    cqTotal, mcqTotal: mcqActive?mcqTotal:null, pracTotal: pracActive?pracTotal:null,
+    totalObt, totalFull, pct,
+    cqPassed, mcqPassed, pracPassed,
+    cqFMtotal, mcqFMtotal, pracFMtotal, cqPMtotal, mcqPMtotal, pracPMtotal,
+  };
+}
+
+function computeTotal(subjects, studentMark) {
+  let sumObt=0, sumFull=0, sumGP=0, counted=0, hasFail=false;
+  for (const sub of subjects) {
+    const r = calcSubject(sub, studentMark?.[sub.code]);
+    if (r.status==='absent') continue;
+    sumObt  += r.totalObt;
+    sumFull += r.totalFull;
+    sumGP   += r.gp;
+    counted++;
+    if (r.status==='fail') hasFail=true;
+  }
+  const gpa = counted>0 ? (sumGP/counted).toFixed(2) : '0.00';
+  const pct = sumFull>0 ? ((sumObt/sumFull)*100).toFixed(2) : '0.00';
+  const result = counted===0?'NOT ENTERED':hasFail?'FAIL':counted<subjects.length?'INCOMPLETE':'PASS';
+  const division = !hasFail && counted>0
+    ? parseFloat(gpa)>=4.5?'First Division (Distinction)':parseFloat(gpa)>=3.5?'First Division':parseFloat(gpa)>=2.5?'Second Division':'Third Division'
     : '—';
-  return { totalObt, totalFull, gpa, pct, result, division, subCount };
-};
-// ─────────────────────────────────────────────────────────
-//  EXCEL EXPORT — CLASS MARK SHEET (3 sheets)
-// ─────────────────────────────────────────────────────────
-const exportClassExcel = async ({ students, subjects, studentMarks, examConfig, program, className, section, toast }) => {
-  try {
-    let XLSX;
-    try { XLSX = await import('xlsx'); }
-    catch { toast.error('xlsx not found. Run: npm install xlsx'); return false; }
+  return { sumObt, sumFull, gpa, pct, result, division, hasFail, counted };
+}
 
-    const sorted = [...students].sort((a, b) => {
-      const ra = parseInt(a.rollNumber, 10) || 0, rb = parseInt(b.rollNumber, 10) || 0;
-      return ra !== rb ? ra - rb : (a.userId?.name || '').localeCompare(b.userId?.name || '');
-    });
-
-    const rows = sorted.map((s, idx) => {
-      const marks = studentMarks[s._id] || {}, total = computeTotal(subjects, marks);
-      const row = {
-        'Serial': idx + 1, 'Roll No.': s.rollNumber || '—',
-        'Reg. No.': s.registrationNumber || s.studentId || '—',
-        'Student Name': s.userId?.name || '—',
-        'Class': s.class?.name || (typeof s.class === 'string' ? s.class : '') || '—',
-        'Section': s.section || '—',
-      };
-      subjects.forEach(sub => {
-        const obt = marks[sub.code];
-        const { grade, status } = calcGrade(obt, sub.fullMarks, sub.passMarks);
-        row[`${sub.name} (${sub.code})`] = (obt !== '' && obt != null) ? parseInt(obt, 10) || 0 : 'Absent';
-        row[`${sub.name} Grade`] = (obt !== '' && obt != null) ? grade : '—';
-      });
-      row['Total Obtained'] = total.totalObt;
-      row['Total Full'] = total.totalFull;
-      row['Percentage'] = `${total.pct}%`;
-      row['GPA'] = total.gpa;
-      row['Division'] = total.division;
-      row['Result'] = total.result;
-      return row;
-    });
-
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = [
-      { wch: 8 }, { wch: 10 }, { wch: 16 }, { wch: 26 }, { wch: 14 }, { wch: 10 },
-      ...subjects.flatMap(() => [{ wch: 22 }, { wch: 10 }]),
-      { wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 8 }, { wch: 24 }, { wch: 12 },
-    ];
-    ws['!freeze'] = { xSplit: 4, ySplit: 1 };
-
-    const wb = XLSX.utils.book_new();
-    wb.Props = { Title: `${className || 'Class'} — ${examConfig.name || 'Result'}`, Author: COLLEGE.nameEn, CreatedDate: new Date() };
-    XLSX.utils.book_append_sheet(wb, ws, 'Mark Sheet');
-
-    // Summary sheet
-    const passCount = sorted.filter(s => computeTotal(subjects, studentMarks[s._id] || {}).result === 'PASS').length;
-    const failCount = sorted.filter(s => computeTotal(subjects, studentMarks[s._id] || {}).result === 'FAIL').length;
-    const avgGPA = sorted.length > 0
-      ? (sorted.reduce((acc, s) => acc + parseFloat(computeTotal(subjects, studentMarks[s._id] || {}).gpa || 0), 0) / sorted.length).toFixed(2)
-      : '0.00';
-    const sumRows = [
-      { Field: 'College', Value: COLLEGE.nameEn }, { Field: 'Program', Value: program || '—' },
-      { Field: 'Class', Value: className || '—' }, { Field: 'Section', Value: section || 'All' },
-      { Field: 'Exam', Value: examConfig.name || '—' }, { Field: 'Year', Value: examConfig.year || '—' },
-      { Field: 'Session', Value: examConfig.session || '—' }, { Field: '', Value: '' },
-      { Field: 'Total Students', Value: sorted.length }, { Field: 'PASS', Value: passCount },
-      { Field: 'FAIL', Value: failCount },
-      { Field: 'Pass Rate', Value: sorted.length > 0 ? `${((passCount / sorted.length) * 100).toFixed(1)}%` : '—' },
-      { Field: 'Class Avg. GPA', Value: avgGPA }, { Field: '', Value: '' },
-      { Field: 'Generated On', Value: new Date().toLocaleString('en-GB') },
-    ];
-    const wsSumm = XLSX.utils.json_to_sheet(sumRows);
-    wsSumm['!cols'] = [{ wch: 20 }, { wch: 36 }];
-    XLSX.utils.book_append_sheet(wb, wsSumm, 'Summary');
-
-    // Subject Analysis sheet
-    const subRows = subjects.map(sub => {
-      let passed = 0, failed = 0, absent = 0, totalObt = 0, count = 0;
-      sorted.forEach(s => {
-        const obt = (studentMarks[s._id] || {})[sub.code];
-        if (obt === '' || obt === null || obt === undefined) { absent++; return; }
-        const { status } = calcGrade(obt, sub.fullMarks, sub.passMarks);
-        totalObt += parseInt(obt, 10) || 0; count++;
-        if (status === 'pass') passed++; else failed++;
-      });
-      return {
-        'Subject Code': sub.code, 'Subject Name': sub.name,
-        'Full Marks': sub.fullMarks, 'Pass Marks': sub.passMarks,
-        'Appeared': count, 'Passed': passed, 'Failed': failed, 'Absent': absent,
-        'Avg. Marks': count > 0 ? (totalObt / count).toFixed(1) : '—',
-        'Pass Rate': count > 0 ? `${((passed / count) * 100).toFixed(1)}%` : '—',
-      };
-    });
-    const wsSub = XLSX.utils.json_to_sheet(subRows);
-    wsSub['!cols'] = [{ wch: 14 }, { wch: 26 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }];
-    XLSX.utils.book_append_sheet(wb, wsSub, 'Subject Analysis');
-
-    const fileName = [safeFile(className || 'Class'), safeFile(section || 'AllSec'), safeFile(program || ''), safeFile(examConfig.year || new Date().getFullYear()), 'MarkSheet'].join('_') + '.xlsx';
-    XLSX.writeFile(wb, fileName);
-    return fileName;
-  } catch (err) { console.error('Excel error:', err); throw err; }
-};
+// Convert DB subject array → local entry map
+function buildEntryFromDB(subjects, savedSubs) {
+  const out = {};
+  for (const sub of subjects) {
+    const s = savedSubs?.find(x => x.code === sub.code);
+    if (!s) continue;
+    out[sub.code] = {
+      cqP1  : s.cqP1   ?? '', cqP2  : s.cqP2   ?? '',
+      mcqP1 : s.mcqP1  ?? '', mcqP2 : s.mcqP2  ?? '',
+      pracP1: s.practicalP1 ?? '', pracP2: s.practicalP2 ?? '',
+    };
+  }
+  return out;
+}
 
 // ─────────────────────────────────────────────────────────
-//  EXCEL EXPORT — INDIVIDUAL STUDENT MARK SHEET
+//  SUBJECT PRESETS
 // ─────────────────────────────────────────────────────────
-const exportStudentExcel = async ({ student, subjects, marks, examConfig, program, toast }) => {
-  try {
-    let XLSX;
-    try { XLSX = await import('xlsx'); }
-    catch { toast.error('xlsx not found. Run: npm install xlsx'); return false; }
+function makePreset(type, isPair) {
+  const papers = isPair ? 2 : 1;
+  if (type === 'science') {
+    return {
+      subjectType:'science', isPair,
+      cqFM:50, cqPM: Math.ceil(50*papers*0.33),
+      hasMCQ:true,  mcqFM:25, mcqPM: Math.ceil(25*papers*0.33),
+      hasPractical:true, practicalFM:25, practicalPM: Math.ceil(25*papers*0.33),
+    };
+  }
+  return {
+    subjectType:'arts', isPair,
+    cqFM:70, cqPM: Math.ceil(70*papers*0.33),
+    hasMCQ:true,  mcqFM:30, mcqPM: Math.ceil(30*papers*0.33),
+    hasPractical:false, practicalFM:25, practicalPM: Math.ceil(25*papers*0.33),
+  };
+}
 
-    const total = computeTotal(subjects, marks);
-    const subRows = subjects.map((sub, i) => {
-      const obt = marks?.[sub.code];
-      const { grade, gpa, status } = calcGrade(obt, sub.fullMarks, sub.passMarks);
-      return {
-        'S.No': i + 1, 'Subject Code': sub.code || '—', 'Subject Name': sub.name || '—',
-        'Full Marks': sub.fullMarks || 100, 'Pass Marks': sub.passMarks || 33,
-        'Marks Obtained': status === 'absent' ? 'Absent' : (obt !== '' && obt != null ? parseInt(obt, 10) || 0 : '—'),
-        'Grade': grade, 'Grade Point': status === 'absent' ? '—' : gpa.toFixed(1),
-        'Remarks': status === 'fail' ? 'FAIL' : status === 'absent' ? 'Absent' : 'Pass',
-      };
-    });
-    subRows.push({
-      'S.No': '—', 'Subject Code': '—', 'Subject Name': 'GRAND TOTAL',
-      'Full Marks': total.totalFull, 'Pass Marks': '—',
-      'Marks Obtained': total.totalObt, 'Grade': '—', 'Grade Point': total.gpa, 'Remarks': total.result,
-    });
-
-    const wb = XLSX.utils.book_new();
-    wb.Props = { Title: `Mark Sheet — ${student.userId?.name || ''}`, Author: COLLEGE.nameEn, CreatedDate: new Date() };
-
-    const infoRows = [
-      { Field: 'RESULT MARK SHEET', Value: COLLEGE.nameEn },
-      { Field: '', Value: '' },
-      { Field: 'Name', Value: student.userId?.name || '—' },
-      { Field: 'Roll No.', Value: student.rollNumber || '—' },
-      { Field: 'Registration', Value: student.registrationNumber || student.studentId || '—' },
-      { Field: 'Class', Value: student.class?.name || (typeof student.class === 'string' ? student.class : '') || '—' },
-      { Field: 'Section', Value: student.section || '—' },
-      { Field: 'Session', Value: examConfig.session || student.session || '—' },
-      { Field: 'Exam', Value: examConfig.name || '—' },
-      { Field: 'Year', Value: examConfig.year || '—' },
-      { Field: 'Program', Value: program || '—' },
-      { Field: '', Value: '' },
-      { Field: 'Result', Value: total.result },
-      { Field: 'Division', Value: total.division },
-      { Field: 'Total Marks', Value: `${total.totalObt} / ${total.totalFull}` },
-      { Field: 'Percentage', Value: `${total.pct}%` },
-      { Field: 'GPA', Value: `${total.gpa} / 5.00` },
-      { Field: '', Value: '' },
-      { Field: 'Generated', Value: new Date().toLocaleDateString('en-GB') },
-    ];
-    const wsInfo = XLSX.utils.json_to_sheet(infoRows);
-    wsInfo['!cols'] = [{ wch: 16 }, { wch: 36 }];
-    XLSX.utils.book_append_sheet(wb, wsInfo, 'Student Info');
-
-    const wsMark = XLSX.utils.json_to_sheet(subRows);
-    wsMark['!cols'] = [{ wch: 7 }, { wch: 14 }, { wch: 28 }, { wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 9 }, { wch: 13 }, { wch: 12 }];
-    wsMark['!freeze'] = { xSplit: 0, ySplit: 1 };
-    XLSX.utils.book_append_sheet(wb, wsMark, 'Mark Sheet');
-
-    const fileName = `MarkSheet_${safeFile(student.userId?.name || '')}_Roll${safeFile(student.rollNumber || '')}.xlsx`;
-    XLSX.writeFile(wb, fileName);
-    return fileName;
-  } catch (err) { console.error('Student Excel error:', err); throw err; }
-};
-
-
+const DEF_SUBS = [
+  { code:'BAN', name:'Bangla',  ...makePreset('arts',true) },
+  { code:'ENG', name:'English', ...makePreset('arts',true) },
+  { code:'ICT', name:'ICT',     ...makePreset('science',true) },
+  { code:'MAT', name:'Mathematics', ...makePreset('arts',true), hasMCQ:false },
+];
 
 // ─────────────────────────────────────────────────────────
-//  RESULT CARD COMPONENT  (794px wide = A4)
-// ─────────────────────────────────────────────────────────
-export const ResultCard = React.memo(({ student, logoUrl, signUrl, examConfig, subjects, marks, program, settings, srNo }) => {
-  const t = getT(program);
-  const name       = student.userId?.name || '—';
-  const rollNo     = student.rollNumber || '—';
-  const regNo      = student.registrationNumber || student.studentId || '—';
-  const cls        = student.class?.name || (typeof student.class==='string'?student.class:'') || '—';
-  const section    = student.section || '';
-  const session    = examConfig.session || student.session || '—';
-  const fatherName = student.fatherName || student.guardianName || '—';
-  const motherName = student.motherName || '—';
-  const total      = computeTotal(subjects, marks);
-
-  return (
-    <div className="result-card">  
-
-      {/* ── COLLEGE SEAL + NAME ── */}
-      <div className="rc-college-header">
-        <div className="rc-seal-wrap">
-          {logoUrl
-            ? <img src={logoUrl} alt="logo" crossOrigin="anonymous" className="rc-seal-img"
-                onError={e=>{e.target.style.display='none';}} />
-            : <div className="rc-seal-fb" style={{ borderColor: t.ac, color: t.nc }}>
-                <span>{COLLEGE.nameBn[0]}</span>
-              </div>
-          }
-        </div>
-        <div className="rc-college-text">
-          <p className="rc-cname" style={{ color: t.nc }}>𝖬𝖠𝖫𝖪𝖧𝖠𝖭𝖠𝖦𝖠𝖱 𝖢𝖮𝖫𝖫𝖤𝖦𝖤</p>
-          <div className="rc-caddr">{COLLEGE.address} &nbsp;|&nbsp; EIIN: {COLLEGE.eiin}</div>
-        </div>
-      </div>
-
-      {/* ── STRIPE ── */}
-      
-      {/* <div className="rc-sign-row" style={{ borderTopColor: t.ac+'55' }} /> */}
-
-      {/* ── RESULT TITLE ── */}
-      <div className="rc-title-block">
-        {/* <p className="rc-main-title">RESULT-cum-MARKS CERTIFICATE</p> */}
-        <p className="rc-sub-title" style={{ color: t.nc }}>
-          {program === 'HSC'     ? 'HSC PASS COURSE'
-           : program === 'Degree'   ? 'DEGREE PASS COURSE'
-           : 'HONOURS PASS COURSE'}
-        </p>
-        <p className="rc-exam-detail">
-          {examConfig.name || 'Annual Examination'} &nbsp;·&nbsp; {examConfig.year || new Date().getFullYear()}
-        </p>
-      </div>
-
-      {/* ── STUDENT INFO ── */}
-      <div className="rc-student-info">
-        {[
-          ['Name',           name],
-          ["Father's Name",  fatherName],
-          
-          ['Class / Course', `${cls}${section?' — '+section:''}`],
-          ['Roll No.',       rollNo],
-          ['Session',        session],
-        ].map(([l,v])=>(
-          <div key={l} className="rc-si-row">
-            <span className="rc-si-label">{l}</span>
-            <span className="rc-si-sep">:</span>
-            <span className="rc-si-val">{v}</span>
-          </div>
-        ))}
-        
-      </div>
-      
-
-      {/* ── MARKS TABLE ── */}
-      <div className="rc-table-wrap">
-        <table className="rc-marks-table">
-          <thead>
-            <tr style={{ background: t.th }}>
-              <th className="rc-th rc-th-sno">S.No</th>
-              <th className="rc-th rc-th-code">Code</th>
-              <th className="rc-th rc-th-subject">Subject / Paper</th>
-              <th className="rc-th rc-th-full">Full Marks</th>
-              <th className="rc-th rc-th-pass">Pass Marks</th>
-              <th className="rc-th rc-th-obt">Marks Obtained</th>
-              <th className="rc-th rc-th-grade">Grade</th>
-              <th className="rc-th rc-th-gpa">Grade Point</th>
-              <th className="rc-th rc-th-rmk">Remarks</th>
-            </tr>
-          </thead>
-          <tbody>
-            {subjects.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="rc-no-sub">No subjects configured</td>
-              </tr>
-            ) : subjects.map((sub, i) => {
-              const obt = marks?.[sub.code];
-              const { grade, gpa, status } = calcGrade(obt, sub.fullMarks, sub.passMarks);
-              const isFail = status === 'fail';
-              const isAbsent = status === 'absent';
-              return (
-                <tr key={i} className={i%2===0 ? 'rc-tr-even' : 'rc-tr-odd'}>
-                  <td className="rc-td rc-td-c">{i+1}</td>
-                  <td className="rc-td rc-td-c rc-mono">{sub.code||'—'}</td>
-                  <td className="rc-td">{sub.name||'—'}</td>
-                  <td className="rc-td rc-td-c">{sub.fullMarks||'100'}</td>
-                  <td className="rc-td rc-td-c">{sub.passMarks||'33'}</td>
-                  <td className={`rc-td rc-td-c rc-obt-cell${isFail?' rc-fail':isAbsent?' rc-absent':''}`}>
-                    {isAbsent ? 'Absent' : (obt !== '' && obt !== null && obt !== undefined ? obt : '—')}
-                  </td>
-                  <td className={`rc-td rc-td-c rc-grade-cell${isFail?' rc-fail-grade':status==='pass'?' rc-pass-grade':''}`}>
-                    {grade}
-                  </td>
-                  <td className="rc-td rc-td-c">{isAbsent ? '—' : gpa.toFixed(1)}</td>
-                  <td className={`rc-td rc-td-c${isFail?' rc-fail-rmk':''}`}>
-                    {isFail ? 'FAIL' : isAbsent ? 'Absent' : 'Pass'}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-          <tfoot>
-            <tr className="rc-total-row" style={{ background: t.th+'18', borderTop:`2px solid ${t.ac}` }}>
-              <td className="rc-td" colSpan={3} style={{ fontWeight:800, color:t.nc, textAlign:'right' }}>Grand Total</td>
-              <td className="rc-td rc-td-c" style={{ fontWeight:800 }}>{total.totalFull}</td>
-              <td className="rc-td" />
-              <td className="rc-td rc-td-c" style={{ fontWeight:900, color:t.nc, fontSize:14 }}>{total.totalObt}</td>
-              <td className="rc-td" colSpan={3} />
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
-      {/* ── RESULT SUMMARY ── */}
-      <div className="rc-summary">
-        <div className="rc-summary-left">
-          <div className="rc-result-row">
-            <span className="rc-rl">Result</span>
-            <span className="rc-rsep">:</span>
-            <span className={`rc-result-badge${total.result==='PASS'?' pass':total.result==='FAIL'?' fail':' pending'}`}>
-              {total.result}
-            </span>
-          </div>
-          <div className="rc-result-row">
-            <span className="rc-rl">Division</span>
-            <span className="rc-rsep">:</span>
-            <span className="rc-rv">{total.division}</span>
-          </div>
-          <div className="rc-result-row">
-            <span className="rc-rl">Percentage</span>
-            <span className="rc-rsep">:</span>
-            <span className="rc-rv">{total.pct}%</span>
-          </div>
-          <div className="rc-result-row">
-            <span className="rc-rl">GPA (Grade Point Avg.)</span>
-            <span className="rc-rsep">:</span>
-            <span className="rc-rv rc-gpa-val" style={{ color:t.nc }}>{total.gpa} / 5.00</span>
-          </div>
-        </div>
-
-        {/* Grade legend */}
-        <div className="rc-grade-legend">
-          <p className="rc-legend-title">Grade</p>
-          {[
-            ['A+','80-100','5.00'],['A','70-79','4.00'],['A-','60-69','3.50'],
-            ['B','50-59','3.00'],['C','40-49','2.00'],['D','33-39','1.00'],['F','<33','0.00'],
-          ].map(([g,r,gp])=>(
-            <div key={g} className="rc-legend-row">
-              <span className="rc-leg-grade" style={g==='F'?{color:'#dc2626'}:{color:t.nc}}>{g}</span>
-              <span className="rc-leg-range">{r}</span>
-              <span className="rc-leg-gp">GPA: {gp}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── REMARKS ── */}
-      
-
-      {/* ── SIGNATURE ROW ── */}
-      <div className="rc-sign-row" style={{ borderTopColor: t.ac+'55' }}>
-        {/* <div className="rc-sign-block">
-          <div className="rc-sign-blank" />
-          <div className="rc-sign-rule" style={{ background: t.ac }} />
-          <p className="rc-sign-label">Class Teacher</p>
-        </div> */}
-        <div className="rc-sign-block">
-          <div className="rc-sign-blank" />
-          <div className="rc-sign-rule" style={{ background: t.ac }} />
-          <p className="rc-sign-label">Executor</p>
-        </div>
-        <div className="rc-sign-block">
-          {signUrl
-            ? <img src={signUrl} alt="sign" className="rc-sign-img" />
-            : <div className="rc-sign-blank" />
-          }
-          <div className="rc-sign-rule" style={{ background: t.ac }} />
-          <p className="rc-sign-label">Principal</p>
-        </div>
-      </div>
-
-      {/* ── FOOTER ── */}
-      <div className="rc-footer" style={{ background: t.hg }}>
-        <p className="rc-footer-text">
-          {COLLEGE.nameEn} &nbsp;|
-          ☎ {COLLEGE.phone} &nbsp;|&nbsp; {COLLEGE.email}
-        </p>
-      </div>
-      
-    </div>
-  );
-});
-
-// ─────────────────────────────────────────────────────────
-//  PROGRESS OVERLAY
-// ─────────────────────────────────────────────────────────
-const ProgressOverlay = ({ progress, current, total }) => (
-  <div className="rcg-pg-overlay">
-    <div className="rcg-pg-box">
-      <svg viewBox="0 0 80 80" width="76" height="76">
-        <circle cx="40" cy="40" r="32" fill="none" stroke="#E5E7EB" strokeWidth="7"/>
-        <circle cx="40" cy="40" r="32" fill="none" stroke="#059669" strokeWidth="7"
-          strokeLinecap="round"
-          strokeDasharray={`${2*Math.PI*32}`}
-          strokeDashoffset={`${2*Math.PI*32*(1-progress/100)}`}
-          transform="rotate(-90 40 40)"
-          style={{transition:'stroke-dashoffset .3s'}}/>
-        <text x="40" y="45" textAnchor="middle" fontSize="13" fontWeight="800" fill="#065F46">{progress}%</text>
-      </svg>
-      <p className="rcg-pg-title">Generating PDF…</p>
-      <p className="rcg-pg-sub">{current} of {total}</p>
-    </div>
-  </div>
-);
-
-// ─────────────────────────────────────────────────────────
-//  PANEL
+//  SMALL UI COMPONENTS
 // ─────────────────────────────────────────────────────────
 const Panel = ({ title, icon, children, badge, defaultOpen=true }) => {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open,setOpen] = useState(defaultOpen);
   return (
     <section className="rcg-panel">
       <button className="rcg-panel-head" onClick={()=>setOpen(o=>!o)}>
-        <span className="rcg-panel-hl">{icon}{title}
+        <span className="rcg-panel-hl">{icon} {title}
           {badge!=null && <span className="rcg-panel-badge">{badge}</span>}
         </span>
         {open ? <ChevronUp size={13}/> : <ChevronDown size={13}/>}
@@ -525,126 +213,544 @@ const Panel = ({ title, icon, children, badge, defaultOpen=true }) => {
   );
 };
 
-// ─────────────────────────────────────────────────────────
-//  PROGRAM SELECTOR
-// ─────────────────────────────────────────────────────────
-const ProgramSelector = ({ value, onChange }) => (
-  <div className="rcg-prog-sel">
-    {[
-      {k:'HSC',    label:'HSC',     color:'#84070f'},
-      {k:'Degree', label:'Degree',  color:'#065F46'},
-      {k:'Honours',label:'Honours', color:'#1d4ed8'},
-    ].map(o=>(
-      <button key={o.k}
-        className={`rcg-prog-btn${value===o.k?' on':''}`}
-        style={value===o.k
-          ? {background:o.color, borderColor:o.color, color:'#fff', boxShadow:`0 4px 12px ${o.color}44`}
-          : {borderColor:o.color+'44', color:o.color}}
-        onClick={()=>onChange(o.k)}>
-        {o.label}
-      </button>
-    ))}
-  </div>
+const Tog = ({ on, onToggle, label, activeColor='#059669' }) => (
+  <button
+    onClick={onToggle}
+    style={{
+      display:'flex', alignItems:'center', gap:5, border:'none', background:'none',
+      cursor:'pointer', fontSize:11, fontWeight:700,
+      color: on ? activeColor : '#94a3b8', padding:'2px 4px',
+    }}
+  >
+    {on ? <ToggleRight size={18} color={activeColor}/> : <ToggleLeft size={18} color="#d1d5db"/>}
+    {label}
+  </button>
+);
+
+const N = ({ value, onChange, max, placeholder, width=64 }) => (
+  <input
+    type="number" min="0" max={max}
+    placeholder={placeholder}
+    value={value ?? ''}
+    onChange={e => onChange(e.target.value)}
+    style={{
+      width, padding:'3px 6px', border:'1px solid #d1d5db',
+      borderRadius:4, fontSize:12, textAlign:'center',
+    }}
+  />
 );
 
 // ─────────────────────────────────────────────────────────
-//  UPLOAD FIELD
+//  SUBJECT CONFIG ROW
 // ─────────────────────────────────────────────────────────
-const UpField = ({ label, val, onUp, onRm, isSig }) => {
-  const ref = useRef(null);
-  const onChange = e => {
-    const f = e.target.files[0]; if (!f) return;
-    const r = new FileReader();
-    r.onload = ev => onUp(ev.target.result);
-    r.readAsDataURL(f); e.target.value = '';
-  };
+const SubjectRow = ({ sub, idx, onChange, onRemove }) => {
+  const set   = (f,v) => onChange(idx, {...sub,[f]:v});
+  const setPre= (type, isPair) => onChange(idx, { code:sub.code, name:sub.name, ...makePreset(type, isPair) });
+  const papers= sub.isPair ? 2 : 1;
+  const cqFull  = (Number(sub.cqFM)||70)*papers;
+  const mcqFull = (Number(sub.mcqFM)||30)*papers;
+  const pracFull= (Number(sub.practicalFM)||25)*papers;
+  const totalFM = cqFull + (sub.hasMCQ?mcqFull:0) + (sub.hasPractical?pracFull:0);
+
   return (
-    <div className="rcg-upfield">
-      <div className="rcg-uplbl">{label}
-        {val && <span className="rcg-upok"><CheckCircle size={10}/> Set</span>}
-      </div>
-      <input ref={ref} type="file" accept="image/*" style={{display:'none'}} onChange={onChange}/>
-      <div style={{display:'flex',gap:6}}>
-        <button className="rcg-upbtn" onClick={()=>ref.current?.click()}>
-          <Upload size={11}/>{val?'Change':'Upload'}
+    <div className="sub-row-card">
+      {/* ── Row 1: identity ── */}
+      <div className="sub-row-1">
+        <input className="sub-inp sub-code" placeholder="Code" value={sub.code} onChange={e=>set('code',e.target.value)}/>
+        <input className="sub-inp sub-name" placeholder="Subject Name"  value={sub.name} onChange={e=>set('name',e.target.value)}/>
+        <select className="sub-sel" value={sub.subjectType}
+          onChange={e=>setPre(e.target.value, sub.isPair)}>
+          <option value="arts">Arts / Commerce / BMT</option>
+          <option value="science">Science</option>
+          <option value="custom">Custom</option>
+        </select>
+        <button
+          className={`pair-btn${sub.isPair?' active':''}`}
+          onClick={()=>setPre(sub.subjectType, !sub.isPair)}
+          title={sub.isPair?'Click for Single paper':'Click for Pair (P1+P2)'}
+        >
+          <Layers size={12}/>
+          {sub.isPair ? 'Pair (P1+P2)' : 'Single (1 paper)'}
         </button>
-        {val && <button className="rcg-updel" onClick={onRm}><X size={11}/></button>}
+        <button className="sub-del" onClick={()=>onRemove(idx)} title="Remove"><Trash2 size={13}/></button>
       </div>
-      {val && <div className="rcg-upthumb-wrap">
-        <img src={val} alt="" className={`rcg-upthumb${isSig?' sig':''}`}/>
-      </div>}
-    </div>
-  );
-};
 
-// ─────────────────────────────────────────────────────────
-//  MARKS ENTRY FORM (inline per student)
-// ─────────────────────────────────────────────────────────
-const MarksEntryForm = ({ student, subjects, marks, onSave, onExcelDl, theme }) => {
-  const [local, setLocal] = useState({ ...marks });
+      {/* ── Row 2: marks config ── */}
+      <div className="sub-row-2">
 
-  const update = (code, val) => setLocal(p => ({ ...p, [code]: val }));
-  const total  = computeTotal(subjects, local);
+        {/* CQ */}
+        <div className="mark-section cq-s">
+          <div className="mark-sec-title">✍️ CQ (Written)</div>
+          <div className="mark-sec-fields">
+            <div className="mf-item">
+              <label>FM / paper</label>
+              <N value={sub.cqFM} onChange={v=>set('cqFM',v)} placeholder="70"/>
+              <span className="mf-total">= {cqFull}</span>
+            </div>
+            <div className="mf-item">
+              <label>Pass (total)</label>
+              <N value={sub.cqPM} onChange={v=>set('cqPM',v)} placeholder={Math.ceil(cqFull*0.33)}/>
+            </div>
+          </div>
+        </div>
 
-  return (
-    <div className="marks-form">
-      <div className="marks-form-header" style={{ borderColor: theme.ac }}>
-        <BarChart2 size={14} style={{ color: theme.nc }} />
-        <span style={{ color: theme.nc }}>Enter Marks — {student.userId?.name}</span>
-        <span className="marks-form-roll">Roll: {student.rollNumber || '—'}</span>
-      </div>
-      <div className="marks-subjects-grid">
-        {subjects.map((sub, i) => {
-          const val = local[sub.code];
-          const { grade, status } = calcGrade(val, sub.fullMarks, sub.passMarks);
-          return (
-            <div key={i} className={`marks-sub-row${status==='fail'?' fail-row':''}`}>
-              <div className="marks-sub-info">
-                <span className="marks-sub-code">{sub.code}</span>
-                <span className="marks-sub-name">{sub.name}</span>
-                <span className="marks-sub-max">/{sub.fullMarks||100}</span>
+        {/* MCQ */}
+        <div className={`mark-section mcq-s${sub.hasMCQ?'':' dimmed'}`}>
+          <div className="mark-sec-title">
+            <Tog on={sub.hasMCQ} onToggle={()=>set('hasMCQ',!sub.hasMCQ)} label="MCQ (Objective)" activeColor="#7c3aed"/>
+          </div>
+          {sub.hasMCQ ? (
+            <div className="mark-sec-fields">
+              <div className="mf-item">
+                <label>FM / paper</label>
+                <N value={sub.mcqFM} onChange={v=>set('mcqFM',v)} placeholder="30"/>
+                <span className="mf-total">= {mcqFull}</span>
               </div>
-              <div className="marks-sub-input-wrap">
-                <input
-                  className={`marks-inp${status==='fail'?' marks-inp-fail':status==='pass'?' marks-inp-pass':''}`}
-                  type="number" min="0" max={sub.fullMarks||100}
-                  placeholder="Marks"
-                  value={val !== undefined && val !== null ? val : ''}
-                  onChange={e => update(sub.code, e.target.value)}
-                />
-                {val !== undefined && val !== null && val !== '' && (
-                  <span className={`marks-grade-chip${status==='fail'?' fail':''}`}
-                    style={status==='pass'?{background:theme.vb,color:theme.nc}:{}}>
-                    {grade}
-                  </span>
-                )}
+              <div className="mf-item">
+                <label>Pass (total)</label>
+                <N value={sub.mcqPM} onChange={v=>set('mcqPM',v)} placeholder={Math.ceil(mcqFull*0.33)}/>
               </div>
             </div>
-          );
-        })}
-      </div>
-      <div className="marks-form-footer">
-        <div className="marks-totals">
-          <span>Total: <strong>{total.totalObt}/{total.totalFull}</strong></span>
-          <span>PCT: <strong>{total.pct}%</strong></span>
-          <span>GPA: <strong style={{ color: theme.nc }}>{total.gpa}</strong></span>
-          <span className={`marks-result${total.result==='PASS'?' pass':total.result==='FAIL'?' fail':''}`}>
-            {total.result}
-          </span>
+          ) : (
+            <p className="mark-sec-hint">Leave MCQ blank → grade from CQ only</p>
+          )}
         </div>
-        <div className="marks-footer-btns">
-          <button className="marks-excel-btn" onClick={()=>onExcelDl(student, local)} title="Download Excel mark sheet">
-            <FileSpreadsheet size={13}/> Excel
-          </button>
-          <button className="marks-save-btn" style={{ background: theme.hg }}
-            onClick={() => onSave(student._id, local)}>
-            <Save size={13}/> Save Marks
-          </button>
+
+        {/* Practical */}
+        <div className={`mark-section prac-s${sub.hasPractical?'':' dimmed'}`}>
+          <div className="mark-sec-title">
+            <Tog on={sub.hasPractical} onToggle={()=>set('hasPractical',!sub.hasPractical)} label="Practical" activeColor="#0891b2"/>
+          </div>
+          {sub.hasPractical ? (
+            <div className="mark-sec-fields">
+              <div className="mf-item">
+                <label>FM / paper</label>
+                <N value={sub.practicalFM} onChange={v=>set('practicalFM',v)} placeholder="25"/>
+                <span className="mf-total">= {pracFull}</span>
+              </div>
+              <div className="mf-item">
+                <label>Pass (total)</label>
+                <N value={sub.practicalPM} onChange={v=>set('practicalPM',v)} placeholder={Math.ceil(pracFull*0.33)}/>
+              </div>
+            </div>
+          ) : (
+            <p className="mark-sec-hint">Not applicable</p>
+          )}
         </div>
+
+        {/* Total FM */}
+        <div className="mark-section total-s">
+          <div className="mark-sec-title">Total FM</div>
+          <div className="total-fm-val">{totalFM}</div>
+          <div className="total-fm-hint">({papers} paper{papers>1?'s':''})</div>
+        </div>
+
       </div>
     </div>
   );
 };
+
+// ─────────────────────────────────────────────────────────
+//  MARKS ENTRY FORM
+// ─────────────────────────────────────────────────────────
+const MarksEntryForm = ({ student, subjects, marks, onSave, theme }) => {
+  const [local, setLocal] = useState(() => {
+    const init = {};
+    for (const sub of subjects) {
+      init[sub.code] = marks?.[sub.code]
+        ? { ...marks[sub.code] }
+        : { cqP1:'', cqP2:'', mcqP1:'', mcqP2:'', pracP1:'', pracP2:'' };
+    }
+    return init;
+  });
+
+  const setField = (code, field, val) =>
+    setLocal(p => ({ ...p, [code]: { ...p[code], [field]: val } }));
+
+  const total = computeTotal(subjects, local);
+
+  const chipStyle = (passed) => !passed===null ? {} : passed
+    ? { background:'#d1fae5', color:'#065f46', border:'1px solid #6ee7b7' }
+    : { background:'#fee2e2', color:'#dc2626', border:'1px solid #fca5a5' };
+
+  return (
+    <div className="met-form">
+      <div className="met-form-head" style={{ borderColor: theme.ac }}>
+        <BarChart2 size={14} color={theme.nc}/>
+        <strong style={{ color:theme.nc }}>{student.userId?.name}</strong>
+        <span className="met-roll">Roll: {student.rollNumber||'—'}</span>
+      </div>
+
+      {subjects.map((sub, si) => {
+        const entry  = local[sub.code] || {};
+        const res    = calcSubject(sub, entry);
+        const isPair = Boolean(sub.isPair);
+        const papers = isPair ? 2 : 1;
+        const cqFull = (Number(sub.cqFM)||70)*papers;
+        const mcqFull= (Number(sub.mcqFM)||30)*papers;
+        const pracFull=(Number(sub.practicalFM)||25)*papers;
+
+        return (
+          <div key={si} className={`met-subject${res.status==='fail'?' met-fail':res.status==='pass'?' met-pass':''}`}>
+
+            {/* Subject header */}
+            <div className="met-sub-hd">
+              <span className="met-sub-badge">{sub.code}</span>
+              <span className="met-sub-nm">{sub.name}</span>
+              <span className="met-sub-tag">{sub.subjectType==='science'?'🔬 Sci':'📚 Arts'}</span>
+              <span className="met-sub-pair">{isPair?'Pair':'Single'}</span>
+              {res.status !== 'absent' && (
+                <span className="met-sub-live" style={res.status==='fail'?{color:'#dc2626'}:{color:theme.nc}}>
+                  {res.grade} · GP {res.gp?.toFixed(1)} · {((res.pct||0)).toFixed(1)}%
+                </span>
+              )}
+            </div>
+
+            <div className="met-components">
+
+              {/* CQ */}
+              <div className="met-comp cq-comp">
+                <div className="met-comp-hd">
+                  <span className="met-comp-label">✍️ CQ</span>
+                  <span className="met-comp-fm">Full: {cqFull} | Pass: {sub.cqPM||Math.ceil(cqFull*0.33)}</span>
+                  {res.cqTotal !== null && (
+                    <span className="met-comp-total" style={chipStyle(res.cqPassed)}>
+                      {res.cqTotal}/{cqFull} {res.cqPassed?'✓':'✗'}
+                    </span>
+                  )}
+                </div>
+                <div className="met-inputs">
+                  <div className="met-inp-wrap">
+                    <label>Paper 1</label>
+                    <input type="number" min="0" max={sub.cqFM}
+                      className={`met-inp${res.cqPassed===false?' inp-fail':res.cqPassed===true?' inp-pass':''}`}
+                      placeholder={`0–${sub.cqFM}`}
+                      value={entry.cqP1??''} onChange={e=>setField(sub.code,'cqP1',e.target.value)}/>
+                  </div>
+                  {isPair && (
+                    <div className="met-inp-wrap">
+                      <label>Paper 2</label>
+                      <input type="number" min="0" max={sub.cqFM}
+                        className={`met-inp${res.cqPassed===false?' inp-fail':res.cqPassed===true?' inp-pass':''}`}
+                        placeholder={`0–${sub.cqFM}`}
+                        value={entry.cqP2??''} onChange={e=>setField(sub.code,'cqP2',e.target.value)}/>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* MCQ */}
+              {sub.hasMCQ && (
+                <div className="met-comp mcq-comp">
+                  <div className="met-comp-hd">
+                    <span className="met-comp-label">📝 MCQ</span>
+                    <span className="met-comp-fm">Full: {mcqFull} | Pass: {sub.mcqPM||Math.ceil(mcqFull*0.33)}</span>
+                    <span className="met-optional-tag">optional</span>
+                    {res.mcqTotal !== null && (
+                      <span className="met-comp-total" style={chipStyle(res.mcqPassed)}>
+                        {res.mcqTotal}/{mcqFull} {res.mcqPassed?'✓':'✗'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="met-inputs">
+                    <div className="met-inp-wrap">
+                      <label>Paper 1</label>
+                      <input type="number" min="0" max={sub.mcqFM}
+                        className={`met-inp${res.mcqPassed===false?' inp-fail':res.mcqPassed===true?' inp-pass':''}`}
+                        placeholder={`0–${sub.mcqFM} (opt)`}
+                        value={entry.mcqP1??''} onChange={e=>setField(sub.code,'mcqP1',e.target.value)}/>
+                    </div>
+                    {isPair && (
+                      <div className="met-inp-wrap">
+                        <label>Paper 2</label>
+                        <input type="number" min="0" max={sub.mcqFM}
+                          className={`met-inp${res.mcqPassed===false?' inp-fail':res.mcqPassed===true?' inp-pass':''}`}
+                          placeholder={`0–${sub.mcqFM}`}
+                          value={entry.mcqP2??''} onChange={e=>setField(sub.code,'mcqP2',e.target.value)}/>
+                      </div>
+                    )}
+                  </div>
+                  <p className="met-skip-note">Blank = skip MCQ → CQ-only grade</p>
+                </div>
+              )}
+
+              {/* Practical */}
+              {sub.hasPractical && (
+                <div className="met-comp prac-comp">
+                  <div className="met-comp-hd">
+                    <span className="met-comp-label">🔬 Practical</span>
+                    <span className="met-comp-fm">Full: {pracFull} | Pass: {sub.practicalPM||Math.ceil(pracFull*0.33)}</span>
+                    <span className="met-optional-tag">optional</span>
+                    {res.pracTotal !== null && (
+                      <span className="met-comp-total" style={chipStyle(res.pracPassed)}>
+                        {res.pracTotal}/{pracFull} {res.pracPassed?'✓':'✗'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="met-inputs">
+                    <div className="met-inp-wrap">
+                      <label>Paper 1</label>
+                      <input type="number" min="0" max={sub.practicalFM}
+                        className={`met-inp${res.pracPassed===false?' inp-fail':res.pracPassed===true?' inp-pass':''}`}
+                        placeholder={`0–${sub.practicalFM} (opt)`}
+                        value={entry.pracP1??''} onChange={e=>setField(sub.code,'pracP1',e.target.value)}/>
+                    </div>
+                    {isPair && (
+                      <div className="met-inp-wrap">
+                        <label>Paper 2</label>
+                        <input type="number" min="0" max={sub.practicalFM}
+                          className={`met-inp${res.pracPassed===false?' inp-fail':res.pracPassed===true?' inp-pass':''}`}
+                          placeholder={`0–${sub.practicalFM}`}
+                          value={entry.pracP2??''} onChange={e=>setField(sub.code,'pracP2',e.target.value)}/>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Footer */}
+      <div className="met-footer">
+        <div className="met-totals">
+          <span>Total: <b>{total.sumObt}/{total.sumFull}</b></span>
+          <span>Pct: <b>{total.pct}%</b></span>
+          <span>GPA: <b style={{ color: total.hasFail?'#dc2626':theme.nc }}>
+            {total.hasFail ? 'FAIL (no GPA)' : total.gpa}
+          </b></span>
+          <span className={`met-result${total.result==='PASS'?' pass':total.result==='FAIL'?' fail':''}`}>
+            {total.result}
+          </span>
+          {total.result==='PASS' && <span className="met-div">{total.division}</span>}
+        </div>
+        <button className="met-save-btn" style={{ background:theme.hg }}
+          onClick={() => onSave(student._id, local)}>
+          <Save size={13}/> Save Marks
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────
+//  RESULT CARD  (A4 printable)
+// ─────────────────────────────────────────────────────────
+export const ResultCard = React.memo(({ student, logoUrl, signUrl, examConfig, subjects, marks, program }) => {
+  const t     = getT(program);
+  const total = computeTotal(subjects, marks);
+  const name  = student.userId?.name || '—';
+
+  return (
+    <div className="result-card">
+
+      {/* College header */}
+      <div className="rc-college-header">
+        <div className="rc-seal-wrap">
+          {logoUrl
+            ? <img src={logoUrl} alt="logo" crossOrigin="anonymous" className="rc-seal-img"
+                onError={e=>{e.target.style.display='none';}}/>
+            : <div className="rc-seal-fb" style={{borderColor:t.ac,color:t.nc}}><span>M</span></div>
+          }
+        </div>
+        <div className="rc-college-text">
+          <p className="rc-cname" style={{color:t.nc}}>𝖬𝖠𝖫𝖪𝖧𝖠𝖭𝖠𝖦𝖠𝖱 𝖢𝖮𝖫𝖫𝖤𝖦𝖤</p>
+          <div className="rc-caddr">{COLLEGE.address} &nbsp;|&nbsp; EIIN: {COLLEGE.eiin}</div>
+        </div>
+      </div>
+
+      <div className="rc-title-block">
+        <p className="rc-sub-title" style={{color:t.nc}}>
+          {program==='HSC'?'HSC PASS COURSE':program==='Degree'?'DEGREE PASS COURSE':'HONOURS PASS COURSE'}
+        </p>
+        <p className="rc-exam-detail">
+          {examConfig.name||'Annual Examination'} · {examConfig.year||new Date().getFullYear()}
+        </p>
+      </div>
+
+      {/* Student info */}
+      <div className="rc-student-info">
+        {[
+          ['Name',          name],
+          ["Father's Name", student.fatherName||student.guardianName||'—'],
+          ['Class / Course',`${student.class?.name||(typeof student.class==='string'?student.class:'')||'—'}${student.section?' — '+student.section:''}`],
+          ['Roll No.',      student.rollNumber||'—'],
+          ['Session',       examConfig.session||student.session||'—'],
+        ].map(([l,v])=>(
+          <div key={l} className="rc-si-row">
+            <span className="rc-si-label">{l}</span>
+            <span className="rc-si-sep">:</span>
+            <span className="rc-si-val">{v}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Marks table */}
+      <div className="rc-table-wrap">
+        <table className="rc-marks-table">
+          <thead>
+            <tr style={{background:t.th}}>
+              <th className="rc-th" rowSpan={2}>#</th>
+              <th className="rc-th" rowSpan={2}>Code</th>
+              <th className="rc-th" style={{textAlign:'left'}} rowSpan={2}>Subject</th>
+              <th className="rc-th" colSpan={3}>CQ (Written)</th>
+              <th className="rc-th" colSpan={3}>MCQ</th>
+              <th className="rc-th" colSpan={3}>Practical</th>
+              <th className="rc-th" rowSpan={2}>Total</th>
+              <th className="rc-th" rowSpan={2}>Grade</th>
+              <th className="rc-th" rowSpan={2}>GP</th>
+              <th className="rc-th" rowSpan={2}>Status</th>
+            </tr>
+            <tr style={{background:t.th+'cc',fontSize:9}}>
+              <th className="rc-th">P1</th><th className="rc-th">P2</th><th className="rc-th">Total</th>
+              <th className="rc-th">P1</th><th className="rc-th">P2</th><th className="rc-th">Total</th>
+              <th className="rc-th">P1</th><th className="rc-th">P2</th><th className="rc-th">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {subjects.map((sub, i) => {
+              const entry  = marks?.[sub.code];
+              const res    = calcSubject(sub, entry);
+              const isPair = Boolean(sub.isPair);
+              const na     = <span style={{color:'#94a3b8'}}>—</span>;
+
+              return (
+                <tr key={i} className={i%2===0?'rc-tr-even':'rc-tr-odd'}>
+                  <td className="rc-td rc-td-c">{i+1}</td>
+                  <td className="rc-td rc-td-c" style={{fontFamily:'monospace'}}>{sub.code}</td>
+                  <td className="rc-td">{sub.name}</td>
+
+                  {/* CQ */}
+                  <td className="rc-td rc-td-c">{!blank(entry?.cqP1)?entry.cqP1:na}</td>
+                  <td className="rc-td rc-td-c">{isPair&&!blank(entry?.cqP2)?entry.cqP2:na}</td>
+                  <td className={`rc-td rc-td-c${res.cqPassed===false?' rc-fail-c':''}`}>
+                    {res.cqTotal??na}
+                  </td>
+
+                  {/* MCQ */}
+                  {sub.hasMCQ && res.mcqTotal!==null ? (
+                    <>
+                      <td className="rc-td rc-td-c">{!blank(entry?.mcqP1)?entry.mcqP1:na}</td>
+                      <td className="rc-td rc-td-c">{isPair&&!blank(entry?.mcqP2)?entry.mcqP2:na}</td>
+                      <td className={`rc-td rc-td-c${res.mcqPassed===false?' rc-fail-c':''}`}>{res.mcqTotal}</td>
+                    </>
+                  ) : (
+                    <><td className="rc-td rc-td-c" style={{color:'#94a3b8'}}>—</td><td className="rc-td rc-td-c" style={{color:'#94a3b8'}}>—</td><td className="rc-td rc-td-c" style={{color:'#94a3b8'}}>—</td></>
+                  )}
+
+                  {/* Practical */}
+                  {sub.hasPractical && res.pracTotal!==null ? (
+                    <>
+                      <td className="rc-td rc-td-c">{!blank(entry?.pracP1)?entry.pracP1:na}</td>
+                      <td className="rc-td rc-td-c">{isPair&&!blank(entry?.pracP2)?entry.pracP2:na}</td>
+                      <td className={`rc-td rc-td-c${res.pracPassed===false?' rc-fail-c':''}`}>{res.pracTotal}</td>
+                    </>
+                  ) : (
+                    <><td className="rc-td rc-td-c" style={{color:'#94a3b8'}}>—</td><td className="rc-td rc-td-c" style={{color:'#94a3b8'}}>—</td><td className="rc-td rc-td-c" style={{color:'#94a3b8'}}>—</td></>
+                  )}
+
+                  {/* Result */}
+                  <td className={`rc-td rc-td-c${res.status==='fail'?' rc-fail-c':''}`} style={{fontWeight:700}}>
+                    {res.status==='absent'?'Absent':`${res.totalObt}/${res.totalFull}`}
+                  </td>
+                  <td className={`rc-td rc-td-c${res.status==='fail'?' rc-fail-grade':res.status==='pass'?' rc-pass-grade':''}`}>
+                    {res.grade}
+                  </td>
+                  <td className="rc-td rc-td-c">{res.status==='absent'?'—':res.gp?.toFixed(1)}</td>
+                  <td className={`rc-td rc-td-c${res.status==='fail'?' rc-fail-c':''}`}>
+                    {res.status==='fail'?'FAIL':res.status==='absent'?'Absent':'Pass'}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            <tr style={{background:t.th+'18',borderTop:`2px solid ${t.ac}`,fontWeight:800}}>
+              <td className="rc-td" colSpan={3} style={{textAlign:'right',color:t.nc}}>Grand Total</td>
+              <td className="rc-td" colSpan={9}/>
+              <td className="rc-td rc-td-c" style={{color:t.nc,fontSize:13}}>{total.sumObt}/{total.sumFull}</td>
+              <td className="rc-td" colSpan={3}/>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      {/* Summary */}
+      <div className="rc-summary">
+        <div className="rc-summary-left">
+          {[
+            ['Result', <span className={`rc-result-badge${total.result==='PASS'?' pass':total.result==='FAIL'?' fail':' pend'}`}>{total.result}</span>],
+            ['Division', total.division],
+            ['Percentage', `${total.pct}%`],
+            ['GPA', total.hasFail
+              ? <span style={{color:'#dc2626',fontWeight:800}}>Failed — GPA not awarded</span>
+              : <span style={{color:t.nc,fontWeight:800}}>{total.gpa} / 5.00</span>],
+          ].map(([l,v])=>(
+            <div key={l} className="rc-result-row">
+              <span className="rc-rl">{l}</span>
+              <span className="rc-rsep">:</span>
+              <span className="rc-rv">{v}</span>
+            </div>
+          ))}
+        </div>
+        <div className="rc-grade-legend">
+          <p className="rc-legend-title">Grade Scale</p>
+          {[['A+','>79%','5.00'],['A','>69%','4.00'],['A-','>59%','3.50'],
+            ['B','>49%','3.00'],['C','>39%','2.00'],['D','>32%','1.00'],['F','≤32%','0'],
+          ].map(([g,r,gp])=>(
+            <div key={g} className="rc-legend-row">
+              <span className="rc-leg-grade" style={g==='F'?{color:'#dc2626'}:{color:t.nc}}>{g}</span>
+              <span className="rc-leg-range">{r}</span>
+              <span className="rc-leg-gp">GP {gp}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Signature row */}
+      <div className="rc-sign-row" style={{borderTopColor:t.ac+'55'}}>
+        <div className="rc-sign-block">
+          <div className="rc-sign-blank"/>
+          <div className="rc-sign-rule" style={{background:t.ac}}/>
+          <p className="rc-sign-label">Executor</p>
+        </div>
+        <div className="rc-sign-block">
+          {signUrl ? <img src={signUrl} alt="sign" className="rc-sign-img"/> : <div className="rc-sign-blank"/>}
+          <div className="rc-sign-rule" style={{background:t.ac}}/>
+          <p className="rc-sign-label">Principal</p>
+        </div>
+      </div>
+
+      <div className="rc-footer" style={{background:t.hg}}>
+        <p className="rc-footer-text">{COLLEGE.nameEn} | ☎ {COLLEGE.phone} | {COLLEGE.email}</p>
+      </div>
+    </div>
+  );
+});
+
+// ─────────────────────────────────────────────────────────
+//  PROGRESS OVERLAY
+// ─────────────────────────────────────────────────────────
+const ProgressOverlay = ({ progress, current, total }) => (
+  <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:9999}}>
+    <div style={{background:'#fff',borderRadius:16,padding:'36px 48px',textAlign:'center'}}>
+      <svg viewBox="0 0 80 80" width="76" height="76">
+        <circle cx="40" cy="40" r="32" fill="none" stroke="#e5e7eb" strokeWidth="7"/>
+        <circle cx="40" cy="40" r="32" fill="none" stroke="#059669" strokeWidth="7"
+          strokeLinecap="round"
+          strokeDasharray={`${2*Math.PI*32}`}
+          strokeDashoffset={`${2*Math.PI*32*(1-progress/100)}`}
+          transform="rotate(-90 40 40)"
+          style={{transition:'stroke-dashoffset .3s'}}/>
+        <text x="40" y="45" textAnchor="middle" fontSize="13" fontWeight="800" fill="#065F46">{progress}%</text>
+      </svg>
+      <p style={{fontWeight:700,marginTop:8}}>Generating PDF…</p>
+      <p style={{fontSize:12,color:'#64748b'}}>{current} of {total}</p>
+    </div>
+  </div>
+);
 
 // ─────────────────────────────────────────────────────────
 //  MAIN COMPONENT
@@ -660,768 +766,393 @@ const ResultCardGenerator = () => {
   const [signUrl,    setSignUrl]    = useState(null);
   const [customLogo, setCustomLogo] = useState(null);
   const [program,    setProgram]    = useState('Degree');
-
-  const [examConfig, setExamConfig] = useState({
-    name   : 'Annual Examination 2025',
-    year   : '2025',
-    session: '2024-2025',
-  });
-
-  const [subjects, setSubjects] = useState([
-    { code:'BAN',  name:'Bangla',   fullMarks:'100', passMarks:'33' },
-    { code:'ENG',  name:'English',  fullMarks:'100', passMarks:'33' },
-    { code:'MAT',  name:'Mathematics', fullMarks:'100', passMarks:'33' },
-    { code:'ICT',  name:'ICT',      fullMarks:'100', passMarks:'33' },
-  ]);
-
-  // Marks: { [studentId]: { [subjectCode]: value } }
+  const [examConfig, setExamConfig] = useState({ name:'Annual Examination 2025', year:'2025', session:'2024-2025' });
+  const [subjects,   setSubjects]   = useState(DEF_SUBS);
   const [studentMarks, setStudentMarks] = useState({});
 
   const [fCls,    setFCls]    = useState('');
   const [fSec,    setFSec]    = useState('');
   const [q,       setQ]       = useState('');
   const [fResult, setFResult] = useState('');
+  const [sel,     setSel]     = useState(new Set());
+  const [prevId,  setPrevId]  = useState(null);
+  const [marksId, setMarksId] = useState(null);
 
-  const [sel,      setSel]      = useState(new Set());
-  const [prevId,   setPrevId]   = useState(null);
-  const [marksId,  setMarksId]  = useState(null);  // which student has marks form open
-
-  const [initLoad, setInitLoad] = useState(true);
-  const [stuLoad,  setStuLoad]  = useState(false);
-  const [genning,  setGenning]  = useState(false);
-  const [genPct,   setGenPct]   = useState(0);
-  const [genCur,   setGenCur]   = useState(0);
-  const [genTot,   setGenTot]   = useState(0);
+  const [initLoad,     setInitLoad]     = useState(true);
+  const [stuLoad,      setStuLoad]      = useState(false);
+  const [genning,      setGenning]      = useState(false);
+  const [genPct,       setGenPct]       = useState(0);
+  const [genCur,       setGenCur]       = useState(0);
+  const [genTot,       setGenTot]       = useState(0);
   const [sideOpen,     setSideOpen]     = useState(false);
-  const [excelLoading, setExcelLoading] = useState(false);
-  const [dbSaving, setDbSaving] = useState(false);
-  const [savedIds, setSavedIds] = useState(new Set());
+  const [loadingMarks, setLoadingMarks] = useState(false);
 
-  const currentClassName = useMemo(()=>{
-    const sc = classes.find(c=>c._id===fCls||c.name===fCls);
-    return sc?.name||fCls||'';
-  },[classes,fCls]);
+  const logoRef = useRef(null);
+  const signRef = useRef(null);
+  const t = getT(program);
 
-  const theme = getT(program);
-
-  const filtered = useMemo(()=>{
-    const ql = q.toLowerCase();
-    return all.filter(s => {
-      const cls = s.class?.name||(typeof s.class==='string'?s.class:'')||'';
-      const nm  = s.userId?.name||'';
-      const tot = computeTotal(subjects, studentMarks[s._id]);
-      return (
-        (!fCls    || cls===fCls) &&
-        (!fSec    || s.section===fSec) &&
-        (!ql      || nm.toLowerCase().includes(ql) || (s.rollNumber||'').toString().includes(ql)) &&
-        (!fResult || (fResult==='pass' && tot.result==='PASS') ||
-                     (fResult==='fail' && tot.result==='FAIL') ||
-                     (fResult==='pending' && (tot.result==='NOT ENTERED'||tot.result==='INCOMPLETE')))
-      );
-    });
-  },[all,fCls,fSec,q,fResult,studentMarks,subjects]);
-
-  const selList = useMemo(()=>all.filter(s=>sel.has(s._id)),[all,sel]);
-  const allSel  = filtered.length>0 && filtered.every(s=>sel.has(s._id));
-  const uniCls  = useMemo(()=>[...new Map(classes.map(c=>[c.name,c])).values()],[classes]);
-
-  const marksCount = useMemo(()=>{
-    let filled=0, total=all.length;
-    for(const s of all){
-      const m = studentMarks[s._id];
-      if(m && subjects.some(sub=>m[sub.code]!==undefined&&m[sub.code]!=='')) filled++;
-    }
-    return {filled,total};
-  },[all,studentMarks,subjects]);
-
-  useEffect(()=>{
-    (async()=>{
-      try{
-        const [cr,sr] = await Promise.allSettled([
-          classService.getAllClasses(), websiteService.getSettings()
-        ]);
-        if(cr.status==='fulfilled') setClasses(cr.value?.data||[]);
-        if(sr.status==='fulfilled'){
-          const d = sr.value?.data||{};
-          setSettings(d);
-          const logo = d.logo||d.schoolLogo||d.collegeLogo;
-          if(logo) setLogoUrl(logo);
-        }
-      }catch(_){}
-      finally{ setInitLoad(false); }
-    })();
-  },[]);
-
-  useEffect(()=>{
-    if(!fCls){ setSections([]); setFSec(''); return; }
-    const s = classes.find(c=>c._id===fCls||c.name===fCls);
-    if(!s){ setSections([]); return; }
-    setSections([...new Set(classes.filter(c=>c.name===s.name).map(c=>c.section).filter(Boolean))].sort());
-    setFSec('');
-  },[fCls,classes]);
-
-  const fetchStudents = useCallback(async()=>{
-    setStuLoad(true); setSel(new Set()); setPrevId(null); setMarksId(null);
-    try{
-      const p = {};
-      const sc = classes.find(c=>c._id===fCls||c.name===fCls);
-      if(sc)   p.class   = sc.name;
-      if(fSec) p.section = fSec;
-      const res  = await studentService.getAllStudents(p);
-      const list = res?.data||res?.students||(Array.isArray(res)?res:[]);
-      setAll(list);
-      // preserve existing marks on reload
-      toast[list.length?'success':'error'](list.length?`${list.length} students loaded`:'No students found');
-      if(list.length) setSideOpen(false);
-    }catch{ toast.error('Failed to load students'); }
-    finally{ setStuLoad(false); }
-  },[classes,fCls,fSec]);
-
-  const toggleOne = useCallback(id=>{
-    setSel(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;});
-  },[]);
-
-  const toggleAll = ()=>{
-    const ids = filtered.map(s=>s._id);
-    setSel(p=>{ const n=new Set(p); if(allSel) ids.forEach(id=>n.delete(id)); else ids.forEach(id=>n.add(id)); return n; });
-  };
-
-  const togglePrev  = id => { setPrevId(p=>p===id?null:id); setMarksId(null); };
-  const toggleMarks = id => { setMarksId(p=>p===id?null:id); setPrevId(null); };
-
-  const saveMarks = async (sid, marksData) => {
-    // ── 1. Instant local save ─────────────────────────────────
-    setStudentMarks(p => ({ ...p, [sid]: marksData }));
-    setMarksId(null);
-
-    // ── 2. Find student ──────────────────────────────────────
-    const student = all.find(s => s._id === sid);
-    if (!student) {
-      toast.success('Marks saved locally (student not found for DB sync)');
-      return;
-    }
-
-    // ── 3. Build payload matching backend schema ──────────────
-    // Student.class is a String in this project (not ObjectId)
-    const studentClassName = typeof student.class === 'string'
-      ? student.class
-      : (student.class?.name || currentClassName || '');
-
-    const subjectMarks = subjects.map(sub => {
-      const raw = marksData[sub.code];
-      // marksObtained must be Number or null — never string/undefined
-      let obtained = null;
-      if (raw !== undefined && raw !== null && raw !== '') {
-        const parsed = parseInt(raw, 10);
-        obtained = isNaN(parsed) ? null : parsed;
-      }
-      return {
-        code         : String(sub.code  || '').trim(),
-        name         : String(sub.name  || '').trim(),
-        fullMarks    : parseInt(sub.fullMarks,  10) || 100,
-        passMarks    : parseInt(sub.passMarks,  10) || 33,
-        marksObtained: obtained,
-      };
-    });
-
-    const payload = {
-      studentId  : sid,
-      examName   : String(examConfig.name    || 'Annual Examination').trim(),
-      examYear   : String(examConfig.year    || new Date().getFullYear()).trim(),
-      session    : String(examConfig.session || '').trim(),
-      program    : program || 'Degree',
-      className  : studentClassName.trim(),
-      section    : String(student.section || fSec || '').trim(),
-      subjects   : subjectMarks,
-      isPublished: false,
-    };
-
-    // ── 4. Send to backend ───────────────────────────────────
-    try {
-      await markService.saveMarks(payload);
-      setSavedIds(p => new Set([...p, sid]));
-      toast.success('✅ Marks saved to database!');
-    } catch (err) {
-      const msg = err?.response?.data?.message || err.message || 'Unknown error';
-      console.error('[saveMarks] Backend error:', msg, '| Payload:', payload);
-      toast.error(`Saved locally. DB error: ${msg}`);
-    }
-  };
-
-  const setExam = (k,v) => setExamConfig(p=>({...p,[k]:v}));
-
-  const addSubject    = ()    => setSubjects(p=>[...p,{code:'',name:'',fullMarks:'100',passMarks:'33'}]);
-  const removeSubject = i     => setSubjects(p=>p.filter((_,idx)=>idx!==i));
-  const updateSubject = (i,f,v) => setSubjects(p=>p.map((s,idx)=>idx===i?{...s,[f]:v}:s));
-
-  const captureEl = async id => {
-    const h2c = (await import('html2canvas')).default;
-    const el  = document.getElementById(id);
-    if(!el) return null;
-    el.style.left='0px'; el.style.top='0px'; el.style.zIndex='9998';
-    await new Promise(r=>setTimeout(r,120));
-    const canvas = await h2c(el,{
-      scale:2, useCORS:true, allowTaint:true,
-      backgroundColor:'#fff', logging:false,
-      width:el.offsetWidth, height:el.offsetHeight,
-    });
-    el.style.left='-9999px'; el.style.top='-9999px'; el.style.zIndex='-1';
-    return canvas;
-  };
-
-  const dlOne = async (student, idx) => {
-    try{
-      const {jsPDF} = await import('jspdf');
-      const canvas  = await captureEl(`rc-pdf-${student._id}`);
-      if(!canvas){ toast.error('Render failed'); return; }
-      const pdf  = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-      const imgW = 210;
-      const imgH = Math.round((canvas.height/canvas.width)*210);
-      pdf.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,imgW,Math.min(imgH,297));
-      pdf.save(`Result_${safeFile(student.userId?.name||'')}_Roll${safeFile(student.rollNumber||student.studentId||'')}.pdf`);
-    }catch(err){ console.error(err); toast.error('PDF error'); }
-  };
-
-  const handleDlAll = async () => {
-    if(!selList.length){ toast.error('Select at least one student'); return; }
-    setGenning(true); setGenPct(0); setGenCur(0); setGenTot(selList.length);
-    for(let i=0;i<selList.length;i++){
-      setGenCur(i+1);
-      setGenPct(Math.round(((i+1)/selList.length)*100));
-      await dlOne(selList[i], i);
-      await new Promise(r=>setTimeout(r,320));
-    }
-    setGenning(false);
-    toast.success(`✅ ${selList.length} Result Cards downloaded!`);
-  };
-
-  // Select all who have PASS result
-  const selectPassed = () => {
-    const ids = filtered
-      .filter(s => computeTotal(subjects, studentMarks[s._id]).result === 'PASS')
-      .map(s=>s._id);
-    setSel(new Set(ids));
-  };
-
-  // Class Excel export
-  const handleClassExcel = async () => {
-    const studentsToExport = filtered.length > 0 ? filtered : all;
-    if (!studentsToExport.length) { toast.error('No students loaded'); return; }
-    setExcelLoading(true);
-    try {
-      const fn = await exportClassExcel({
-        students: studentsToExport, subjects, studentMarks, examConfig,
-        program, className: currentClassName, section: fSec, toast,
-      });
-      if (fn) toast.success(`✅ Excel saved: ${fn}`);
-    } catch (err) { console.error(err); toast.error('Excel export failed'); }
-    finally { setExcelLoading(false); }
-  };
-
-  const handleStudentExcel = async (student, marksOverride) => {
-    try {
-      const fn = await exportStudentExcel({
-        student, subjects, marks: marksOverride || studentMarks[student._id] || {},
-        examConfig, program, toast,
-      });
-      if (fn) toast.success(`✅ Mark sheet: ${fn}`);
-    } catch (err) { console.error(err); toast.error('Excel failed'); }
-  };
-
-
-  // ── Save student marks to backend ──
-  const saveStudentToBackend = async (student, marksData) => {
-    try {
-      const subjectMarks = subjects.map(sub => ({
-        code: sub.code, name: sub.name,
-        fullMarks: parseInt(sub.fullMarks, 10) || 100,
-        passMarks: parseInt(sub.passMarks, 10) || 33,
-        marksObtained: (marksData[sub.code] !== undefined && marksData[sub.code] !== '')
-          ? parseInt(marksData[sub.code], 10) : null,
-      }));
-      await markService.saveMarks({
-        studentId: student._id,
-        examName: examConfig.name || 'Annual Examination',
-        examYear: examConfig.year || String(new Date().getFullYear()),
-        session: examConfig.session || '',
-        program,
-        className: student.class?.name || (typeof student.class==='string'?student.class:'') || currentClassName,
-        section: student.section || fSec || '',
-        subjects: subjectMarks,
-        isPublished: false,
-      });
-      setSavedIds(p => new Set([...p, student._id]));
-      return true;
-    } catch (err) { console.error('Save to DB error:', err); return false; }
-  };
-
-  const handleSaveAllToDb = async () => {
-    const withMarks = all.filter(s => {
-      const m = studentMarks[s._id];
-      return m && subjects.some(sub => m[sub.code] !== undefined && m[sub.code] !== '');
-    });
-    if (!withMarks.length) { toast.error('কোনো marks enter করা হয়নি'); return; }
-
-    setDbSaving(true);
-    let saved = 0;
-    for (const student of withMarks) {
+  // ── Initial load ─────────────────────────────────────────
+  useEffect(() => {
+    (async () => {
       try {
-        await saveMarks(student._id, studentMarks[student._id] || {});
-        saved++;
-      } catch (_) {}
-    }
-    setDbSaving(false);
-    toast.success(`✅ ${saved} জন শিক্ষার্থীর marks সংরক্ষিত!`);
-  };
+        const [cls, ws] = await Promise.all([
+          classService.getAllClasses?.() || Promise.resolve({ data:[] }),
+          websiteService.getWebsiteSettings?.() || Promise.resolve({ data:null }),
+        ]);
+        setClasses(cls?.data || []);
+        const s = ws?.data?.[0] || ws?.data || null;
+        setSettings(s);
+        if (s?.logo) setLogoUrl(s.logo);
+        if (s?.principalSignature) setSignUrl(s.principalSignature);
+      } catch {}
+      setInitLoad(false);
+    })();
+  }, []);
 
-  // ─────────────────────────────────────────────────────
-  //  RENDER
-  // ─────────────────────────────────────────────────────
+  // ── Load students ─────────────────────────────────────────
+  useEffect(() => {
+    if (!fCls) { setAll([]); setSections([]); return; }
+    setStuLoad(true);
+    studentService.getAllStudents({ class: fCls })
+      .then(r => {
+        const list = r?.data || [];
+        setAll(list);
+        setSections([...new Set(list.map(s=>s.section).filter(Boolean))].sort());
+      })
+      .catch(() => setAll([]))
+      .finally(() => setStuLoad(false));
+  }, [fCls]);
+
+  // ── Load saved marks ──────────────────────────────────────
+  const loadSavedMarks = useCallback(async () => {
+    if (!fCls || !examConfig.name) return;
+    setLoadingMarks(true);
+    try {
+      const res = await markService.getAllMarks({
+        className: fCls, examName: examConfig.name, session: examConfig.session,
+      });
+      const saved = {};
+      for (const m of (res?.data || [])) {
+        const sid = m.student?._id || m.student;
+        if (sid) saved[sid] = buildEntryFromDB(subjects, m.subjects);
+      }
+      setStudentMarks(prev => ({ ...prev, ...saved }));
+    } catch {}
+    setLoadingMarks(false);
+  }, [fCls, examConfig.name, examConfig.session, subjects]);
+
+  useEffect(() => { loadSavedMarks(); }, [fCls, examConfig.name]);
+
+  // ── Filtered students ─────────────────────────────────────
+  const filtered = useMemo(() => {
+    let list = fSec ? all.filter(s => s.section===fSec) : all;
+    if (q.trim()) {
+      const lq = q.toLowerCase();
+      list = list.filter(s => (s.userId?.name||'').toLowerCase().includes(lq) || String(s.rollNumber||'').includes(lq));
+    }
+    if (fResult) {
+      list = list.filter(s => computeTotal(subjects, studentMarks[s._id]).result === fResult);
+    }
+    return list;
+  }, [all, fSec, q, fResult, subjects, studentMarks]);
+
+  // ── Save marks ────────────────────────────────────────────
+  const handleSaveMarks = useCallback(async (studentId, localMarks) => {
+    try {
+      const student = all.find(s => s._id === studentId);
+      if (!student) { toast.error('Student not found'); return; }
+
+      const subjectsPayload = subjects.map(sub => {
+        const e = localMarks[sub.code] || {};
+        const isPair = Boolean(sub.isPair);
+        const n = v => (!blank(v) ? Number(v) : null);
+        return {
+          code   : sub.code, name: sub.name,
+          subjectType: sub.subjectType, isPair,
+          cqFM   : Number(sub.cqFM)  || 70,
+          cqPM   : Number(sub.cqPM)  || null,
+          cqP1   : n(e.cqP1),
+          cqP2   : isPair ? n(e.cqP2) : null,
+          hasMCQ : sub.hasMCQ,
+          mcqFM  : Number(sub.mcqFM)  || 30,
+          mcqPM  : Number(sub.mcqPM)  || null,
+          mcqP1  : sub.hasMCQ ? n(e.mcqP1)  : null,
+          mcqP2  : sub.hasMCQ && isPair ? n(e.mcqP2) : null,
+          hasPractical  : sub.hasPractical,
+          practicalFM   : Number(sub.practicalFM)  || 25,
+          practicalPM   : Number(sub.practicalPM)  || null,
+          practicalP1   : sub.hasPractical ? n(e.pracP1) : null,
+          practicalP2   : sub.hasPractical && isPair ? n(e.pracP2) : null,
+        };
+      });
+
+      await markService.saveMarks({
+        studentId, examName: examConfig.name, examYear: examConfig.year,
+        session: examConfig.session, program, className: fCls,
+        section: student.section || fSec || '',
+        subjects: subjectsPayload,
+      });
+
+      setStudentMarks(prev => ({ ...prev, [studentId]: localMarks }));
+      toast.success(`✓ Marks saved — ${student.userId?.name || 'Student'}`);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to save marks');
+    }
+  }, [all, subjects, examConfig, program, fCls, fSec]);
+
+  // ── PDF ───────────────────────────────────────────────────
+  const generatePDF = useCallback(async (targetStudents) => {
+    if (!targetStudents.length) { toast.error('No students selected'); return; }
+    setGenning(true); setGenPct(0); setGenCur(0); setGenTot(targetStudents.length);
+    try {
+      const [h2c, { jsPDF }] = await Promise.all([
+        import('html2canvas').then(m => m.default),
+        import('jspdf'),
+      ]);
+      const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+      const W = pdf.internal.pageSize.getWidth();
+      const H = pdf.internal.pageSize.getHeight();
+
+      for (let i=0; i<targetStudents.length; i++) {
+        const s = targetStudents[i];
+        const div = document.createElement('div');
+        div.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff;width:794px';
+        document.body.appendChild(div);
+        const { createRoot } = await import('react-dom/client');
+        const root = createRoot(div);
+        await new Promise(res => {
+          root.render(
+            <ResultCard student={s} logoUrl={customLogo||logoUrl} signUrl={signUrl}
+              examConfig={examConfig} subjects={subjects}
+              marks={studentMarks[s._id]||{}} program={program}/>
+          );
+          setTimeout(res, 500);
+        });
+        const canvas = await h2c(div.firstChild, { scale:2, useCORS:true, backgroundColor:'#fff', logging:false });
+        const img = canvas.toDataURL('image/jpeg', 0.92);
+        const imgH = W * (canvas.height/canvas.width);
+        if (i>0) pdf.addPage();
+        pdf.addImage(img, 'JPEG', 0, imgH<=H?(H-imgH)/2:0, W, Math.min(imgH,H));
+        root.unmount(); document.body.removeChild(div);
+        setGenCur(i+1); setGenPct(Math.round(((i+1)/targetStudents.length)*100));
+      }
+      pdf.save(targetStudents.length===1
+        ? `ResultCard_${safeFile(targetStudents[0].userId?.name||'')}.pdf`
+        : `ResultCards_${safeFile(fCls)}.pdf`);
+      toast.success(`PDF saved (${targetStudents.length} card${targetStudents.length>1?'s':''})`);
+    } catch (err) { console.error(err); toast.error('PDF generation failed'); }
+    setGenning(false);
+  }, [customLogo, logoUrl, signUrl, examConfig, subjects, studentMarks, program, fCls]);
+
+  // ── Subject CRUD ──────────────────────────────────────────
+  const changeSubject = (idx, s) => setSubjects(p => p.map((x,i) => i===idx ? s : x));
+  const addSubject    = () => setSubjects(p => [...p, { code:'', name:'', ...makePreset('arts',true) }]);
+  const removeSubject = idx => setSubjects(p => p.filter((_,i) => i!==idx));
+
+  // ── Select ────────────────────────────────────────────────
+  const toggleSel = (id, shift) => {
+    setSel(p => { const n=new Set(p); n.has(id)?n.delete(id):n.add(id); return n; });
+    setPrevId(id);
+  };
+  const allSel  = filtered.length>0 && filtered.every(s=>sel.has(s._id));
+  const someSel = filtered.some(s=>sel.has(s._id));
+  const selStudents = useMemo(() => all.filter(s=>sel.has(s._id)), [all,sel]);
+
+  if (initLoad) return (
+    <div className="rcg-loading-full"><Loader className="spin" size={28} color="#059669"/><p>Loading…</p></div>
+  );
+
   return (
     <div className="rcg-root">
       {genning && <ProgressOverlay progress={genPct} current={genCur} total={genTot}/>}
 
       {/* TOP BAR */}
-      <header className="rcg-topbar">
-        <div className="rcg-topbar-l">
-          <button className="rcg-btn-back" onClick={()=>navigate('/dashboard/students')}>
-            <ArrowLeft size={15}/><span>Students</span>
-          </button>
-          <div className="rcg-page-heading">
-            <div className="rcg-heading-icon" style={{background:theme.hg}}><Award size={17}/></div>
-            <div>
-              <h1 className="rcg-heading-title">Result Card Generator</h1>
-            </div>
-          </div>
-          {program && <span className="rcg-prog-badge" style={{background:theme.vb,color:theme.vc,borderColor:theme.vbr}}>{program}</span>}
-          {all.length>0 && (
-            <span className="rcg-marks-chip">
-              <BarChart2 size={11}/> Marks: {marksCount.filled}/{marksCount.total}
-            </span>
-          )}
-        </div>
-        <div className="rcg-topbar-r">
-          {selList.length>0 && (
-            <span className="rcg-sel-chip" style={{background:theme.vb,borderColor:theme.vbr,color:theme.vc}}>
-              <CheckCircle size={12}/>{selList.length} selected
-            </span>
-          )}
-          {selList.length>0 && <>
-            <button className="rcg-tbtn ghost" onClick={()=>setSel(new Set())}><X size={13}/><span>Clear</span></button>
-            <button className="rcg-tbtn amber" onClick={handleDlAll} disabled={genning}>
-              <Download size={14}/><span>PDF ({selList.length})</span>
-            </button>
-          </>}
-          {all.length > 0 && (
-            <button className="rcg-tbtn excel" onClick={handleClassExcel} disabled={excelLoading}
-              title="Download class mark sheet as Excel">
-              {excelLoading ? <Loader size={13} className="rcg-spin"/> : <FileSpreadsheet size={13}/>}
-              <span>{excelLoading ? '…' : 'Excel'}</span>
-            </button>
-          )}
-          {marksCount.filled > 0 && (
-            <button className="rcg-tbtn db-save" onClick={handleSaveAllToDb} disabled={dbSaving}
-              title="Save all marks to database">
-              {dbSaving ? <Loader size={13} className="rcg-spin"/> : <span>💾</span>}
-              <span>{dbSaving ? 'Saving…' : 'Save DB'}</span>
-            </button>
-          )}
-          <button className="rcg-tbtn ghost rcg-sidebar-toggle" onClick={()=>setSideOpen(o=>!o)}>
-            <Filter size={14}/>
-          </button>
-        </div>
-      </header>
+      <div className="rcg-topbar" style={{background:t.hg}}>
+        <button className="rcg-back-btn" onClick={()=>navigate(-1)}><ArrowLeft size={16}/> Back</button>
+        <span className="rcg-topbar-title"><Award size={18}/> Result Card Generator</span>
+        <button className="rcg-settings-btn" onClick={()=>setSideOpen(o=>!o)}><Filter size={14}/> Settings</button>
+      </div>
 
-      {/* BODY */}
       <div className="rcg-body">
-
-        {/* ── SIDEBAR ── */}
+        {/* SIDEBAR */}
         <aside className={`rcg-sidebar${sideOpen?' open':''}`}>
-          <div className="rcg-sb-header">
-            <span className="rcg-sb-title"><Filter size={13}/> Options</span>
-            <button className="rcg-sb-close" onClick={()=>setSideOpen(false)}><X size={16}/></button>
-          </div>
-          <div className="rcg-sb-scroll">
 
-            <Panel title="Program / Course" icon={<GraduationCap size={12}/>}>
-              <ProgramSelector value={program} onChange={setProgram}/>
-            </Panel>
-
-            <Panel title="Exam Configuration" icon={<Calendar size={12}/>}>
-              {[
-                ['name',    'Exam Name',     'Annual Examination 2025'],
-                ['year',    'Academic Year', '2025'],
-                ['session', 'Session',       '2024-2025'],
-              ].map(([k,lbl,ph])=>(
-                <div key={k} className="rcg-fg">
-                  <label>{lbl}</label>
-                  <input className="rcg-inp" type="text" placeholder={ph}
-                    value={examConfig[k]} onChange={e=>setExam(k,e.target.value)}/>
-                </div>
+          {/* Program */}
+          <Panel title="Program" icon={<GraduationCap size={13}/>}>
+            <div className="rcg-prog-sel">
+              {[{k:'HSC',c:'#84070f'},{k:'Degree',c:'#065F46'},{k:'Honours',c:'#1d4ed8'}].map(o=>(
+                <button key={o.k}
+                  style={program===o.k?{background:o.c,borderColor:o.c,color:'#fff',padding:'6px 14px',borderRadius:7,border:'2px solid',fontWeight:700,cursor:'pointer'}
+                    :{borderColor:o.c+'44',color:o.c,padding:'6px 14px',borderRadius:7,border:'2px solid',fontWeight:600,cursor:'pointer',background:'#fff'}}
+                  onClick={()=>setProgram(o.k)}>{o.k}</button>
               ))}
-            </Panel>
+            </div>
+          </Panel>
 
-            <Panel title="Subject Configuration" icon={<BookOpen size={12}/>} badge={subjects.length}>
-              <div className="rcg-sub-editor">
-                {subjects.map((sub, i) => (
-                  <div key={i} className="rcg-sub-card">
-                    <div className="rcg-sub-card-hdr">
-                      <div className="rcg-sub-card-num" style={{background:theme.hg}}>{i+1}</div>
-                      <span className="rcg-sub-card-label">{sub.name || `Subject ${i+1}`}</span>
-                      <button className="rcg-sub-card-del" onClick={()=>removeSubject(i)} title="Remove">
-                        <Trash2 size={12}/>
-                      </button>
-                    </div>
-                    <div className="rcg-sub-card-fields">
-                      <div className="rcg-sub-field-group">
-                        <label className="rcg-sub-field-lbl"><Hash size={10}/> Subject Code</label>
-                        <input className="rcg-sub-field-inp" placeholder="e.g. BAN101"
-                          value={sub.code} onChange={e=>updateSubject(i,'code',e.target.value)}/>
-                      </div>
-                      <div className="rcg-sub-field-group">
-                        <label className="rcg-sub-field-lbl"><AlignLeft size={10}/> Subject Name</label>
-                        <input className="rcg-sub-field-inp" placeholder="e.g. Bangla (1st Paper)"
-                          value={sub.name} onChange={e=>updateSubject(i,'name',e.target.value)}/>
-                      </div>
-                      <div className="rcg-sub-2col">
-                        <div className="rcg-sub-field-group">
-                          <label className="rcg-sub-field-lbl"><Target size={10}/> Full Marks</label>
-                          <input className="rcg-sub-field-inp" type="number" placeholder="100"
-                            value={sub.fullMarks} onChange={e=>updateSubject(i,'fullMarks',e.target.value)}/>
-                        </div>
-                        <div className="rcg-sub-field-group">
-                          <label className="rcg-sub-field-lbl"><ShieldCheck size={10}/> Pass Marks</label>
-                          <input className="rcg-sub-field-inp" type="number" placeholder="33"
-                            value={sub.passMarks} onChange={e=>updateSubject(i,'passMarks',e.target.value)}/>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                <button className="rcg-sub-add" style={{background:theme.hg}} onClick={addSubject}>
-                  <Plus size={13}/> Add Subject
-                </button>
+          {/* Exam config */}
+          <Panel title="Exam Info" icon={<Calendar size={13}/>}>
+            {[['Exam Name','name'],['Year','year'],['Session','session']].map(([l,k])=>(
+              <div key={k} className="rcg-field">
+                <label className="rcg-label">{l}</label>
+                <input className="rcg-inp" value={examConfig[k]}
+                  onChange={e=>setExamConfig(p=>({...p,[k]:e.target.value}))}/>
               </div>
-            </Panel>
+            ))}
+          </Panel>
 
-            <Panel title="Upload Assets" icon={<Upload size={12}/>}>
-              <UpField label="College Logo" val={customLogo}
-                onUp={b64=>{setCustomLogo(b64);setLogoUrl(b64);}}
-                onRm={()=>{setCustomLogo(null);setLogoUrl(settings?.logo||'/logo.png');}}/>
-              <UpField label="Principal Signature (PNG)" val={signUrl}
-                onUp={setSignUrl} onRm={()=>setSignUrl(null)} isSig/>
-            </Panel>
+          {/* Subjects */}
+          <Panel title="Subject Config" icon={<BookOpen size={13}/>} badge={subjects.length}>
+            <div className="sub-cfg-info-box">
+              <strong>Rules:</strong> CQ = required &nbsp;·&nbsp; MCQ = optional (blank → skip) &nbsp;·&nbsp; Practical = optional<br/>
+              Each must pass <em>independently</em>. Any subject FAIL → no overall GPA.<br/>
+              <strong>Science:</strong> CQ 50/paper · MCQ 25/paper · Practical 25/paper<br/>
+              <strong>Arts/BMT:</strong> CQ 70/paper · MCQ 30/paper
+            </div>
+            <div className="sub-cfg-list">
+              {subjects.map((sub,idx)=>(
+                <SubjectRow key={idx} sub={sub} idx={idx} onChange={changeSubject} onRemove={removeSubject}/>
+              ))}
+            </div>
+            <button className="rcg-add-sub-btn" onClick={addSubject}>
+              <Plus size={12}/> Add Subject
+            </button>
+          </Panel>
 
-            {/* ✅ Excel class download block */}
-            {all.length > 0 && (
-              <div className="rcg-excel-block">
-                <div className="rcg-excel-block-hdr">
-                  <FileSpreadsheet size={16} style={{color:'#16a34a'}}/>
-                  <div>
-                    <p className="rcg-excel-block-title">Class Mark Sheet (Excel)</p>
-                    <p className="rcg-excel-block-sub">
-                      {filtered.length} students · রোল অনুযায়ী সাজানো
-                      {currentClassName && ` · ${currentClassName}`}{fSec && ` · ${fSec}`}
-                    </p>
-                  </div>
-                </div>
-                <button className="rcg-excel-block-btn" onClick={handleClassExcel} disabled={excelLoading}>
-                  {excelLoading
-                    ? <><Loader size={13} className="rcg-spin"/> Generating…</>
-                    : <><FileSpreadsheet size={13}/> Download Class Excel</>}
-                </button>
-                <p className="rcg-excel-block-hint">3 sheets: Mark Sheet · Summary · Subject Analysis</p>
-              </div>
-            )}
-
-            <Panel title="Filter Students" icon={<Filter size={12}/>}>
-              <div className="rcg-sf-wrap">
-                <Search size={12} className="rcg-sf-ico"/>
-                <input className="rcg-sf-inp" type="text" placeholder="Name / Roll…"
-                  value={q} onChange={e=>setQ(e.target.value)}/>
-                {q && <button className="rcg-sf-clr" onClick={()=>setQ('')}><X size={11}/></button>}
-              </div>
-              <div className="rcg-2col">
-                <div className="rcg-fg">
-                  <label>Class</label>
-                  <select className="rcg-sel" value={fCls} onChange={e=>setFCls(e.target.value)}>
-                    <option value="">All Classes</option>
-                    {uniCls.map(c=><option key={c._id} value={c.name}>{c.name}</option>)}
-                  </select>
-                </div>
-                <div className="rcg-fg">
-                  <label>Section</label>
-                  <select className="rcg-sel" value={fSec} onChange={e=>setFSec(e.target.value)}
-                    disabled={!fCls||!sections.length}>
-                    <option value="">All</option>
-                    {sections.map(s=><option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="rcg-fg">
-                <label>Result Filter</label>
-                <select className="rcg-sel" value={fResult} onChange={e=>setFResult(e.target.value)}>
-                  <option value="">All Results</option>
-                  <option value="pass">PASS only</option>
-                  <option value="fail">FAIL only</option>
-                  <option value="pending">Pending / Incomplete</option>
-                </select>
-              </div>
-              <button className="rcg-load-btn" onClick={fetchStudents}
-                disabled={stuLoad||initLoad} style={{background:theme.hg}}>
-                {stuLoad
-                  ? <><Loader size={13} className="rcg-spin"/> Loading…</>
-                  : <><RefreshCw size={13}/> Load Students</>
-                }
-              </button>
-            </Panel>
-
-            {all.length>0 && (
-              <>
-                {/* Stats */}
-                <div className="rcg-marks-summary">
-                  {[
-                    {l:'Total', v:all.length, c:'#1e3a8a'},
-                    {l:'PASS',  v:all.filter(s=>computeTotal(subjects,studentMarks[s._id]).result==='PASS').length, c:'#065F46'},
-                    {l:'FAIL',  v:all.filter(s=>computeTotal(subjects,studentMarks[s._id]).result==='FAIL').length, c:'#dc2626'},
-                    {l:'Pending',v:all.filter(s=>{const r=computeTotal(subjects,studentMarks[s._id]).result;return r==='NOT ENTERED'||r==='INCOMPLETE';}).length, c:'#D97706'},
-                  ].map(({l,v,c})=>(
-                    <div key={l} className="rcg-ms-item">
-                      <div className="rcg-ms-v" style={{color:c}}>{v}</div>
-                      <div className="rcg-ms-l">{l}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Quick actions */}
-                <div className="rcg-quick-actions">
-                  <button className="rcg-qa-btn pass" onClick={selectPassed}>
-                    <CheckCircle size={11}/> Select PASS
+          {/* Logo/Sign */}
+          <Panel title="Logo & Signature" icon={<Upload size={13}/>} defaultOpen={false}>
+            {[['College Logo',logoUrl||customLogo,setCustomLogo,logoRef,false],
+              ['Principal Signature',signUrl,setSignUrl,signRef,true]].map(([l,val,setter,ref,sig])=>(
+              <div key={l} className="rcg-upfield">
+                <div className="rcg-uplbl">{l} {val && <CheckCircle size={10} color="#059669"/>}</div>
+                <input ref={ref} type="file" accept="image/*" style={{display:'none'}}
+                  onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setter(ev.target.result);r.readAsDataURL(f);e.target.value='';}}/>
+                <div style={{display:'flex',gap:6}}>
+                  <button className="rcg-upbtn" onClick={()=>ref.current?.click()}>
+                    <Upload size={11}/> {val?'Change':'Upload'}
                   </button>
-                  <button className="rcg-qa-btn clear" onClick={()=>setSel(new Set())}>
-                    <X size={11}/> Clear All
-                  </button>
+                  {val && <button className="rcg-updel" onClick={()=>setter(null)}><X size={11}/></button>}
                 </div>
-              </>
-            )}
-
-            {selList.length>0 && (
-              <div className="rcg-action-block">
-                <button className="rcg-dl-btn" onClick={handleDlAll} disabled={genning}
-                  style={{background:theme.hg}}>
-                  <Download size={15}/> Download PDF ({selList.length})
-                </button>
+                {val && <img src={val} alt="" style={{maxWidth:'100%',maxHeight:56,marginTop:6,borderRadius:4,border:'1px solid #e2e8f0'}}/>}
               </div>
-            )}
-
-          </div>
+            ))}
+          </Panel>
         </aside>
 
-        {sideOpen && <div className="rcg-overlay" onClick={()=>setSideOpen(false)}/>}
-
-        {/* ── MAIN ── */}
+        {/* MAIN */}
         <main className="rcg-main">
-          {initLoad && (
-            <div className="rcg-state">
-              <Loader size={48} className="rcg-spin rcg-state-ico"/>
-              <h3>Initialising…</h3>
+          {/* Filter bar */}
+          <div className="rcg-filter-bar">
+            <select className="rcg-sel" value={fCls} onChange={e=>{setFCls(e.target.value);setFSec('');}}>
+              <option value="">— Select Class —</option>
+              {classes.map(c=><option key={c._id} value={c.name}>{c.name}</option>)}
+            </select>
+            {sections.length>0 && (
+              <select className="rcg-sel" value={fSec} onChange={e=>setFSec(e.target.value)}>
+                <option value="">All Sections</option>
+                {sections.map(s=><option key={s} value={s}>{s}</option>)}
+              </select>
+            )}
+            <div className="rcg-search-wrap">
+              <Search size={13}/>
+              <input className="rcg-search-inp" placeholder="Name / Roll…" value={q} onChange={e=>setQ(e.target.value)}/>
+            </div>
+            <select className="rcg-sel" value={fResult} onChange={e=>setFResult(e.target.value)}>
+              <option value="">All Results</option>
+              {['PASS','FAIL','INCOMPLETE','NOT ENTERED'].map(r=><option key={r} value={r}>{r}</option>)}
+            </select>
+            <button className="rcg-load-marks-btn" onClick={loadSavedMarks} disabled={loadingMarks||!fCls}>
+              <RefreshCw size={13} className={loadingMarks?'spin':''}/> Reload
+            </button>
+          </div>
+
+          {/* Bulk bar */}
+          {someSel && (
+            <div className="rcg-bulk-bar">
+              <span className="rcg-bulk-count">{sel.size} selected</span>
+              <button className="rcg-bulk-pdf" style={{background:t.hg}}
+                onClick={()=>generatePDF(selStudents)} disabled={genning}>
+                <Download size={13}/> PDF ({sel.size})
+              </button>
+              <button className="rcg-bulk-clear" onClick={()=>setSel(new Set())}><X size={13}/> Clear</button>
             </div>
           )}
 
-          {!initLoad && !all.length && !stuLoad && (
-            <div className="rcg-state">
-              <div className="rcg-empty-icon" style={{background:theme.hg}}><Award size={40}/></div>
-              <h3>Result Card Generator</h3>
-              <p>Configure subjects & exam, load students, enter marks, then generate result cards.</p>
-              <div className="rcg-howto">
-                {[
-                  ['01','Program',   'HSC / Degree / Honours'],
-                  ['02','Subjects',  'Configure subject list with marks'],
-                  ['03','Load',      'Filter & load students'],
-                  ['04','Marks',     'Enter marks per student'],
-                  ['05','Generate',  'Select students & download PDF'],
-                ].map(([n,t,d])=>(
-                  <div key={n} className="rcg-howto-card">
-                    <div className="rcg-howto-n" style={{color:theme.ac}}>{n}</div>
-                    <div className="rcg-howto-t">{t}</div>
-                    <div className="rcg-howto-d">{d}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {stuLoad && (
-            <div className="rcg-state">
-              <Loader size={48} className="rcg-spin rcg-state-ico"/>
-              <h3>Loading students…</h3>
-            </div>
-          )}
-
-          {!stuLoad && all.length>0 && (
-            <div className="rcg-cards-area">
-              <div className="rcg-toolbar">
-                <div className="rcg-toolbar-l">
-                  <span className="rcg-toolbar-count">
-                    {filtered.length} students{sel.size>0 && ` · ${sel.size} selected`}
-                  </span>
-                  <span className="rcg-prog-tag" style={{background:theme.vb,color:theme.vc,borderColor:theme.vbr}}>{program}</span>
-                  {examConfig.name && (
-                    <span className="rcg-prog-tag" style={{background:'#f0f9ff',color:'#0369a1',borderColor:'#bae6fd'}}>
-                      {examConfig.name}
-                    </span>
-                  )}
-                </div>
-                <div className="rcg-toolbar-r">
-                  <button className="rcg-tb" onClick={toggleAll}>
-                    {allSel?<><CheckSquare size={12}/> Deselect All</>:<><Square size={12}/> Select All</>}
-                  </button>
-                  {filtered.some(s=>computeTotal(subjects,studentMarks[s._id]).result==='PASS') && (
-                    <button className="rcg-tb" onClick={selectPassed}>
-                      <CheckCircle size={12}/> Select PASS
-                    </button>
-                  )}
-                  {selList.length>0 && (
-                    <button className="rcg-tb amber" onClick={handleDlAll} disabled={genning}>
-                      <Download size={12}/> PDF ({selList.length})
-                    </button>
-                  )}
-                </div>
+          {/* Student list */}
+          {stuLoad ? (
+            <div className="rcg-stu-loading"><Loader className="spin" size={22}/><p>Loading students…</p></div>
+          ) : !fCls ? (
+            <div className="rcg-empty"><GraduationCap size={40} color="#d1d5db"/><p>Select a class to get started</p></div>
+          ) : filtered.length===0 ? (
+            <div className="rcg-empty"><Search size={36} color="#d1d5db"/><p>No students found</p></div>
+          ) : (
+            <div className="rcg-student-list">
+              <div className="rcg-sel-all-row">
+                <button className="rcg-sel-all-btn"
+                  onClick={()=>allSel?setSel(new Set()):setSel(new Set(filtered.map(s=>s._id)))}>
+                  {allSel?<CheckSquare size={14}/>:<Square size={14}/>}
+                  {allSel?'Deselect All':`Select All (${filtered.length})`}
+                </button>
               </div>
 
-              {currentClassName && (
-                <div className="rcg-excel-bar">
-                  <FileSpreadsheet size={13} style={{color:'#16a34a'}}/>
-                  <span>
-                    <strong>{currentClassName}{fSec ? ` · ${fSec}` : ''}</strong>
-                    {' '}— {filtered.length} students. Excel: Mark Sheet + Summary + Subject Analysis
-                  </span>
-                  <button className="rcg-excel-bar-btn" onClick={handleClassExcel} disabled={excelLoading}>
-                    {excelLoading ? <Loader size={11} className="rcg-spin"/> : <Download size={11}/>}
-                    {excelLoading ? 'Generating…' : 'Download Excel'}
-                  </button>
-                </div>
-              )}
+              {filtered.map(s => {
+                const total    = computeTotal(subjects, studentMarks[s._id]);
+                const isSel    = sel.has(s._id);
+                const marksOpen= marksId===s._id;
+                const prevOpen = prevId===s._id;
 
-              <div className="rcg-card-list">
-                {filtered.map((student, idx) => {
-                  const isSel  = sel.has(student._id);
-                  const isPrev = prevId===student._id;
-                  const isMark = marksId===student._id;
-                  const nm     = student.userId?.name||'—';
-                  const cls    = student.class?.name||student.class||'—';
-                  const ph     = student.userId?.profileImage||null;
-                  const actv   = student.userId?.isActive;
-                  const marks  = studentMarks[student._id] || {};
-                  const total  = computeTotal(subjects, marks);
-                  const hasMarks = subjects.some(s=>marks[s.code]!==undefined&&marks[s.code]!=='');
-
-                  return (
-                    <div key={student._id}
-                      className={`rcg-row${isSel?' sel':''}${isPrev||isMark?' open':''}`}
-                      style={isSel?{borderColor:theme.ac,background:theme.vb+'44'}
-                        :(isPrev||isMark)?{borderColor:theme.ac+'88'}:{}}>
-                      <div className="rcg-row-head">
-                        <div className="rcg-row-l">
-                          <button className={`rcg-chk${isSel?' on':''}`}
-                            onClick={()=>toggleOne(student._id)}
-                            style={isSel?{color:theme.ac}:{}}>
-                            {isSel?<CheckSquare size={15}/>:<Square size={15}/>}
-                          </button>
-                          <div className="rcg-ava">
-                            {ph?<img src={ph} alt="" crossOrigin="anonymous"/>:<User size={14}/>}
-                            <div className={`rcg-dot${actv?' active':''}`}/>
-                          </div>
-                          <div className="rcg-stu-text">
-                            <p className="rcg-stu-name">{nm}</p>
-                            <p className="rcg-stu-meta">
-                              {cls}{student.section&&` · ${student.section}`}
-                              {student.rollNumber&&` · Roll ${student.rollNumber}`}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="rcg-row-r">
-                          {/* Result badge */}
-                          {hasMarks ? (
-                            <span className={`rcg-result-tag ${total.result==='PASS'?'pass':total.result==='FAIL'?'fail':'pending'}`}>
-                              {total.result} {total.result==='PASS'&&`· ${total.pct}%`}
-                            </span>
-                          ) : (
-                            <span className="rcg-result-tag pending">No Marks</span>
-                          )}
-                          {hasMarks && (
-                            <button className="rcg-row-btn excel-sm"
-                              onClick={()=>handleStudentExcel(student, marks)}
-                              title="Download mark sheet Excel">
-                              <FileSpreadsheet size={12}/><span>Excel</span>
-                            </button>
-                          )}
-                          <button
-                            className={`rcg-row-btn${isMark?' on':''}`}
-                            onClick={()=>toggleMarks(student._id)}
-                            style={isMark?{background:theme.vb,borderColor:theme.ac,color:theme.vc}:{borderColor:'#d97706',color:'#d97706'}}>
-                            <Edit3 size={12}/><span>{isMark?'Close':'Marks'}</span>
-                          </button>
-                          <button
-                            className={`rcg-row-btn${isPrev?' on':''}`}
-                            onClick={()=>togglePrev(student._id)}
-                            style={isPrev?{background:theme.vb,borderColor:theme.ac,color:theme.vc}:{}}>
-                            {isPrev?<EyeOff size={12}/>:<Eye size={12}/>}
-                            <span>{isPrev?'Close':'Preview'}</span>
-                          </button>
-                          <button className="rcg-row-btn amber" onClick={()=>dlOne(student, idx)}>
-                            <Download size={12}/><span>PDF</span>
-                          </button>
-                        </div>
+                return (
+                  <div key={s._id} className={`rcg-stu-card${isSel?' selected':''}`}>
+                    <div className="rcg-stu-row">
+                      <button className="rcg-stu-chk" onClick={e=>toggleSel(s._id,e.shiftKey)}>
+                        {isSel?<CheckSquare size={16} color={t.nc}/>:<Square size={16} color="#9ca3af"/>}
+                      </button>
+                      <div className="rcg-stu-info">
+                        <span className="rcg-stu-name">{s.userId?.name||'—'}</span>
+                        <span className="rcg-stu-meta">Roll: {s.rollNumber||'—'} · {s.class||'—'}{s.section?` (${s.section})`:''}</span>
                       </div>
-
-                      {/* MARKS ENTRY FORM */}
-                      {isMark && (
-                        <div className="rcg-marks-drawer">
-                          <MarksEntryForm
-                            student={student} subjects={subjects}
-                            marks={marks} onSave={saveMarks}
-                            onExcelDl={(s, m) => handleStudentExcel(s, m)}
-                            theme={theme}/>
-                        </div>
-                      )}
-
-                      {/* PREVIEW */}
-                      {isPrev && (
-                        <div className="rcg-drawer">
-                          <div className="rcg-preview-wrap">
-                            <div className="rcg-preview-scaler">
-                              <ResultCard
-                                student={student} logoUrl={logoUrl} signUrl={signUrl}
-                                examConfig={examConfig} subjects={subjects}
-                                marks={marks} program={program} settings={settings}
-                                srNo={filtered.indexOf(student)+1}/>
-                            </div>
-                          </div>
-                          <p className="rcg-preview-note">PDF will look exactly like this preview</p>
-                        </div>
-                      )}
+                      <div className="rcg-stu-result">
+                        <span className={`rcg-result-badge${total.result==='PASS'?' pass':total.result==='FAIL'?' fail':' pend'}`}>
+                          {total.result}
+                        </span>
+                        {total.result==='PASS' && (
+                          <span style={{fontSize:11,color:t.nc,fontWeight:700}}>{total.gpa} GPA</span>
+                        )}
+                      </div>
+                      <div className="rcg-stu-actions">
+                        <button className="rcg-stu-marks-btn"
+                          onClick={()=>setMarksId(id=>id===s._id?null:s._id)}>
+                          {marksOpen?<><EyeOff size={13}/> Close</>:<><Edit3 size={13}/> Marks</>}
+                        </button>
+                        <button className="rcg-stu-preview-btn"
+                          onClick={()=>setPrevId(id=>id===s._id?null:s._id)}>
+                          {prevOpen?<><EyeOff size={13}/> Hide</>:<><Eye size={13}/> Preview</>}
+                        </button>
+                        <button className="rcg-stu-pdf-btn" style={{background:t.hg}}
+                          onClick={()=>generatePDF([s])} disabled={genning}>
+                          <Download size={13}/> PDF
+                        </button>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
+
+                    {marksOpen && (
+                      <MarksEntryForm student={s} subjects={subjects}
+                        marks={studentMarks[s._id]||{}}
+                        onSave={handleSaveMarks} theme={t}/>
+                    )}
+
+                    {prevOpen && (
+                      <div className="rcg-preview-wrap">
+                        <ResultCard student={s} logoUrl={customLogo||logoUrl} signUrl={signUrl}
+                          examConfig={examConfig} subjects={subjects}
+                          marks={studentMarks[s._id]||{}} program={program}/>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </main>
-      </div>
-
-      {/* PDF POOL */}
-      <div className="rcg-pdf-pool" aria-hidden="true">
-        {selList.map((s, idx) => (
-          <div key={s._id} id={`rc-pdf-${s._id}`} className="rcg-pdf-slot">
-            <ResultCard
-              student={s} logoUrl={logoUrl} signUrl={signUrl}
-              examConfig={examConfig} subjects={subjects}
-              marks={studentMarks[s._id] || {}}
-              program={program} settings={settings}
-              srNo={idx+1}/>
-          </div>
-        ))}
       </div>
     </div>
   );
