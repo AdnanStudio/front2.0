@@ -1,4 +1,3 @@
-
 // FILE PATH: src/services/markService.js
 // ============================================================
 import axios from 'axios';
@@ -39,8 +38,9 @@ const markService = {
 
   // ── Bulk save entire class ─────────────────────────────────
   // POST /api/marks/bulk
-  saveBulkMarks: (marksArray) =>
-    API.post('/marks/bulk', { marksArray }).then(r => r.data),
+  // FIX: was { marksArray } — backend expects { entries }
+  saveBulkMarks: (entries) =>
+    API.post('/marks/bulk', { entries }).then(r => r.data),
 
   // ── Get all marks (admin/teacher) with filters ─────────────
   // GET /api/marks?className=&examName=&page=&limit=
@@ -78,7 +78,7 @@ const markService = {
   togglePublish: (id) =>
     API.patch(`/marks/${id}/publish`).then(r => r.data),
 
-  // ── Publish all for a class ────────────────────────────────
+  // ── Publish all for a class (by className/examName) ────────
   // POST /api/marks/publish-class
   publishClassResults: (data) =>
     API.post('/marks/publish-class', data).then(r => r.data),
